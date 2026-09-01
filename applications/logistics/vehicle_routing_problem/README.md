@@ -5,9 +5,10 @@
 This project implements a hybrid **Quantum-Classical Warehouse Management System (WMS)** optimization pipeline and visual simulator for the **Capacitated Vehicle Routing Problem (CVRP)** and **Batch Picking / Automated Guided Vehicle (AGV) Routing**.
 
 The system addresses large-scale warehouse order fulfilment by decomposing the combinatorial NP-hard VRP problem into two coordinated stages:
-1. **Quantum K-Means Clustering (Batch Assignment)**: Partitions multi-dimensional warehouse pick orders ($x, y, z$, weight, volume, SLA urgency, zone class) into $K$ balanced batches using quantum state fidelity / swap-test distance metric.
-2. **QAOA & QUBO Route Optimization**: Formulates intra-cluster AGV pick sequences as a Quadratic Unconstrained Binary Optimization (QUBO) problem with Miller-Tucker-Zemlin (MTZ) subtour elimination constraints and maps them to an Ising Hamiltonian for Quantum Approximate Optimization Algorithm (QAOA) execution.
-3. **Visual Simulator**: A high-resolution 2D warehouse simulator supporting static plot exports, animated multi-AGV GIF simulations, and real-time interactive desktop GUI navigation.
+1. **Quantum Fuzzy C-Means (QFCM / F-Means) & K-Means Clustering**: Partitions multi-dimensional warehouse pick orders ($x, y, z$, weight, volume, SLA urgency, zone class) into $K$ balanced batches using continuous membership probabilities $u_{ik} \in [0, 1]$ and quantum state fidelity derived from Born's rule measurement probabilities.
+2. **Entropy-Based Dynamic Capacity Rebalancing**: Identifies boundary orders situated across cluster transitions via Shannon entropy $H_i = -\sum_k u_{ik} \ln u_{ik}$ and redistributes them to prevent AGV overload.
+3. **QAOA & QUBO Route Optimization**: Formulates intra-cluster AGV pick sequences as a Quadratic Unconstrained Binary Optimization (QUBO) problem with Miller-Tucker-Zemlin (MTZ) subtour elimination constraints and maps them to an Ising Hamiltonian for Quantum Approximate Optimization Algorithm (QAOA) execution.
+4. **Visual Simulator**: A high-resolution 2D warehouse simulator supporting static plot exports, animated multi-AGV GIF simulations, boundary halo indicators, and real-time interactive desktop GUI navigation.
 
 ---
 
@@ -16,13 +17,16 @@ The system addresses large-scale warehouse order fulfilment by decomposing the c
 ```mermaid
 flowchart TD
     A[Raw Warehouse Orders\nx, y, z, weight, volume, SLA, zone] --> B[Qubitized Feature Encoding]
-    B --> C[Quantum K-Means Subroutine\nSwap-Test Fidelity Metric]
-    C --> D[K Batches / AGV Allocations]
-    D --> E[QUBO Intra-Cluster Formulation\nDegree + Capacity + MTZ Penalties]
-    E --> F[Ising Hamiltonian Mapping\nx -> (1-z)/2]
-    F --> G[Classiq QAOA Synthesis\nParameterized Ansatz & Circuit Execution]
-    G --> H[AGV Dispatch Routes]
-    H --> I[WMS Visual Simulator\nPNG / GIF / Interactive GUI]
+    B --> C[Quantum Swap-Test Circuit\nAncilla Measurement Probabilities]
+    C --> D[Quantum Fidelity Metric\nD_Q = 1 - |<ψ|c>|^2 = 2 P_1]
+    D --> E[Fuzzy Membership Matrix U_ik\nwith Fuzziness Parameter m]
+    E --> F[Shannon Entropy Calculation\n& Dynamic AGV Load Rebalancing]
+    F --> G[K Balanced Batches / AGV Allocations]
+    G --> H[QUBO Intra-Cluster Formulation\nDegree + Capacity + MTZ Penalties]
+    H --> I[Ising Hamiltonian Mapping\nx -> (1-z)/2]
+    I --> J[Classiq QAOA Synthesis\nParameterized Ansatz & Circuit Execution]
+    J --> K[AGV Dispatch Routes]
+    K --> L[WMS Visual Simulator\nPNG / GIF / Interactive GUI]
 ```
 
 ### 2.1 Feature Vector Representation
@@ -31,24 +35,29 @@ $$\mathbf{v}_i = [x_i, y_i, z_i, w_i, v_i, \text{SLA}_i, \text{Zone}_i]^T$$
 Features are normalized and amplitude/angle-encoded into quantum registers:
 $$|\psi_i\rangle = \sum_{j=1}^7 \sqrt{\tilde{v}_{ij}} |j\rangle \quad \text{or} \quad R_y(\theta_j)|0\rangle \quad \text{where } \theta_j = 2 \arcsin\left(\sqrt{\tilde{v}_{ij}}\right)$$
 
-### 2.2 Quantum Distance Metric (Swap-Test Fidelity)
-Instead of purely classical Euclidean distance, cluster assignment uses the quantum state overlap:
-$$F(|\psi_a\rangle, |\psi_b\rangle) = |\langle \psi_a | \psi_b \rangle|^2$$
-$$D_{\text{quantum}}(\mathbf{a}, \mathbf{b}) = 1.0 - |\langle \psi_a | \psi_b \rangle|^2$$
+### 2.2 Quantum Distance Metric via Born's Rule Probability
+Using an ancilla qubit initialized in $|0\rangle$, a swap-test between order state $|\psi_i\rangle$ and centroid state $|c_k\rangle$ produces measurement probabilities:
+$$P(|0\rangle_{\text{ancilla}}) = \frac{1 + |\langle \psi_i | c_k \rangle|^2}{2}, \quad P(|1\rangle_{\text{ancilla}}) = \frac{1 - |\langle \psi_i | c_k \rangle|^2}{2}$$
+The quantum distance is directly proportional to the probability of measuring $|1\rangle$:
+$$D_Q(\psi_i, c_k) = 2 \cdot P(|1\rangle_{\text{ancilla}}) = 1.0 - |\langle \psi_i | c_k \rangle|^2$$
 
-### 2.3 Intra-Cluster VRP QUBO Formulation
-For each cluster with $N$ nodes (including depot $0$), binary decision variables $x_{ij} \in \{0, 1\}$ represent traversal from node $i$ to $j$:
+### 2.3 Quantum Fuzzy C-Means (QFCM) Engine
+- **Objective Function**:
+  $$J_m(U, C) = \sum_{i=1}^N \sum_{k=1}^K (u_{ik})^m D_Q(\psi_i, c_k)$$
+- **Fuzzy Membership Update** ($m > 1.0$, default $m=2.0$):
+  $$u_{ik} = \frac{1}{\sum_{j=1}^K \left(\frac{D_Q(\psi_i, c_k)}{D_Q(\psi_i, c_j) + \epsilon}\right)^{\frac{1}{m-1}}}$$
+- **Centroid Vector Recalculation**:
+  $$\mathbf{c}_k = \frac{\sum_{i=1}^N (u_{ik})^m \mathbf{x}_i}{\sum_{i=1}^N (u_{ik})^m}, \quad |c_k\rangle = \frac{\mathbf{c}_k}{\|\mathbf{c}_k\|}$$
+
+### 2.4 Shannon Entropy & Dynamic Boundary Rebalancing
+For each order $i$, its cluster assignment uncertainty is measured by Shannon entropy:
+$$H_i = -\sum_{k=1}^K u_{ik} \ln(u_{ik} + \epsilon)$$
+Orders with high entropy ($H_i > 0.45$) situated on geographical/capacity boundaries are dynamically reassigned to the least-loaded candidate AGV batch, minimizing overall fleet variance and preventing vehicle capacity overflow.
+
+### 2.5 Intra-Cluster VRP QUBO & QAOA Ising Mapping
+For each cluster with $N$ nodes (including depot $0$), binary variables $x_{ij} \in \{0, 1\}$ represent traversal from $i$ to $j$:
 $$\min \sum_{i,j} d_{ij} x_{ij} + \alpha_{\text{deg}} H_{\text{degree}} + \alpha_{\text{cap}} H_{\text{capacity}} + \alpha_{\text{mtz}} H_{\text{subtour}}$$
-
-- **Degree Penalty**:
-  $$H_{\text{degree}} = \sum_{i} \left(1 - \sum_j x_{ij}\right)^2 + \sum_j \left(1 - \sum_i x_{ij}\right)^2$$
-- **Capacity Penalty**:
-  $$H_{\text{capacity}} = \sum_{i,j} \frac{w_j}{C_{\text{max}}} x_{ij}$$
-- **MTZ Subtour Elimination**:
-  Quadratic penalties enforcing continuous acyclic route sequences without premature closed sub-loops.
-
-### 2.4 Ising Hamiltonian for QAOA
-Mapping binary variables $x_i = \frac{1 - z_i}{2}$ with Pauli-Z operators $z_i \in \{+1, -1\}$ transforms the QUBO matrix $Q$ into:
+Mapping $x_i = \frac{1 - z_i}{2}$ creates the Ising cost Hamiltonian for QAOA:
 $$H_C = \sum_i h_i Z_i + \sum_{i < j} J_{ij} Z_i Z_j + \text{offset}$$
 
 ---
@@ -58,13 +67,16 @@ $$H_C = \sum_i h_i Z_i + \sum_{i < j} J_{ij} Z_i Z_j + \text{offset}$$
 ```
 applications/logistics/vehicle_routing_problem/
 ├── README.md                                  # This comprehensive project documentation
-├── wms_quantum_optimization_pipeline.py       # Core quantum pipeline (K-Means, QUBO, QAOA, Classiq synthesis)
+├── F-means_implementation_plan.md             # Detailed architecture and implementation plan
+├── wms_quantum_fmeans.py                      # Quantum Fuzzy C-Means (QFCM) engine & entropy rebalancing
+├── wms_quantum_optimization_pipeline.py       # Core quantum pipeline (K-Means, QAOA synthesis, Benchmarks)
 ├── wms_visual_simulator.py                    # 2D Warehouse simulator (CLI, PNG, GIF, Interactive GUI)
+├── test_quantum_fmeans.py                     # Unit tests for Quantum F-Means
 ├── vehicle_routing_problem.ipynb              # Interactive Jupyter tutorial notebook
 ├── vehicle_routing_problem.qmod               # Native Classiq QMOD model file
 ├── vehicle_routing_problem.metadata.json      # Classiq library registry metadata
 ├── vehicle_routing_problem.synthesis_options.json # Synthesis compiler preferences
-├── wms_simulation.png                         # Generated static routing map
+├── wms_simulation.png                         # Generated static routing map (with fuzzy boundary rings)
 └── wms_simulation.gif                         # Generated animated multi-AGV dispatch simulation
 ```
 
@@ -77,13 +89,6 @@ applications/logistics/vehicle_routing_problem/
 - Active virtual environment (e.g. `classiq_env`)
 
 ### 4.2 Required Packages
-The project dependencies include:
-- `classiq` (Quantum synthesis & hardware execution SDK)
-- `numpy`, `scipy` (Numerical operations and linear algebra)
-- `matplotlib`, `pillow` (Visualization and GIF rendering)
-- `networkx` (Graph and route modeling)
-
-Install via pip:
 ```bash
 pip install classiq numpy scipy matplotlib pillow networkx
 ```
@@ -94,38 +99,40 @@ pip install classiq numpy scipy matplotlib pillow networkx
 
 ### 5.1 Running the Visual Simulator (`wms_visual_simulator.py`)
 
-The simulator provides flexible CLI options for test sizes, cluster counts, output formats, and GUI modes:
-
 | Argument | Description | Default |
 | :--- | :--- | :--- |
+| `--clustering` | Clustering algorithm (`fmeans` or `kmeans`) | `fmeans` |
+| `--fuzziness-m` | Fuzziness exponent $m$ for Quantum F-Means | `2.0` |
 | `--num-points` | Number of synthesized order locations (`0` for fixed 10-point demo) | `100` |
 | `--k-batches` | Number of AGV pick clusters / fleet size | `4` |
-| `--animate` | Generate frame-by-frame animated dispatch sequence | `False` |
+| `--animate` | Generate frame-by-frame animated dispatch sequence (GIF) | `False` |
 | `--output` | Destination path (`.png` or `.gif`) | `wms_simulation.png` / `.gif` |
 | `--seed` | Random generator seed for repeatable order coordinates | `42` |
 | `--gui`, `--interactive` | Launch interactive desktop window (`TkAgg` backend) | `False` |
 
-#### Mode 1: Static Route Map (PNG)
+#### Mode 1: Static Route Map with Quantum F-Means (PNG)
 ```powershell
-python wms_visual_simulator.py --num-points 40 --k-batches 4 --output wms_simulation.png
+python wms_visual_simulator.py --clustering fmeans --num-points 40 --k-batches 4 --output wms_simulation.png
 ```
-*Output Summary Example:*
+*Console Output Example:*
 ```
 ============================================================
   WMS Quantum Optimization Visual Simulator
 ============================================================
+  * Clustering Engine: FMEANS (m=2.0)
   * Orders count:      40
   * K batches/routes:  4
   * Mode:              Static Plot (PNG)
   * Output path:       wms_simulation.png
   * GUI display:       Headless/Save only
 ============================================================
-[*] Running Quantum K-Means & QAOA Routing Pipeline...
-  - Cluster 1: 6 pick stops, route distance = 46.28 m
-  - Cluster 2: 12 pick stops, route distance = 72.72 m
-  - Cluster 3: 10 pick stops, route distance = 64.73 m
-  - Cluster 4: 12 pick stops, route distance = 76.78 m
-[*] Total AGV Fleet Distance: 260.51 m
+[*] Running Quantum FMEANS & QAOA Routing Pipeline...
+  - Cluster 1: 9 pick stops, route distance = 56.38 m
+  - Cluster 2: 10 pick stops, route distance = 63.19 m
+  - Cluster 3: 11 pick stops, route distance = 73.07 m
+  - Cluster 4: 10 pick stops, route distance = 65.41 m
+[*] Total AGV Fleet Distance: 258.04 m
+[*] Mean Fuzzy Membership Entropy: 1.1912
 [*] Generating static simulation plot...
 [+] Static simulation saved to: .../wms_simulation.png
 [OK] Simulation completed successfully!
@@ -133,61 +140,46 @@ python wms_visual_simulator.py --num-points 40 --k-batches 4 --output wms_simula
 
 #### Mode 2: Animated Multi-AGV Simulation (GIF)
 ```powershell
-python wms_visual_simulator.py --num-points 25 --k-batches 3 --animate --output wms_simulation.gif
+python wms_visual_simulator.py --clustering fmeans --num-points 25 --k-batches 3 --animate --output wms_simulation.gif
 ```
-*Generates animated vehicle trajectories dispatching simultaneously from the central depot $(0,0)$ through their assigned pick clusters.*
 
 #### Mode 3: Interactive GUI Desktop Window
 ```powershell
-python wms_visual_simulator.py --num-points 30 --k-batches 3 --gui
+python wms_visual_simulator.py --clustering fmeans --num-points 30 --k-batches 3 --gui
 ```
 
 ---
 
-### 5.2 Running the Quantum Synthesis Pipeline (`wms_quantum_optimization_pipeline.py`)
+### 5.2 Comparative Benchmarking (K-Means vs F-Means)
 
-Execute the end-to-end Classiq synthesis pipeline to compile the parameterized QAOA ansatz and swap-test circuits:
+Run the built-in benchmark to compare hard vs. soft quantum clustering:
 
 ```powershell
-python wms_quantum_optimization_pipeline.py
+python -c "import pprint; from wms_quantum_optimization_pipeline import benchmark_kmeans_vs_fmeans; pprint.pprint(benchmark_kmeans_vs_fmeans(num_points=60, k_batches=4))"
 ```
 
-#### Programmatic Integration Example:
+*Benchmark Output:*
 ```python
-from wms_quantum_optimization_pipeline import OrderLocation, route_cluster_pipeline, build_qaoa_model
-
-# 1. Define order locations
-orders = [
-    OrderLocation(x=2.0, y=5.0, z=1.0, weight=11.0, volume=13.0, sla_priority=0.9, zone_class=0.2),
-    OrderLocation(x=8.0, y=7.0, z=1.0, weight=15.0, volume=14.0, sla_priority=0.8, zone_class=0.5),
-    OrderLocation(x=14.0, y=10.0, z=1.8, weight=18.0, volume=18.0, sla_priority=0.9, zone_class=0.7),
-]
-
-# 2. Run clustering and QUBO decomposition
-pipeline = route_cluster_pipeline(orders, k_batches=2, vehicle_capacity=100.0)
-
-# 3. Create Classiq QMOD model for QAOA circuit synthesis
-qmod, details = build_qaoa_model(orders, k_batches=2)
+{
+  'fmeans': {
+    'counts': [15, 18, 14, 13],
+    'std_dev': 1.8708,
+    'latency_seconds': 0.4539,
+    'mean_entropy': 1.2497
+  },
+  'kmeans': {
+    'counts': [12, 19, 18, 11],
+    'std_dev': 3.5355,
+    'latency_seconds': 0.0662
+  }
+}
 ```
+*Key Finding*: Quantum F-Means reduces cluster count standard deviation by **~47%**, ensuring significantly more balanced fleet workload.
 
 ---
 
-## 6. Benchmarking & Scalability
+### 5.3 Running Unit Tests
 
-The pipeline includes built-in benchmarking utilities (`benchmark_runtime_100_points`) to evaluate clustering throughput and QUBO generation latency across varying batch counts ($K \in [2, 6]$):
-
-```python
-from wms_quantum_optimization_pipeline import benchmark_runtime_100_points
-
-results = benchmark_runtime_100_points(cluster_counts=[2, 3, 4, 5], repeats=3)
-for row in results:
-    print(f"K={row['k_batches']} -> Avg Latency: {row['avg_seconds']:.4f}s")
+```powershell
+python -m unittest test_quantum_fmeans.py
 ```
-
----
-
-## 7. Key Benefits & Design Highlights
-
-1. **Scalability**: By partitioning 100+ order workloads into balanced sub-clusters, individual route QUBOs remain within quantum hardware NISQ limits ($\le 30$ qubits).
-2. **Multi-Criteria Clustering**: Integrates spatial distances with physical item weight, container volume, and warehouse SLA priorities.
-3. **Cross-Platform Visualizations**: Robust handling of headless server environments (Agg backend) as well as desktop interactive UI (TkAgg).

@@ -352,15 +352,59 @@ def benchmark_runtime_100_points(cluster_counts: list[int] | None = None, repeat
             t0 = time.perf_counter()
             route_cluster_pipeline(orders, k_batches=k, vehicle_capacity=120.0, max_cluster_for_qubo=12)
             timings.append(time.perf_counter() - t0)
-        rows.append({"k_batches": k, "times": timings, "avg_seconds": float(np.mean(timings)), "max_seconds": float(np.max(timings))})
-    return rows
+def benchmark_kmeans_vs_fmeans(num_points: int = 100, k_batches: int = 4, seed: int = 42) -> dict:
+    """Compares hard Quantum K-Means vs soft Quantum F-Means on cluster balance and variance."""
+    from wms_quantum_fmeans import fuzzy_route_cluster_pipeline
+
+    rng = np.random.default_rng(seed)
+    orders = [
+        OrderLocation(
+            x=float(rng.uniform(0.0, 24.0)),
+            y=float(rng.uniform(0.0, 20.0)),
+            z=float(rng.uniform(0.5, 2.5)),
+            weight=float(rng.uniform(5.0, 25.0)),
+            volume=float(rng.uniform(6.0, 24.0)),
+            sla_priority=float(rng.uniform(0.5, 1.0)),
+            zone_class=float(rng.uniform(0.0, 1.0)),
+        )
+        for _ in range(num_points)
+    ]
+
+    t0 = time.perf_counter()
+    kmeans_res = route_cluster_pipeline(orders, k_batches=k_batches, vehicle_capacity=120.0)
+    kmeans_time = time.perf_counter() - t0
+
+    t1 = time.perf_counter()
+    fmeans_res = fuzzy_route_cluster_pipeline(orders, k_batches=k_batches, vehicle_capacity=120.0)
+    fmeans_time = time.perf_counter() - t1
+
+    kmeans_counts = [int(np.sum(np.array(kmeans_res["cluster_labels"]) == c)) for c in range(k_batches)]
+    fmeans_counts = [int(np.sum(np.array(fmeans_res["cluster_labels"]) == c)) for c in range(k_batches)]
+
+    return {
+        "kmeans": {
+            "counts": kmeans_counts,
+            "std_dev": float(np.std(kmeans_counts)),
+            "latency_seconds": kmeans_time,
+        },
+        "fmeans": {
+            "counts": fmeans_counts,
+            "std_dev": float(np.std(fmeans_counts)),
+            "latency_seconds": fmeans_time,
+            "mean_entropy": float(np.mean(fmeans_res["entropies"])),
+        },
+    }
 
 
-def build_qaoa_model(order_locations: list[OrderLocation], k_batches: int = 3):
+def build_qaoa_model(order_locations: list[OrderLocation], k_batches: int = 3, clustering: str = "fmeans"):
     """Synthesis-ready wrapper for the QAOA route solver."""
-    pipeline = route_cluster_pipeline(order_locations, k_batches, vehicle_capacity=120.0)
+    if clustering == "fmeans":
+        from wms_quantum_fmeans import fuzzy_route_cluster_pipeline
+        pipeline = fuzzy_route_cluster_pipeline(order_locations, k_batches, vehicle_capacity=120.0)
+    else:
+        pipeline = route_cluster_pipeline(order_locations, k_batches, vehicle_capacity=120.0)
+
     # A compact problem register that matches the batch-local VRP size.
-    # For a realistic application the register width is <= 30 qubits.
     problem_qubits = min(30, max(8, 2 * (len(order_locations) + 1)))
 
     gamma_beta = [0.35, 0.15] * pipeline["qaoa_layers"]

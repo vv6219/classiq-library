@@ -56,8 +56,18 @@ def generate_test_orders(num_points: int = 100, seed: int = 42) -> list[OrderLoc
     return orders
 
 
-def build_cluster_routes(orders: list[OrderLocation], k_batches: int = 3):
-    pipeline = route_cluster_pipeline(orders, k_batches=k_batches, vehicle_capacity=120.0)
+def build_cluster_routes(
+    orders: list[OrderLocation],
+    k_batches: int = 3,
+    clustering: str = "fmeans",
+    m: float = 2.0,
+):
+    if clustering == "fmeans":
+        from wms_quantum_fmeans import fuzzy_route_cluster_pipeline
+        pipeline = fuzzy_route_cluster_pipeline(orders, k_batches=k_batches, vehicle_capacity=120.0, m=m)
+    else:
+        pipeline = route_cluster_pipeline(orders, k_batches=k_batches, vehicle_capacity=120.0)
+
     labels = np.asarray(pipeline["cluster_labels"])
     centers = np.asarray(pipeline["centers"])
 
@@ -80,8 +90,8 @@ def build_cluster_routes(orders: list[OrderLocation], k_batches: int = 3):
 def _draw_warehouse(ax):
     ax.set_xlim(-1, 30)
     ax.set_ylim(-1, 25)
-    ax.set_xlabel("Warehouse x")
-    ax.set_ylabel("Warehouse y")
+    ax.set_xlabel("Warehouse x (meters)")
+    ax.set_ylabel("Warehouse y (meters)")
     ax.set_title("WMS Batch Picking / AGV Routing Simulator")
 
 
@@ -90,6 +100,7 @@ def plot_static_simulation(
     labels: np.ndarray,
     centers: np.ndarray,
     routes: dict[int, list[int]],
+    entropies: np.ndarray | None = None,
     save_path: str | None = None,
 ):
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -97,7 +108,7 @@ def plot_static_simulation(
 
     colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:brown"]
     depot = (0.0, 0.0)
-    ax.scatter(*depot, color="black", marker="s", s=120, label="Depot")
+    ax.scatter(*depot, color="black", marker="s", s=130, label="Depot (0,0)", zorder=5)
 
     for cluster_id in range(len(centers)):
         members = np.where(labels == cluster_id)[0]
@@ -106,17 +117,35 @@ def plot_static_simulation(
         xs = np.array([orders[i].x for i in members], dtype=float)
         ys = np.array([orders[i].y for i in members], dtype=float)
         color = colors[cluster_id % len(colors)]
-        ax.scatter(xs, ys, s=80, c=color, label=f"Cluster {cluster_id + 1}")
+        ax.scatter(xs, ys, s=80, c=color, label=f"Cluster {cluster_id + 1}", alpha=0.85, zorder=3)
 
         if cluster_id not in routes:
             continue
         route = routes[cluster_id]
         path_x = [orders[route[0]].x, *[orders[i].x for i in route]]
         path_y = [orders[route[0]].y, *[orders[i].y for i in route]]
-        path_x = [depot[0], *path_x]
-        path_y = [depot[1], *path_y]
+        path_x = [depot[0], *path_x, depot[0]]
+        path_y = [depot[1], *path_y, depot[1]]
         ax.plot(path_x, path_y, linestyle="--", linewidth=2, color=color, alpha=0.8)
         ax.scatter([orders[i].x for i in route], [orders[i].y for i in route], s=50, facecolors="none", edgecolors=color)
+
+    # Highlight boundary/high-entropy fuzzy nodes
+    if entropies is not None and len(entropies) == len(orders):
+        high_entropy_idx = np.where(entropies > 0.45)[0]
+        if len(high_entropy_idx) > 0:
+            h_xs = [orders[i].x for i in high_entropy_idx]
+            h_ys = [orders[i].y for i in high_entropy_idx]
+            ax.scatter(
+                h_xs,
+                h_ys,
+                s=180,
+                facecolors="none",
+                edgecolors="magenta",
+                linewidths=1.5,
+                linestyle=":",
+                label="Fuzzy Boundary Order",
+                zorder=4,
+            )
 
     for idx, order in enumerate(orders):
         ax.annotate(f"{idx}", (order.x + 0.25, order.y + 0.25), fontsize=8)
@@ -137,6 +166,7 @@ def animate_routes(
     labels: np.ndarray,
     centers: np.ndarray,
     routes: dict[int, list[int]],
+    entropies: np.ndarray | None = None,
     save_path: str | None = None,
 ):
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -147,7 +177,7 @@ def animate_routes(
     all_route_points = []
     for cluster_id in sorted(routes):
         route = routes[cluster_id]
-        path = [depot] + [(orders[i].x, orders[i].y) for i in route]
+        path = [depot] + [(orders[i].x, orders[i].y) for i in route] + [depot]
         all_route_points.append(path)
 
     frames = []
@@ -157,7 +187,7 @@ def animate_routes(
             x_data = [p[0] for p in path[:step]]
             y_data = [p[1] for p in path[:step]]
             line, = ax.plot([], [], linestyle="--", linewidth=2, color=color, alpha=0.8)
-            point, = ax.plot([], [], marker="o", linestyle="None", color=color)
+            point, = ax.plot([], [], marker="o", markersize=7, linestyle="None", color=color)
             frames.append((line, point, x_data, y_data, cluster_id, step))
 
     scatter_map = {}
@@ -171,7 +201,24 @@ def animate_routes(
         s = ax.scatter(xs, ys, s=80, c=color, alpha=0.85)
         scatter_map[cluster_id] = s
 
-    ax.scatter(*depot, color="black", marker="s", s=120, label="Depot")
+    if entropies is not None and len(entropies) == len(orders):
+        high_entropy_idx = np.where(entropies > 0.45)[0]
+        if len(high_entropy_idx) > 0:
+            h_xs = [orders[i].x for i in high_entropy_idx]
+            h_ys = [orders[i].y for i in high_entropy_idx]
+            ax.scatter(
+                h_xs,
+                h_ys,
+                s=180,
+                facecolors="none",
+                edgecolors="magenta",
+                linewidths=1.5,
+                linestyle=":",
+                label="Fuzzy Boundary Order",
+                zorder=4,
+            )
+
+    ax.scatter(*depot, color="black", marker="s", s=130, label="Depot (0,0)", zorder=5)
     ax.legend(loc="upper right")
 
     def update(frame):
@@ -191,6 +238,8 @@ def animate_routes(
 
 def main():
     parser = argparse.ArgumentParser(description="Warehouse management quantum optimization visual simulator")
+    parser.add_argument("--clustering", choices=["fmeans", "kmeans"], default="fmeans", help="Clustering algorithm (fmeans or kmeans)")
+    parser.add_argument("--fuzziness-m", type=float, default=2.0, help="Fuzziness exponent m for Quantum F-Means")
     parser.add_argument("--k-batches", type=int, default=4, help="Number of batch picking clusters / AGV routes")
     parser.add_argument("--animate", action="store_true", help="Generate animated route simulation (GIF)")
     parser.add_argument("--output", type=str, default=None, help="Output file path (e.g. wms_simulation.png or .gif)")
@@ -206,6 +255,7 @@ def main():
     print("=" * 60)
     print("  WMS Quantum Optimization Visual Simulator")
     print("=" * 60)
+    print(f"  * Clustering Engine: {args.clustering.upper()} (m={args.fuzziness_m if args.clustering == 'fmeans' else 'N/A'})")
     print(f"  * Orders count:      {args.num_points if args.num_points > 0 else 'Demo (10)'}")
     print(f"  * K batches/routes:  {args.k_batches}")
     print(f"  * Mode:              {'Animated (GIF)' if args.animate else 'Static Plot (PNG)'}")
@@ -214,10 +264,13 @@ def main():
     print("=" * 60)
 
     orders = generate_test_orders(num_points=args.num_points, seed=args.seed) if args.num_points > 0 else demo_orders()
-    print(f"[*] Running Quantum K-Means & QAOA Routing Pipeline...")
-    pipeline, routes = build_cluster_routes(orders, k_batches=args.k_batches)
+    print(f"[*] Running Quantum {args.clustering.upper()} & QAOA Routing Pipeline...")
+    pipeline, routes = build_cluster_routes(
+        orders, k_batches=args.k_batches, clustering=args.clustering, m=args.fuzziness_m
+    )
     labels = np.asarray(pipeline["cluster_labels"])
     centers = np.asarray(pipeline["centers"])
+    entropies = pipeline.get("entropies")
 
     total_dist = 0.0
     depot = (0.0, 0.0)
@@ -228,13 +281,15 @@ def main():
         print(f"  - Cluster {c_id + 1}: {len(r)} pick stops, route distance = {d:.2f} m")
 
     print(f"[*] Total AGV Fleet Distance: {total_dist:.2f} m")
+    if entropies is not None and len(entropies) > 0:
+        print(f"[*] Mean Fuzzy Membership Entropy: {float(np.mean(entropies)):.4f}")
 
     if args.animate:
         print("[*] Generating animated simulation...")
-        animate_routes(orders, labels, centers, routes, save_path=args.output)
+        animate_routes(orders, labels, centers, routes, entropies=entropies, save_path=args.output)
     else:
         print("[*] Generating static simulation plot...")
-        plot_static_simulation(orders, labels, centers, routes, save_path=args.output)
+        plot_static_simulation(orders, labels, centers, routes, entropies=entropies, save_path=args.output)
 
     print("[OK] Simulation completed successfully!")
 
