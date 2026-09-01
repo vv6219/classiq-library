@@ -53,17 +53,19 @@ def _normalize_columns(matrix: np.ndarray) -> np.ndarray:
 def qubitized_feature_vector(order: OrderLocation) -> np.ndarray:
     raw = np.array(
         [
-            order.x,
-            order.y,
-            order.z,
-            order.weight,
-            order.volume,
+            order.x / 30.0,
+            order.y / 25.0,
+            order.z / 5.0,
+            order.weight / 50.0,
+            order.volume / 50.0,
             order.sla_priority,
             order.zone_class,
         ],
         dtype=float,
     )
-    return _normalize_columns(raw.reshape(1, -1))[0]
+    raw = raw + 0.05
+    norm = np.linalg.norm(raw)
+    return raw / norm if norm > 1e-9 else raw
 
 
 def quantum_kmeans_distance(a: np.ndarray, b: np.ndarray) -> float:
@@ -88,11 +90,15 @@ def kmeans_assign_clusters(orders: list[OrderLocation], k: int) -> tuple[list[np
     overlap metric between the normalized feature vectors |x_i> and cluster-
     centroids |c_k>.
     """
+    if not orders:
+        return [], []
+    k = max(1, min(k, len(orders)))
     x = np.vstack([qubitized_feature_vector(o) for o in orders])
-    centers = x[np.linspace(0, len(x) - 1, k, dtype=int)]
+    indices = np.linspace(0, len(x) - 1, k, dtype=int)
+    centers = x[indices].copy()
     labels = np.zeros(len(orders), dtype=int)
 
-    for _ in range(10):
+    for _ in range(25):
         new_labels = []
         for v in x:
             new_labels.append(int(np.argmin([quantum_kmeans_distance(v, c) for c in centers])))
@@ -103,7 +109,9 @@ def kmeans_assign_clusters(orders: list[OrderLocation], k: int) -> tuple[list[np
         for center_idx in range(k):
             cluster = x[labels == center_idx]
             if len(cluster):
-                centers[center_idx] = cluster.mean(axis=0)
+                c_mean = cluster.mean(axis=0)
+                c_norm = np.linalg.norm(c_mean)
+                centers[center_idx] = c_mean / c_norm if c_norm > 1e-9 else c_mean
 
     return [c.astype(float) for c in centers], labels.tolist()
 

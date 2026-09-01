@@ -2,9 +2,18 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 
 import matplotlib
-matplotlib.use("Agg")
+# Default to Agg for headless and file saving, switch to interactive if --gui requested
+if "--gui" in sys.argv or "--interactive" in sys.argv:
+    try:
+        matplotlib.use("TkAgg")
+    except Exception:
+        matplotlib.use("Agg")
+else:
+    matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
@@ -117,7 +126,10 @@ def plot_static_simulation(
 
     if save_path:
         fig.savefig(save_path, dpi=180)
-    plt.show()
+        print(f"[+] Static simulation saved to: {Path(save_path).resolve()}")
+    if matplotlib.get_backend().lower() != "agg":
+        plt.show()
+    plt.close(fig)
 
 
 def animate_routes(
@@ -171,27 +183,60 @@ def animate_routes(
     anim = FuncAnimation(fig, update, frames=frames, blit=True, interval=350)
     if save_path:
         anim.save(save_path, writer="pillow", fps=8)
-    plt.show()
+        print(f"[+] Animated simulation saved to: {Path(save_path).resolve()}")
+    if matplotlib.get_backend().lower() != "agg":
+        plt.show()
+    plt.close(fig)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Warehouse management quantum optimization visual simulator")
-    parser.add_argument("--k-batches", type=int, default=4)
-    parser.add_argument("--animate", action="store_true")
-    parser.add_argument("--output", type=str, default="wms_simulation.png")
-    parser.add_argument("--num-points", type=int, default=100)
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--k-batches", type=int, default=4, help="Number of batch picking clusters / AGV routes")
+    parser.add_argument("--animate", action="store_true", help="Generate animated route simulation (GIF)")
+    parser.add_argument("--output", type=str, default=None, help="Output file path (e.g. wms_simulation.png or .gif)")
+    parser.add_argument("--num-points", type=int, default=100, help="Number of order locations (0 for demo fixed orders)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for order generation")
+    parser.add_argument("--gui", "--interactive", dest="gui", action="store_true", help="Display interactive GUI window")
     args = parser.parse_args()
 
+    # Determine default output if not provided
+    if args.output is None:
+        args.output = "wms_simulation.gif" if args.animate else "wms_simulation.png"
+
+    print("=" * 60)
+    print("  WMS Quantum Optimization Visual Simulator")
+    print("=" * 60)
+    print(f"  * Orders count:      {args.num_points if args.num_points > 0 else 'Demo (10)'}")
+    print(f"  * K batches/routes:  {args.k_batches}")
+    print(f"  * Mode:              {'Animated (GIF)' if args.animate else 'Static Plot (PNG)'}")
+    print(f"  * Output path:       {args.output}")
+    print(f"  * GUI display:       {'Enabled' if args.gui else 'Headless/Save only'}")
+    print("=" * 60)
+
     orders = generate_test_orders(num_points=args.num_points, seed=args.seed) if args.num_points > 0 else demo_orders()
+    print(f"[*] Running Quantum K-Means & QAOA Routing Pipeline...")
     pipeline, routes = build_cluster_routes(orders, k_batches=args.k_batches)
     labels = np.asarray(pipeline["cluster_labels"])
     centers = np.asarray(pipeline["centers"])
 
+    total_dist = 0.0
+    depot = (0.0, 0.0)
+    for c_id, r in routes.items():
+        pts = [depot] + [(orders[i].x, orders[i].y) for i in r] + [depot]
+        d = sum(np.hypot(pts[k+1][0] - pts[k][0], pts[k+1][1] - pts[k][1]) for k in range(len(pts)-1))
+        total_dist += d
+        print(f"  - Cluster {c_id + 1}: {len(r)} pick stops, route distance = {d:.2f} m")
+
+    print(f"[*] Total AGV Fleet Distance: {total_dist:.2f} m")
+
     if args.animate:
+        print("[*] Generating animated simulation...")
         animate_routes(orders, labels, centers, routes, save_path=args.output)
     else:
+        print("[*] Generating static simulation plot...")
         plot_static_simulation(orders, labels, centers, routes, save_path=args.output)
+
+    print("[OK] Simulation completed successfully!")
 
 
 if __name__ == "__main__":
