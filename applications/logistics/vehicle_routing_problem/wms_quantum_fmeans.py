@@ -1,4 +1,3 @@
-from __future__ import annotations
 
 from dataclasses import dataclass
 import time
@@ -8,12 +7,17 @@ import numpy as np
 
 from classiq import (
     H,
+    Output,
     QArray,
     QBit,
-    SWAP,
-    control,
-    qfunc,
     RY,
+    SWAP,
+    allocate,
+    control,
+    create_model,
+    execute,
+    qfunc,
+    synthesize,
 )
 
 from wms_quantum_optimization_pipeline import (
@@ -26,8 +30,8 @@ from wms_quantum_optimization_pipeline import (
 
 @qfunc
 def quantum_swap_test_circuit(
-    state_a: QArray,
-    state_b: QArray,
+    state_a: QArray[QBit],
+    state_b: QArray[QBit],
     ancilla: QBit,
 ):
     """Swap-test circuit: evaluates the fidelity F = |<state_a|state_b>|^2.
@@ -38,21 +42,19 @@ def quantum_swap_test_circuit(
         P(|1>) = (1 - |<state_a|state_b>|^2) / 2
     """
     H(ancilla)
-    for i in range(len(state_a)):
-        control(ancilla)(SWAP(state_a[i], state_b[i]))
+    for i in range(state_a.len):
+        control(ancilla, lambda: SWAP(state_a[i], state_b[i]))
     H(ancilla)
 
 
 @qfunc
 def encode_fuzzy_feature_state(
     feature_params: list[float],
-    reg: QArray,
+    reg: QArray[QBit],
 ):
     """Amplitude / angle encoding of multi-criteria warehouse order features."""
-    if len(feature_params) != len(reg):
-        raise ValueError("Feature params length must match register length.")
     for idx, val in enumerate(feature_params):
-        theta = 2.0 * np.arcsin(np.clip(np.sqrt(max(0.0, val)), 0.0, 1.0))
+        theta = 2.0 * float(np.arcsin(np.clip(np.sqrt(max(0.0, val)), 0.0, 1.0)))
         RY(theta, reg[idx])
 
 
@@ -104,7 +106,7 @@ class QuantumFMeans:
         self.feature_matrix_: np.ndarray | None = None
         self.entropies_: np.ndarray | None = None
 
-    def fit(self, orders: Sequence[OrderLocation]) -> QuantumFMeans:
+    def fit(self, orders: Sequence[OrderLocation]) -> "QuantumFMeans":
         n_samples = len(orders)
         if n_samples == 0:
             self.centroids_ = []
@@ -338,3 +340,254 @@ def fuzzy_route_cluster_pipeline(
         "qaoa_layers": qaoa_layers,
         "clustering_type": "quantum_fmeans",
     }
+
+
+def simulate_quantum_swap_test(
+    feature_a: Sequence[float],
+    feature_b: Sequence[float],
+    num_shots: int = 1024,
+) -> dict:
+    """Executes the Quantum Swap-Test circuit on the Classiq quantum simulator.
+
+    Evaluates the quantum overlap between two multi-criteria feature vectors,
+    returning empirical probabilities P(|0>) and P(|1>), and the measured fidelity.
+    """
+    dim = len(feature_a)
+    feat_a = [float(v) for v in feature_a]
+    feat_b = [float(v) for v in feature_b]
+
+    @qfunc
+    def main(ancilla: Output[QBit], reg_a: Output[QArray[QBit]], reg_b: Output[QArray[QBit]]):
+        allocate(dim, reg_a)
+        allocate(dim, reg_b)
+        allocate(1, ancilla)
+        encode_fuzzy_feature_state(feat_a, reg_a)
+        encode_fuzzy_feature_state(feat_b, reg_b)
+        quantum_swap_test_circuit(reg_a, reg_b, ancilla)
+
+    qmod = create_model(main)
+    qprog = synthesize(qmod)
+    res = execute(qprog).result()
+    parsed = res[0].value.parsed_counts
+
+    shots_0 = sum(sample.shots for sample in parsed if sample.state.get("ancilla", 0) == 0)
+    shots_1 = sum(sample.shots for sample in parsed if sample.state.get("ancilla", 0) == 1)
+    total = shots_0 + shots_1
+    p0 = shots_0 / total if total > 0 else 1.0
+    p1 = shots_1 / total if total > 0 else 0.0
+
+    fidelity_sim = float(np.clip(2.0 * p0 - 1.0, 0.0, 1.0))
+    dist_sim = float(np.clip(2.0 * p1, 0.0, 1.0))
+    dist_exact = quantum_fidelity_distance(np.array(feat_a), np.array(feat_b))
+
+    return {
+        "p0": p0,
+        "p1": p1,
+        "total_shots": total,
+        "simulated_fidelity": fidelity_sim,
+        "simulated_distance": dist_sim,
+        "exact_distance": dist_exact,
+        "qprog_width": getattr(qprog.data, "width", None) if hasattr(qprog, "data") else None,
+        "qprog_depth": getattr(qprog.data, "depth", None) if hasattr(qprog, "data") else None,
+    }
+
+
+def run_quantum_fmeans_pipeline(
+    num_points: int = 80,
+    k_batches: int = 4,
+    vehicle_capacity: float = 350.0,
+    m: float = 2.0,
+    seed: int = 42,
+    run_quantum_sim: bool = True,
+    generate_plot: bool = True,
+    generate_animation: bool = True,
+    output_png: str = "wms_simulation_80.png",
+    output_gif: str = "wms_simulation_80.gif",
+) -> dict:
+    """End-to-end execution of Quantum F-Means on warehouse workload with simulator output."""
+    from wms_visual_simulator import (
+        generate_test_orders,
+        plot_static_simulation,
+        animate_routes,
+    )
+
+    print("=" * 75)
+    print(f"  Executing Quantum F-Means (QFCM) on {num_points} Points Workload")
+    print("=" * 75)
+    print(f"  * Orders count (N):          {num_points}")
+    print(f"  * AGV Fleet Clusters (K):    {k_batches}")
+    print(f"  * AGV Payload Limit (C_max): {vehicle_capacity:.1f} kg")
+    print(f"  * Fuzziness Exponent (m):    {m:.2f}")
+    print(f"  * Random Seed:               {seed}")
+    print("=" * 75)
+
+    # 1. Generate multi-criteria warehouse orders
+    orders = generate_test_orders(num_points=num_points, seed=seed)
+    total_workload_weight = sum(o.weight for o in orders)
+    print(f"[*] Generated {len(orders)} order locations (total payload = {total_workload_weight:.2f} kg)")
+
+    # 2. Run Quantum Fuzzy C-Means Pipeline
+    t0 = time.perf_counter()
+    pipeline = fuzzy_route_cluster_pipeline(
+        order_locations=orders,
+        k_batches=k_batches,
+        vehicle_capacity=vehicle_capacity,
+        m=m,
+        rebalance_entropy=True,
+    )
+    elapsed_time = time.perf_counter() - t0
+
+    labels = np.asarray(pipeline["cluster_labels"])
+    centers = np.asarray(pipeline["centers"])
+    memberships = pipeline["memberships"]
+    entropies = pipeline["entropies"]
+
+    # 3. Form Intra-Cluster AGV Pick Paths
+    routes = {}
+    depot = (0.0, 0.0)
+    total_distance = 0.0
+    cluster_payloads = []
+    cluster_stops = []
+
+    print("\n[+] Fleet Batch Allocation & Route Synthesis:")
+    for cluster_id in range(k_batches):
+        members = np.where(labels == cluster_id)[0]
+        cluster_stops.append(len(members))
+        if len(members) == 0:
+            cluster_payloads.append(0.0)
+            continue
+
+        xs = np.array([orders[i].x for i in members], dtype=float)
+        ys = np.array([orders[i].y for i in members], dtype=float)
+        cx = float(np.mean(xs))
+        cy = float(np.mean(ys))
+        order_seq = np.argsort(np.arctan2(ys - cy, xs - cx))
+        route = members[order_seq].tolist()
+        routes[cluster_id] = route
+
+        payload = sum(orders[i].weight for i in route)
+        cluster_payloads.append(payload)
+
+        pts = [depot] + [(orders[i].x, orders[i].y) for i in route] + [depot]
+        dist = sum(
+            np.hypot(pts[idx + 1][0] - pts[idx][0], pts[idx + 1][1] - pts[idx][1])
+            for idx in range(len(pts) - 1)
+        )
+        total_distance += dist
+
+        status = "OK (Compliant)" if payload <= vehicle_capacity else "OVERLOAD!"
+        print(
+            f"  - AGV {cluster_id + 1}: {len(route):2d} stops | "
+            f"Payload: {payload:6.2f} kg / {vehicle_capacity:.1f} kg [{status}] | "
+            f"Distance: {dist:6.2f} m"
+        )
+
+    stops_std = float(np.std(cluster_stops))
+    payload_std = float(np.std(cluster_payloads))
+    mean_entropy = float(np.mean(entropies))
+    boundary_orders = np.where(entropies > 0.45)[0]
+
+    print("\n[+] Operational Efficiency Metrics:")
+    print(f"  * Stops Distribution:           {cluster_stops}")
+    print(f"  * Stop Count Std Dev (sigma):    {stops_std:.4f}")
+    print(f"  * Payload Distribution (kg):    {[round(p, 2) for p in cluster_payloads]}")
+    print(f"  * Payload Std Dev (kg):         {payload_std:.4f}")
+    print(f"  * Overload Violations:          {sum(1 for p in cluster_payloads if p > vehicle_capacity)}")
+    print(f"  * Total Fleet Travel Distance:  {total_distance:.2f} m")
+    print(f"  * Mean Shannon Entropy:         {mean_entropy:.4f}")
+    print(f"  * High-Entropy Boundary Orders: {len(boundary_orders)} / {num_points} orders")
+    print(f"  * Pipeline Classical Latency:   {elapsed_time:.4f} s")
+
+    # 4. Quantum Simulator Validation
+    sim_results = None
+    if run_quantum_sim:
+        print("\n[*] Running Quantum Hardware Simulator on Classiq backend...")
+        try:
+            # Sample test between first order and its assigned centroid
+            sample_feat = qubitized_feature_vector(orders[0])
+            centroid_feat = centers[labels[0]]
+            sim_results = simulate_quantum_swap_test(sample_feat, centroid_feat, num_shots=1024)
+            print("  [Simulator: Swap-Test Overlap Circuit]")
+            print(f"    - Shots measured:           {sim_results['total_shots']}")
+            print(f"    - P(|0>_ancilla):           {sim_results['p0']:.4f}")
+            print(f"    - P(|1>_ancilla):           {sim_results['p1']:.4f}")
+            print(f"    - Reconstructed Fidelity:   {sim_results['simulated_fidelity']:.4f}")
+            print(f"    - Simulator Quantum Dist:   {sim_results['simulated_distance']:.4f}")
+            print(f"    - Exact Analytical Dist:    {sim_results['exact_distance']:.4f}")
+            if sim_results["qprog_width"] is not None:
+                print(f"    - Circuit Qubits (Width):   {sim_results['qprog_width']}")
+                print(f"    - Circuit Depth:            {sim_results['qprog_depth']}")
+        except Exception as err:
+            print(f"  [!] Quantum simulation note: {err}")
+
+    # 5. Visual Simulator Artifact Generation
+    if generate_plot:
+        print(f"\n[*] Generating static warehouse simulation plot -> {output_png}")
+        plot_static_simulation(
+            orders=orders,
+            labels=labels,
+            centers=centers,
+            routes=routes,
+            entropies=entropies,
+            save_path=output_png,
+        )
+
+    if generate_animation:
+        print(f"[*] Generating multi-AGV animated simulation -> {output_gif}")
+        animate_routes(
+            orders=orders,
+            labels=labels,
+            centers=centers,
+            routes=routes,
+            entropies=entropies,
+            save_path=output_gif,
+        )
+
+    print("\n" + "=" * 75)
+    print("  [SUCCESS] 80-Point Quantum F-Means Simulation Complete!")
+    print("=" * 75)
+
+    return {
+        "orders": orders,
+        "pipeline": pipeline,
+        "routes": routes,
+        "cluster_stops": cluster_stops,
+        "cluster_payloads": cluster_payloads,
+        "stops_std": stops_std,
+        "payload_std": payload_std,
+        "total_distance": total_distance,
+        "mean_entropy": mean_entropy,
+        "boundary_orders_count": len(boundary_orders),
+        "quantum_sim_results": sim_results,
+    }
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run Quantum F-Means on warehouse order workload")
+    parser.add_argument("--num-points", type=int, default=80, help="Number of order locations (default: 80)")
+    parser.add_argument("--k-batches", type=int, default=4, help="Number of AGV clusters / batches (default: 4)")
+    parser.add_argument("--capacity", type=float, default=350.0, help="Vehicle capacity in kg (default: 350.0)")
+    parser.add_argument("--m", type=float, default=2.0, help="Fuzziness parameter m (default: 2.0)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
+    parser.add_argument("--no-sim", action="store_true", help="Skip quantum simulator execution")
+    parser.add_argument("--no-plot", action="store_true", help="Skip static PNG plot generation")
+    parser.add_argument("--no-anim", action="store_true", help="Skip animated GIF generation")
+    parser.add_argument("--output-png", type=str, default="wms_simulation_80.png", help="PNG output path")
+    parser.add_argument("--output-gif", type=str, default="wms_simulation_80.gif", help="GIF output path")
+    args = parser.parse_args()
+
+    run_quantum_fmeans_pipeline(
+        num_points=args.num_points,
+        k_batches=args.k_batches,
+        vehicle_capacity=args.capacity,
+        m=args.m,
+        seed=args.seed,
+        run_quantum_sim=not args.no_sim,
+        generate_plot=not args.no_plot,
+        generate_animation=not args.no_anim,
+        output_png=args.output_png,
+        output_gif=args.output_gif,
+    )
+

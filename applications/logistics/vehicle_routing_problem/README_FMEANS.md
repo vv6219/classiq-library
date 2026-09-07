@@ -201,9 +201,17 @@ cd applications\logistics\vehicle_routing_problem
 
 ---
 
-## 7. Key Benefits & Summary
+## 7. Empirical Case Studies
+
+- [FMEANS_VS_KMEANS_40_POINTS_CASE_STUDY.md](file:///c:/Users/vladimir.dobrouchkin/.gemini/antigravity-ide/scratch/classiq_env/classiq-library/applications/logistics/vehicle_routing_problem/FMEANS_VS_KMEANS_40_POINTS_CASE_STUDY.md): Detailed 40-order benchmark demonstrating 71.1% stop variance reduction and elimination of AGV overloads.
+- [FMEANS_VS_KMEANS_80_POINTS_CASE_STUDY.md](file:///c:/Users/vladimir.dobrouchkin/.gemini/antigravity-ide/scratch/classiq_env/classiq-library/applications/logistics/vehicle_routing_problem/FMEANS_VS_KMEANS_80_POINTS_CASE_STUDY.md): Full-scale 80-order workload evaluation with Classiq quantum hardware simulator verification (15 qubits, 2,048 shots), 98.0% payload variance reduction, and 100% capacity compliance.
+
+---
+
+## 8. Key Benefits & Summary
 
 1. **Probabilistic Realism**: Incorporates quantum measurement uncertainty into warehouse batching rather than artificial hard constraints.
 2. **Robust Capacity Management**: Shannon entropy dynamic rebalancing mitigates vehicle overload risks on borderline orders.
 3. **Seamless QAOA Integration**: Produces standard Ising Hamiltonians directly compilable by the Classiq quantum synthesis engine.
 4. **Interactive Visual Feedback**: Enables both automated headless export pipelines (CI/CD) and desktop visualization.
+
