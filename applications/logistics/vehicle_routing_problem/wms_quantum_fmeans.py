@@ -157,7 +157,10 @@ class QuantumFMeans:
                 if len(zero_dist) > 0:
                     new_U[i, zero_dist] = 1.0 / len(zero_dist)
                 else:
-                    inv_dists = (1.0 / np.maximum(D[i], eps)) ** (1.0 / (self.m - 1.0))
+                    exponent = float(min(50.0, 1.0 / max(1e-4, self.m - 1.0)))
+                    log_inv = -exponent * np.log(np.maximum(D[i], eps))
+                    log_inv -= np.max(log_inv)
+                    inv_dists = np.exp(log_inv)
                     new_U[i] = inv_dists / np.sum(inv_dists)
 
             U = new_U
