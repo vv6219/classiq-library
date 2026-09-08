@@ -290,9 +290,16 @@ def dispatch_field_technicians(
             # Baseline legacy dispatch: unclustered sequential arrival queue (FIFO dispatch)
             rebalanced_tech_labels = [i % k_techs for i in range(len(depot_tasks))]
 
+        # Group tasks by technician local ID for fast O(N) lookup
+        active_tech_count = min(k_techs, len(depot_tasks))
+        tech_task_groups: dict[int, list[int]] = {k: [] for k in range(active_tech_count)}
+        for idx, lbl in enumerate(rebalanced_tech_labels):
+            if lbl in tech_task_groups:
+                tech_task_groups[lbl].append(idx)
+
         # Build closed-loop routes from depot base
         for tech_local_id in range(k_techs):
-            tech_task_subindices = [idx for idx, lbl in enumerate(rebalanced_tech_labels) if lbl == tech_local_id]
+            tech_task_subindices = tech_task_groups.get(tech_local_id, [])
             if not tech_task_subindices:
                 technician_routes.append(
                     TechnicianRoute(

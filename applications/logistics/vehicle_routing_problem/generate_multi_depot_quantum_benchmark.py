@@ -216,41 +216,29 @@ def build_comprehensive_benchmark_figure(
         fontweight="bold",
         pad=10,
     )
-    tech_indices = np.arange(1, 13)
+    num_display = min(16, len(baseline_plan.technician_routes))
+    tech_indices = np.arange(1, num_display + 1)
     width = 0.38
 
-    base_shifts = [r.total_shift_time_min for r in baseline_plan.technician_routes]
-    qfcm_shifts = [r.total_shift_time_min for r in qfcm_plan.technician_routes]
+    base_shifts = [r.total_shift_time_min for r in baseline_plan.technician_routes[:num_display]]
+    qfcm_shifts = [r.total_shift_time_min for r in qfcm_plan.technician_routes[:num_display]]
 
-    # Handle length consistency
-    while len(base_shifts) < 12:
+    while len(base_shifts) < num_display:
         base_shifts.append(0.0)
-    while len(qfcm_shifts) < 12:
+    while len(qfcm_shifts) < num_display:
         qfcm_shifts.append(0.0)
 
     rects1 = ax3.bar(tech_indices - width / 2, base_shifts, width, label="Baseline (FIFO)", color="#E74C3C", alpha=0.85)
     rects2 = ax3.bar(tech_indices + width / 2, qfcm_shifts, width, label="Quantum F-Means", color="#2ECC71", alpha=0.9)
 
     ax3.axhline(480.0, color="#C0392B", linestyle="--", linewidth=2.0, label="8.0h Shift Limit (480 min)")
-    ax3.set_xlabel("Technician ID (Fleet 1-12)", fontsize=10, fontweight="bold")
+    ax3.set_xlabel(f"Technician Sample (1-{num_display} of {len(baseline_plan.technician_routes)})", fontsize=10, fontweight="bold")
     ax3.set_ylabel("Total Shift Time (Minutes)", fontsize=10, fontweight="bold")
     ax3.set_xticks(tech_indices)
-    ax3.set_xticklabels([f"T{i}" for i in tech_indices], fontsize=9)
-    ax3.set_ylim(0, 700)
+    ax3.set_xticklabels([f"T{i}" for i in tech_indices], fontsize=8.5)
+    ax3.set_ylim(0, max(520.0, max(base_shifts + qfcm_shifts + [480.0]) * 1.15))
     ax3.legend(loc="upper right", fontsize=8.5, framealpha=0.95)
     ax3.grid(True, linestyle=":", alpha=0.5, axis="y")
-
-    # Annotate max reduction
-    ax3.annotate(
-        "Overload Capped\nfrom 648m to 449m",
-        xy=(12, 450),
-        xytext=(9.2, 570),
-        arrowprops=dict(facecolor="#27AE60", shrink=0.08, width=1.5, headwidth=6),
-        fontsize=8.5,
-        fontweight="bold",
-        color="#196F3D",
-        bbox=dict(boxstyle="round,pad=0.2", facecolor="#EAFAF1", edgecolor="#27AE60"),
-    )
 
     # -------------------------------------------------------------
     # Panel 4: Inter-Depot Task Distribution & Workload Balance
@@ -277,8 +265,9 @@ def build_comprehensive_benchmark_figure(
     ax4.set_ylabel("Assigned Customer Work Orders", fontsize=10, fontweight="bold")
     ax4.set_xticks(x_dep)
     ax4.set_xticklabels(depot_labels, fontsize=9.5, fontweight="bold")
-    ax4.set_ylim(0, 30)
-    ax4.axhline(20.0, color="#7F8C8D", linestyle=":", linewidth=1.5, label="Perfect Equity (20 tasks/depot)")
+    expected_equity = num_tasks / num_depots
+    ax4.set_ylim(0, max(base_tasks + qfcm_tasks) * 1.25)
+    ax4.axhline(expected_equity, color="#7F8C8D", linestyle=":", linewidth=1.5, label=f"Perfect Equity ({expected_equity:.1f} tasks/depot)")
     ax4.legend(loc="upper right", fontsize=8.5, framealpha=0.95)
     ax4.grid(True, linestyle=":", alpha=0.5, axis="y")
 
@@ -397,4 +386,21 @@ def build_comprehensive_benchmark_figure(
 
 
 if __name__ == "__main__":
-    build_comprehensive_benchmark_figure()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Comprehensive Multi-Depot Quantum Benchmark Figure Generator")
+    parser.add_argument("--tasks", "--num-tasks", type=int, default=80, help="Number of customer tasks (default: 80)")
+    parser.add_argument("--techs", "--num-techs", type=int, default=12, help="Total fleet technicians (default: 12)")
+    parser.add_argument("--depots", "--num-depots", type=int, default=4, help="Number of regional depots (default: 4)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
+    parser.add_argument("--output", type=str, default="mdf_comprehensive_benchmark.png", help="Output PNG path")
+    args = parser.parse_args()
+
+    k_per_depot = max(1, args.techs // args.depots)
+    build_comprehensive_benchmark_figure(
+        num_tasks=args.tasks,
+        num_depots=args.depots,
+        techs_per_depot=k_per_depot,
+        seed=args.seed,
+        output_path=args.output,
+    )

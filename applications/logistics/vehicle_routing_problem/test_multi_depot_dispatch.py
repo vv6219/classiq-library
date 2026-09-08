@@ -177,4 +177,31 @@ class TestMultiDepotFieldTechnicianDispatch(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    import sys
+    import os
+
+    if "--gui" in sys.argv:
+        from gui_multi_depot_dispatch import main as launch_gui
+        sys.argv.remove("--gui")
+        launch_gui()
+        sys.exit(0)
+
+    # Parse custom parameter flags if present
+    custom_argv = [sys.argv[0]]
+    i = 1
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        if arg in ("--tasks", "--num-tasks") and i + 1 < len(sys.argv):
+            os.environ["MDFTD_NUM_TASKS"] = str(sys.argv[i + 1])
+            i += 2
+        elif arg in ("--techs", "--num-techs", "--technicians") and i + 1 < len(sys.argv):
+            os.environ["MDFTD_TOTAL_TECHS"] = str(sys.argv[i + 1])
+            i += 2
+        elif arg in ("--depots", "--num-depots") and i + 1 < len(sys.argv):
+            os.environ["MDFTD_NUM_DEPOTS"] = str(sys.argv[i + 1])
+            i += 2
+        else:
+            custom_argv.append(arg)
+            i += 1
+
+    unittest.main(argv=custom_argv)
