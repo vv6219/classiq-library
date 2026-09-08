@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum Multi-Tier Field-Technician Dispatch Simulator & Benchmark | Classiq SC-QFCM</title>
+  <meta name="description" content="Nationwide heterogeneous fleet dispatch simulator and benchmark for up to 35,000 field service technicians using Classiq Quantum Fuzzy C-Means (SC-QFCM)." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Chart.js for executive analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Executive Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="quantum-badge">
+          <span class="pulse-dot"></span>
+          <span>Classiq Quantum Engine</span>
+        </div>
+        <h1 class="header-title">Quantum Field-Technician Dispatch Simulator</h1>
+        <p class="header-subtitle">
+          Nationwide Heterogeneous Fleet Routing (Up to 35,000 Techs) • Multi-Tier SC-QFCM • Born's Rule Swap-Test Overlap
+        </p>
+      </div>
+      <div class="header-right">
+        <div class="header-stat">
+          <span class="stat-label">Fleet Capacity</span>
+          <span class="stat-val" id="header-fleet-val">35,000 Techs</span>
+        </div>
+        <div class="header-stat">
+          <span class="stat-label">Solver Status</span>
+          <span class="stat-val text-cyan" id="header-status-val">Ready</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <div class="workspace-layout">
+      <!-- Left Sidebar: Parameter Controls & Presets -->
+      <aside class="sidebar-panel">
+        <div class="panel-section">
+          <h2 class="section-title">⚡ Quick Presets</h2>
+          <div class="preset-grid">
+            <button class="preset-btn active" id="preset-national" data-tasks="100" data-techs="35000" data-hubs="4">
+              <span class="preset-icon">🇺🇸</span>
+              <span class="preset-name">US National (35k)</span>
+            </button>
+            <button class="preset-btn" id="preset-metro" data-tasks="80" data-techs="1000" data-hubs="4">
+              <span class="preset-icon">🏙️</span>
+              <span class="preset-name">Metro Fleet (1k)</span>
+            </button>
+            <button class="preset-btn" id="preset-equitable" data-tasks="100" data-techs="16" data-hubs="4">
+              <span class="preset-icon">⚖️</span>
+              <span class="preset-name">Equitable (16)</span>
+            </button>
+            <button class="preset-btn" id="preset-quantum" data-tasks="80" data-techs="12" data-hubs="4">
+              <span class="preset-icon">🔬</span>
+              <span class="preset-name">Classiq QAOA</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h2 class="section-title">🎛️ Dispatch Parameters</h2>
+          
+          <!-- Technicians slider -->
+          <div class="input-group">
+            <div class="input-label-row">
+              <label for="input-techs">Field Technicians ($K$)</label>
+              <span class="val-badge" id="badge-techs">35,000</span>
+            </div>
+            <input type="range" id="input-techs" min="4" max="35000" step="10" value="35000" class="styled-slider" />
+          </div>
+
+          <!-- Customer tasks slider -->
+          <div class="input-group">
+            <div class="input-label-row">
+              <label for="input-tasks">Customer Tasks ($N$)</label>
+              <span class="val-badge" id="badge-tasks">100</span>
+            </div>
+            <input type="range" id="input-tasks" min="10" max="500" step="5" value="100" class="styled-slider" />
+          </div>
+
+          <!-- Service Hubs slider -->
+          <div class="input-group">
+            <div class="input-label-row">
+              <label for="input-hubs">Regional Depots ($M$)</label>
+              <span class="val-badge" id="badge-hubs">4</span>
+            </div>
+            <input type="range" id="input-hubs" min="2" max="12" step="1" value="4" class="styled-slider" />
+          </div>
+
+          <!-- Emergency SLA ratio -->
+          <div class="input-group">
+            <div class="input-label-row">
+              <label for="input-emergency">Emergency 911 SLA Ratio</label>
+              <span class="val-badge" id="badge-emergency">15%</span>
+            </div>
+            <input type="range" id="input-emergency" min="0" max="40" step="5" value="15" class="styled-slider" />
+          </div>
+
+          <!-- Quantum Fuzziness m -->
+          <div class="input-group">
+            <div class="input-label-row">
+              <label for="input-fuzziness">Quantum Fuzziness ($m$)</label>
+              <span class="val-badge" id="badge-fuzziness">2.0</span>
+            </div>
+            <input type="range" id="input-fuzziness" min="1.1" max="3.0" step="0.1" value="2.0" class="styled-slider" />
+          </div>
+
+          <!-- Random Seed -->
+          <div class="input-group">
+            <div class="input-label-row">
+              <label for="input-seed">Simulation Seed</label>
+              <input type="number" id="input-seed" value="42" min="1" max="9999" class="styled-number" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section action-section">
+          <button class="action-btn primary-btn" id="btn-run-dispatch">
+            <span class="btn-icon">🚀</span>
+            <span>Run Quantum Dispatch</span>
+          </button>
+          <button class="action-btn secondary-btn" id="btn-run-benchmark">
+            <span class="btn-icon">📊</span>
+            <span>Run 3-Way Benchmark</span>
+          </button>
+        </div>
+
+        <!-- Legend / Skill Tiers -->
+        <div class="panel-section legend-section">
+          <h3 class="legend-title">Skill Tiers & Equipment</h3>
+          <div class="legend-item"><span class="color-dot dot-tier1"></span> Tier 1: Residential (Van)</div>
+          <div class="legend-item"><span class="color-dot dot-tier2"></span> Tier 2: Fiber Splicing (Splicer)</div>
+          <div class="legend-item"><span class="color-dot dot-tier3"></span> Tier 3: Commercial Elec (Bucket)</div>
+          <div class="legend-item"><span class="color-dot dot-tier4"></span> Tier 4: Heavy Infra (Heavy Rig)</div>
+        </div>
+      </aside>
+
+      <!-- Right Main Content Area -->
+      <main class="main-content">
+        <!-- Navigation Tab Bar -->
+        <nav class="tab-nav">
+          <button class="tab-btn active" id="tab-btn-sim" data-tab="tab-sim">
+            <span class="tab-icon">🗺️</span>
+            <span>Territory & Route Simulator</span>
+          </button>
+          <button class="tab-btn" id="tab-btn-bench" data-tab="tab-bench">
+            <span class="tab-icon">📊</span>
+            <span>Detailed Benchmark Dashboard</span>
+          </button>
+          <button class="tab-btn" id="tab-btn-quantum" data-tab="tab-quantum">
+            <span class="tab-icon">⚛️</span>
+            <span>Classiq Quantum Synthesis</span>
+          </button>
+        </nav>
+
+        <!-- Tab 1: Territory & Route Simulator -->
+        <section class="tab-pane active" id="tab-sim">
+          <!-- Top KPI Ribbon -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <span class="kpi-title">Active Fleet / Standby</span>
+              <div class="kpi-val text-cyan" id="kpi-active-techs">28 / 34,972</div>
+              <span class="kpi-sub" id="kpi-active-sub">100% Demand Served</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-title">Fleet Travel Distance</span>
+              <div class="kpi-val" id="kpi-distance">1,893 km</div>
+              <span class="kpi-sub text-emerald" id="kpi-distance-miles">1,176 miles</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-title">Windshield Travel Time</span>
+              <div class="kpi-val" id="kpi-windshield">39.2 hrs</div>
+              <span class="kpi-sub" id="kpi-speed-sub">Avg 48 km/h</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-title">Fleet Operating Cost</span>
+              <div class="kpi-val text-amber" id="kpi-cost">$5,458</div>
+              <span class="kpi-sub" id="kpi-irs-sub">IRS $0.67/mi + Labor</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-title">CO2 Emissions</span>
+              <div class="kpi-val text-rose" id="kpi-co2">475 kg</div>
+              <span class="kpi-sub">EPA 0.404 kg/mi</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-title">Skill & Shift Compliance</span>
+              <div class="kpi-val text-emerald" id="kpi-compliance">100% / 92%</div>
+              <span class="kpi-sub">0 Feasibility Errors</span>
+            </div>
+          </div>
+
+          <!-- Canvas Map & Simulator Controls -->
+          <div class="map-container">
+            <div class="map-header">
+              <div class="map-title-row">
+                <span class="map-title">US Multi-Depot Geographic Route Topology</span>
+                <span class="map-subtitle" id="map-telemetry">Click any stop or hub to inspect details</span>
+              </div>
+              <div class="map-actions">
+                <button class="map-btn" id="btn-toggle-routes">Toggle Routes</button>
+                <button class="map-btn" id="btn-toggle-halos">Fuzzy Halos</button>
+                <button class="map-btn" id="btn-reset-zoom">Reset View</button>
+              </div>
+            </div>
+
+            <!-- Main High-Res Canvas -->
+            <div class="canvas-wrapper">
+              <canvas id="dispatch-canvas" width="1200" height="720"></canvas>
+              <!-- Interactive Tooltip Overlay -->
+              <div class="map-tooltip" id="map-tooltip"></div>
+            </div>
+
+            <!-- Animated Workday Playback Bar (08:00 - 17:00) -->
+            <div class="timeline-bar">
+              <div class="timeline-controls">
+                <button class="play-btn" id="btn-timeline-play">▶ Play Day</button>
+                <button class="step-btn" id="btn-timeline-step">Step ⏭</button>
+                <div class="clock-display" id="timeline-clock">08:00 AM</div>
+              </div>
+              <div class="timeline-slider-wrapper">
+                <input type="range" id="timeline-slider" min="0" max="540" value="0" class="styled-slider" />
+                <div class="timeline-ticks">
+                  <span>08:00 Start</span>
+                  <span>10:00 Morning</span>
+                  <span>12:00 Midday</span>
+                  <span>14:00 Afternoon</span>
+                  <span>17:00 EOD</span>
+                </div>
+              </div>
+              <div class="speed-control">
+                <label for="timeline-speed">Speed:</label>
+                <select id="timeline-speed" class="styled-select">
+                  <option value="1">1x</option>
+                  <option value="5" selected>5x</option>
+                  <option value="20">20x</option>
+                  <option value="50">50x</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab 2: Detailed Benchmark Dashboard -->
+        <section class="tab-pane" id="tab-bench">
+          <div class="benchmark-header">
+            <h2 class="benchmark-title">Executive 3-Way Comparative Benchmark</h2>
+            <p class="benchmark-desc">
+              Rigorous comparative evaluation across Classical FIFO, Deterministic Hard K-Means, and Multi-Tier Quantum F-Means (SC-QFCM).
+            </p>
+          </div>
+
+          <!-- Quantum Advantage Highlight Banner -->
+          <div class="advantage-banner" id="advantage-banner">
+            <div class="banner-stat">
+              <span class="banner-title">Distance Reduction</span>
+              <span class="banner-val text-emerald" id="adv-dist-val">-20.9%</span>
+              <span class="banner-sub" id="adv-dist-km">501 km saved</span>
+            </div>
+            <div class="banner-stat">
+              <span class="banner-title">Windshield Hours Saved</span>
+              <span class="banner-val text-cyan" id="adv-hours-val">10.4 hrs</span>
+              <span class="banner-sub">Productive time gained</span>
+            </div>
+            <div class="banner-stat">
+              <span class="banner-title">Fleet Operating Savings</span>
+              <span class="banner-val text-amber" id="adv-cost-val">$676.67</span>
+              <span class="banner-sub">Per morning dispatch</span>
+            </div>
+            <div class="banner-stat">
+              <span class="banner-title">Carbon Averted</span>
+              <span class="banner-val text-emerald" id="adv-co2-val">126 kg CO2</span>
+              <span class="banner-sub">EPA emissions factor</span>
+            </div>
+          </div>
+
+          <!-- Charts Grid -->
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h3 class="chart-title">Fleet Distance & Windshield Hours</h3>
+              <div class="chart-box">
+                <canvas id="chart-distance"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3 class="chart-title">Daily Operating Cost Breakdown ($)</h3>
+              <div class="chart-box">
+                <canvas id="chart-cost"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3 class="chart-title">Depot & Technician Workload Variance ($\sigma$)</h3>
+              <div class="chart-box">
+                <canvas id="chart-variance"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3 class="chart-title">Environmental Footprint (kg CO2 Averted)</h3>
+              <div class="chart-box">
+                <canvas id="chart-co2"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed Comparison Table -->
+          <div class="table-container">
+            <h3 class="table-title">Quantitative Methodology Audit Matrix</h3>
+            <table class="benchmark-table" id="benchmark-table">
+              <thead>
+                <tr>
+                  <th>Optimization Architecture</th>
+                  <th>Total Distance</th>
+                  <th>Windshield Hrs</th>
+                  <th>Operating Cost</th>
+                  <th>CO2 (kg)</th>
+                  <th>Depot Balance ($\sigma$)</th>
+                  <th>Shift Compliance</th>
+                  <th>Runtime</th>
+                </tr>
+              </thead>
+              <tbody id="benchmark-tbody">
+                <!-- Populated via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Tab 3: Classiq Quantum Synthesis Explorer -->
+        <section class="tab-pane" id="tab-quantum">
+          <div class="quantum-header">
+            <h2 class="quantum-title">Classiq Quantum Synthesis Engine Architecture</h2>
+            <p class="quantum-desc">
+              Detailed breakdown of the synthesized intra-route QAOA quantum circuits, swap-test Born's rule overlaps, and Ising Hamiltonians.
+            </p>
+          </div>
+
+          <div class="quantum-cards-grid">
+            <div class="quantum-info-card">
+              <span class="q-card-tag">Ansatz Model</span>
+              <h3 class="q-card-title">Intra-Route QAOA Hamiltonian</h3>
+              <p class="q-card-desc">
+                Combinatorial sub-route permutation mapping $x_{it} \in \{0, 1\}$ with degree and MTZ subtour penalties compiled into Ising Pauli-Z terms.
+              </p>
+              <div class="q-formula">
+                $$H_C = A \sum_{i} \left(1 - \sum_t x_{it}\right)^2 + B \sum_{t} \left(1 - \sum_i x_{it}\right)^2 + C \sum_{i,j,t} d_{ij} x_{it} x_{j,t+1}$$
+              </div>
+            </div>
+
+            <div class="quantum-info-card">
+              <span class="q-card-tag">Circuit Metric</span>
+              <h3 class="q-card-title">Quantum Circuit Synthesis Telemetry</h3>
+              <ul class="q-stat-list">
+                <li><span>Qubits Allocated per Sub-Problem:</span> <strong id="q-qubits">9 - 25 Qubits</strong></li>
+                <li><span>QAOA Variational Layers ($p$):</span> <strong id="q-layers">2 Layers</strong></li>
+                <li><span>Synthesized Circuit Depth:</span> <strong id="q-depth">22 - 58</strong></li>
+                <li><span>2-Qubit Entangling CX Gates:</span> <strong id="q-cx">72 - 300 Gates</strong></li>
+                <li><span>Ancilla Measurement Shots:</span> <strong id="q-shots">2,048 Shots</strong></li>
+              </ul>
+            </div>
+
+            <div class="quantum-info-card">
+              <span class="q-card-tag">Fidelity Metric</span>
+              <h3 class="q-card-title">Born's Rule Swap-Test Overlap</h3>
+              <p class="q-card-desc">
+                Continuous quantum distance computed via destructive interference probability $P(|1\rangle_{\text{anc}}) = \frac{1 - |\langle \psi_i | c_k \rangle|^2}{2}$.
+              </p>
+              <div class="q-formula">
+                $$D_Q(\psi_i, c_k) = 2 \cdot P(|1\rangle_{\text{anc}}) = 1.0 - |\langle \psi_i | c_k \rangle|^2$$
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
