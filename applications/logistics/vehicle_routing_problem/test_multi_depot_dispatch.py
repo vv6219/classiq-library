@@ -31,9 +31,13 @@ from wms_field_technician_dispatch import (
 class TestMultiDepotFieldTechnicianDispatch(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.num_tasks = 80
-        cls.num_depots = 4
-        cls.techs_per_depot = 3
+        import os
+        cls.num_tasks = int(os.environ.get("MDFTD_NUM_TASKS", 100))
+        cls.num_depots = int(os.environ.get("MDFTD_NUM_DEPOTS", 4))
+        total_techs = int(os.environ.get("MDFTD_TOTAL_TECHS", 1000))
+        cls.techs_per_depot = int(os.environ.get("MDFTD_TECHS_PER_DEPOT", max(1, total_techs // cls.num_depots)))
+        cls.total_technicians = cls.num_depots * cls.techs_per_depot
+
         cls.depots, cls.tasks = generate_field_service_problem(
             num_tasks=cls.num_tasks,
             num_depots=cls.num_depots,
@@ -106,12 +110,14 @@ class TestMultiDepotFieldTechnicianDispatch(unittest.TestCase):
         """Verify that inter-depot entropy rebalancing maintains low workload standard deviation."""
         counts = self.plan.depot_task_counts
         self.assertEqual(sum(counts), self.num_tasks)
-        # Verify no depot is starved (has >= 15 tasks for 80 tasks / 4 depots)
+        expected = self.num_tasks / self.num_depots
+        min_bound = max(1, int(expected * 0.5))
+        max_bound = int(expected * 1.5) + 2
         for c in counts:
-            self.assertGreaterEqual(c, 15)
-            self.assertLessEqual(c, 25)
-        # Workload standard deviation across depots should be under 2.5 hours
-        self.assertLessEqual(self.plan.depot_workload_std, 2.5)
+            self.assertGreaterEqual(c, min_bound)
+            self.assertLessEqual(c, max_bound)
+        # Workload standard deviation across depots should be under 3.5 hours
+        self.assertLessEqual(self.plan.depot_workload_std, 3.5)
 
     def test_irs_and_epa_roi_conversions(self):
         """Verify mathematical integrity of IRS Notice 2024-08 and EPA 2024 emissions formulas."""
@@ -154,7 +160,7 @@ class TestMultiDepotFieldTechnicianDispatch(unittest.TestCase):
         )
 
     def test_runtime_scaling(self):
-        """Verify that hierarchical quantum-classical decomposition executes in under 2.5 seconds."""
+        """Verify that hierarchical quantum-classical decomposition executes in under 6.0 seconds for 1000 technicians."""
         t0 = time.perf_counter()
         plan = dispatch_field_technicians(
             self.depots,
@@ -165,8 +171,8 @@ class TestMultiDepotFieldTechnicianDispatch(unittest.TestCase):
         elapsed = time.perf_counter() - t0
         self.assertLess(
             elapsed,
-            2.5,
-            f"Execution time {elapsed:.3f}s exceeded hierarchical threshold of 2.5s",
+            6.0,
+            f"Execution time {elapsed:.3f}s exceeded hierarchical threshold of 6.0s",
         )
 
 

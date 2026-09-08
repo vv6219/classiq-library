@@ -191,9 +191,11 @@ class MultiDepotQuantumFMeans:
         current_loads = calc_depot_workloads(crisp_labels)
         # Total technician capacity in minutes per depot:
         depot_capacities = np.array([d.technician_count * d.shift_hours * 60.0 for d in depots], dtype=float)
+        target_load = float(np.mean(current_loads))
+        target_count = float(n / m_depots)
 
         # Identify boundary tasks with high Shannon entropy (situated between service depot territories)
-        boundary_indices = np.where(self.depot_entropies_ > self.entropy_threshold)[0]
+        boundary_indices = np.where(self.depot_entropies_ > 0.25)[0]
         # Sort descending by entropy
         boundary_indices = boundary_indices[np.argsort(-self.depot_entropies_[boundary_indices])]
 
@@ -203,27 +205,29 @@ class MultiDepotQuantumFMeans:
             cur_dep = rebalanced[idx]
             task = tasks[idx]
             cur_load_ratio = current_loads[cur_dep] / max(depot_capacities[cur_dep], 1e-9)
+            is_overloaded = (
+                (cur_load_ratio > 0.80)
+                or (current_loads[cur_dep] > target_load * 1.05)
+                or (np.sum(rebalanced == cur_dep) > target_count + 1)
+            )
 
-            # If current depot load ratio is higher than target average (or > 85%)
-            if cur_load_ratio > 0.80:
-                # Find candidate depots with significant membership (> 15%)
+            if is_overloaded:
                 probs = memberships[idx]
-                candidates = [d for d in range(m_depots) if d != cur_dep and probs[d] > 0.15]
+                candidates = [d for d in range(m_depots) if d != cur_dep and probs[d] > 0.10]
                 if not candidates:
                     continue
 
-                # Choose candidate depot with lowest load ratio
-                best_cand = min(candidates, key=lambda d: current_loads[d] / max(depot_capacities[d], 1e-9))
-                cand_load_ratio = current_loads[best_cand] / max(depot_capacities[best_cand], 1e-9)
-
-                if cand_load_ratio < cur_load_ratio:
+                # Choose candidate depot with lowest current workload
+                best_cand = min(candidates, key=lambda d: current_loads[d])
+                if current_loads[best_cand] < current_loads[cur_dep]:
                     dist_cur = np.hypot(task.x - depots[cur_dep].x, task.y - depots[cur_dep].y)
                     dist_new = np.hypot(task.x - depots[best_cand].x, task.y - depots[best_cand].y)
                     dt_cur = (dist_cur / transit_speed_km_min) * 1.25 + task.service_duration_min
                     dt_new = (dist_new / transit_speed_km_min) * 1.25 + task.service_duration_min
 
-                    current_loads[cur_dep] -= dt_cur
-                    current_loads[best_cand] += dt_new
-                    rebalanced[idx] = best_cand
+                    if current_loads[best_cand] + dt_new < current_loads[cur_dep]:
+                        current_loads[cur_dep] -= dt_cur
+                        current_loads[best_cand] += dt_new
+                        rebalanced[idx] = best_cand
 
         return rebalanced.tolist()
