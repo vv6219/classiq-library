@@ -300,7 +300,7 @@ class MultiTierWebHandler(SimpleHTTPRequestHandler):
     def _handle_dispatch(self, params: dict) -> None:
         num_tasks = int(params.get("num_tasks", 1000))
         total_technicians = int(params.get("total_technicians", 50))
-        num_hubs = int(params.get("num_hubs", 1000))
+        num_hubs = int(params.get("num_hubs", 10))
         fuzziness_m = float(params.get("fuzziness_m", 2.0))
         emergency_ratio = float(params.get("emergency_ratio", 0.0))
         method = str(params.get("method", "quantum_multitier_qfcm"))

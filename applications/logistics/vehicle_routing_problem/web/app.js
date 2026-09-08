@@ -707,7 +707,7 @@ function simulateClientSideDispatch(payload) {
     return (s - 1) / 2147483646;
   };
 
-  const numHubs = Math.min(Math.max(payload.num_hubs || 4, 1), 16);
+  const numHubs = Math.min(Math.max(payload.num_hubs || 10, 1), 16);
   const numTasks = Math.min(Math.max(payload.num_tasks || 40, 4), 300);
   const totalTechs = payload.total_technicians || 50;
   const emergencyRatio = payload.emergency_ratio || 0.15;
@@ -1323,7 +1323,7 @@ function renderIdleCanvas() {
   }
 
   // 2. Hub Previews & Radar Range Rings
-  const numHubs = parseInt(elements.inputHubs ? elements.inputHubs.value : '1000', 10);
+  const numHubs = parseInt(elements.inputHubs ? elements.inputHubs.value : '10', 10);
   const hubCoords = [];
   if (numHubs === 1) {
     hubCoords.push({ name: 'Hub 1: Central Depot', x: 50, y: 50 });
@@ -2188,7 +2188,7 @@ async function prefetchBenchmark() {
   const defaultPayload = {
     num_tasks: 40,
     total_technicians: 50,
-    num_hubs: 4,
+    num_hubs: 10,
     emergency_ratio: 0.15,
     fuzziness_m: 1.5,
     seed: 42,

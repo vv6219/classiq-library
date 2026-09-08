@@ -164,3 +164,6 @@ cython_debug/
 # Application generated exports
 Export/
 **/Export/
+
+# Firebase cache
+.firebase/

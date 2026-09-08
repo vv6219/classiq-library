@@ -39,6 +39,14 @@
           <span class="stat-label">Engine API</span>
           <span class="stat-val text-emerald" id="header-engine-val" style="font-size: 11px;">● Checking</span>
         </div>
+        <a href="case-study.html" target="_blank" class="header-stat" style="text-decoration: none; cursor: pointer; border: 1px solid rgba(0, 240, 255, 0.35); background: rgba(0, 240, 255, 0.08);" title="Read the Multi-Depot Quantum Case Study & ROI Report">
+          <span class="stat-label" style="color: #00F0FF;">Report</span>
+          <span class="stat-val" style="color: #F8FAFC; font-size: 11px;">📖 Case Study</span>
+        </a>
+        <a href="https://docs.google.com/document/d/1JrAfOfHbS_Z0FnoEqjX_lGjBSZcXoWZZnGRKD-vPnAg/edit?usp=sharing" target="_blank" class="header-stat" style="text-decoration: none; cursor: pointer; border: 1px solid rgba(96, 165, 250, 0.35); background: rgba(96, 165, 250, 0.08);" title="Open Technical Whitepaper in Google Docs">
+          <span class="stat-label" style="color: #60A5FA;">Whitepaper</span>
+          <span class="stat-val" style="color: #F8FAFC; font-size: 11px;">📄 Google Doc</span>
+        </a>
       </div>
     </header>
 
@@ -93,9 +101,9 @@
           <div class="input-group">
             <div class="input-label-row">
               <label for="input-hubs">Regional Depots ($M$)</label>
-              <span class="val-badge" id="badge-hubs">1,000</span>
+              <span class="val-badge" id="badge-hubs">10</span>
             </div>
-            <input type="range" id="input-hubs" min="1" max="5000" step="1" value="1000" class="styled-slider" />
+            <input type="range" id="input-hubs" min="1" max="5000" step="1" value="10" class="styled-slider" />
           </div>
 
           <!-- Emergency SLA ratio -->
@@ -149,7 +157,7 @@
 
             <div class="method-checkbox-list" id="method-checkbox-list" style="display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; padding-right: 2px;">
               <label class="method-cb-label">
-                <input type="checkbox" class="method-cb" value="baseline_fifo" checked />
+                <input type="checkbox" class="method-cb" value="baseline_fifo" />
                 <span class="method-cb-text"><span class="method-cb-num">1.</span> ⏱️ Classic FIFO Baseline</span>
               </label>
 
@@ -164,7 +172,7 @@
               </label>
 
               <label class="method-cb-label">
-                <input type="checkbox" class="method-cb" value="classic_fcm" checked />
+                <input type="checkbox" class="method-cb" value="classic_fcm" />
                 <span class="method-cb-text"><span class="method-cb-num">4.</span> 🌀 Fuzzy Means Classical (FCM)</span>
               </label>
 
@@ -174,31 +182,31 @@
               </label>
 
               <label class="method-cb-label">
-                <input type="checkbox" class="method-cb" value="pure_ga_classical" checked />
+                <input type="checkbox" class="method-cb" value="pure_ga_classical" />
                 <span class="method-cb-text"><span class="method-cb-num">6.</span> 🧬 Pure Classical Genetic Alg</span>
               </label>
 
               <label class="method-cb-label">
-                <input type="checkbox" class="method-cb" value="pure_ga_quantum" checked />
+                <input type="checkbox" class="method-cb" value="pure_ga_quantum" />
                 <span class="method-cb-text"><span class="method-cb-num">7.</span> ⚛️🧬 Pure Quantum GA (QGA)</span>
               </label>
 
               <label class="method-cb-label">
-                <input type="checkbox" class="method-cb" value="kmeans_depot_ga_classical" checked />
+                <input type="checkbox" class="method-cb" value="kmeans_depot_ga_classical" />
                 <span class="method-cb-text"><span class="method-cb-num">8.</span> 🏢🧬 K-Means + GA per Depot</span>
               </label>
 
               <label class="method-cb-label">
-                <input type="checkbox" class="method-cb" value="kmeans_depot_ga_quantum" checked />
+                <input type="checkbox" class="method-cb" value="kmeans_depot_ga_quantum" />
                 <span class="method-cb-text"><span class="method-cb-num">9.</span> ⚛️🏢 Quantum K-Means + Q-GA</span>
               </label>
 
               <label class="method-cb-label">
-                <input type="checkbox" class="method-cb" value="simulated_annealing" checked />
+                <input type="checkbox" class="method-cb" value="simulated_annealing" />
                 <span class="method-cb-text"><span class="method-cb-num">10.</span> 🔥 Simulated Annealing</span>
               </label>
             </div>
-            <div id="active-methods-count" style="font-size: 10px; color: #00F0FF; font-weight: 600; margin-top: 6px; text-align: right;">10 of 10 Active</div>
+            <div id="active-methods-count" style="font-size: 10px; color: #00F0FF; font-weight: 600; margin-top: 6px; text-align: right;">3 of 10 Active</div>
           </div>
 
           <!-- Quantum Function & Kernel Configuration -->
@@ -478,7 +486,12 @@
                   Rigorous comparative evaluation across Classical FIFO, Hard K-Means, Fuzzy C-Means, Pure Genetic Algorithms (Classical & Quantum), and Hybrid K-Means + GA architectures.
                 </p>
               </div>
-              <button class="primary-btn bench-run-btn" id="btn-run-benchmark-tab">📊 Run 9-Method Benchmark</button>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <a href="mdf_comprehensive_benchmark.png" target="_blank" class="mini-tool-btn" style="padding: 8px 12px; font-size: 11px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; color: #00F0FF; border-color: rgba(0, 240, 255, 0.4);" title="View publication-quality 6-panel comprehensive benchmark figure">
+                  🖼️ 6-Panel Benchmark Plot
+                </a>
+                <button class="primary-btn bench-run-btn" id="btn-run-benchmark-tab">📊 Run Benchmark</button>
+              </div>
             </div>
           </div>
 
