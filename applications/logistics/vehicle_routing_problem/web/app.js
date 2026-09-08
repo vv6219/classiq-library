@@ -344,6 +344,9 @@ function initListeners() {
         const txt = e.target.options[e.target.selectedIndex].text;
         elements.badgeMethod.textContent = txt.split('.')[0].trim();
       }
+      if (typeof updateQuantumPanelActiveState === 'function') {
+        updateQuantumPanelActiveState();
+      }
       if (state.dispatchData) {
         await switchViewMethod(chosen);
       }
@@ -456,6 +459,67 @@ function initListeners() {
     }
     if (elements.qKernelCardFormula) {
       elements.qKernelCardFormula.textContent = kInfo.formula;
+    }
+
+    // Handle Entanglement Gamma parameter active vs inactive state
+    const isZZ = kKey === 'zz_feature_map';
+    const gammaCol = document.getElementById('qparam-col-gamma');
+    if (gammaCol) {
+      gammaCol.classList.toggle('is-inactive', !isZZ);
+    }
+    if (elements.inputQuantumGamma) {
+      elements.inputQuantumGamma.disabled = !isZZ;
+    }
+    if (elements.badgeQuantumGamma) {
+      if (isZZ) {
+        const gVal = parseFloat(elements.inputQuantumGamma.value).toFixed(2);
+        elements.badgeQuantumGamma.textContent = `γ = ${gVal}`;
+      } else {
+        elements.badgeQuantumGamma.textContent = 'N/A (ZZ Only)';
+      }
+    }
+
+    updateQuantumPanelActiveState();
+  }
+
+  function updateQuantumPanelActiveState() {
+    const quantumMethods = ['quantum_multitier_qfcm', 'quantum_kmeans', 'pure_ga_quantum', 'kmeans_depot_ga_quantum'];
+    const curMethod = elements.selectMethod ? elements.selectMethod.value : 'quantum_multitier_qfcm';
+    const activeMethods = getActiveMethods();
+    const isQuantumSelected = quantumMethods.includes(curMethod);
+    const hasQuantumActive = activeMethods.some((m) => quantumMethods.includes(m));
+
+    const panel = document.getElementById('quantum-kernel-panel');
+    const notice = document.getElementById('quantum-kernel-inactive-notice');
+    const badge = elements.badgeQuantumKernelCode;
+    const kKey = elements.selectQuantumKernel ? elements.selectQuantumKernel.value : 'swap_test';
+    const kInfo = QUANTUM_KERNELS[kKey] || QUANTUM_KERNELS['swap_test'];
+
+    if (panel) {
+      panel.classList.toggle('is-inactive', !isQuantumSelected);
+    }
+    if (notice) {
+      notice.style.display = isQuantumSelected ? 'none' : 'flex';
+      const noticeText = notice.querySelector('.inactive-notice-text');
+      if (noticeText) {
+        if (hasQuantumActive) {
+          noticeText.textContent = 'Standby for classical active view. Active for Quantum Paradigms (3, 5, 7, 9) in benchmark.';
+        } else {
+          noticeText.textContent = 'Inactive: current solver and active options are classical (Paradigms 1, 2, 4, 6, 8, 10).';
+        }
+      }
+    }
+    if (badge) {
+      if (isQuantumSelected) {
+        badge.textContent = kInfo.code;
+        badge.title = `Active quantum kernel: ${kInfo.name}`;
+      } else if (hasQuantumActive) {
+        badge.textContent = 'STANDBY';
+        badge.title = 'Active in benchmark for quantum algorithms, but standby for current classical map view';
+      } else {
+        badge.textContent = 'INACTIVE';
+        badge.title = 'Inactive for classical algorithms';
+      }
     }
   }
 
@@ -628,6 +692,18 @@ function updateActiveMethodsUI() {
   const btnLabel = document.getElementById('btn-run-benchmark-label');
   if (btnLabel) {
     btnLabel.textContent = `Run Benchmark (${checkedCbs.length} Active)`;
+  }
+
+  // Update visual inactive styling on checkbox labels
+  allCbs.forEach((cb) => {
+    const parentLabel = cb.closest('.method-cb-label');
+    if (parentLabel) {
+      parentLabel.classList.toggle('is-inactive', !cb.checked);
+    }
+  });
+
+  if (typeof updateQuantumPanelActiveState === 'function') {
+    updateQuantumPanelActiveState();
   }
 }
 
@@ -1725,6 +1801,7 @@ async function prefetchBenchmark() {
 // Initial Boot - Starts in interactive idle preview, awaiting explicit user execution
 window.addEventListener('DOMContentLoaded', () => {
   initListeners();
+  updateActiveMethodsUI();
   resizeCanvas();
   prefetchBenchmark();
 });

@@ -198,10 +198,16 @@
           </div>
 
           <!-- Quantum Function & Kernel Configuration -->
-          <div class="quantum-kernel-panel">
+          <div class="quantum-kernel-panel" id="quantum-kernel-panel">
             <div class="quantum-kernel-header">
-              <span class="quantum-kernel-title">⚛️ Quantum Distance Function</span>
+              <span class="quantum-kernel-title" id="quantum-kernel-panel-title">⚛️ Quantum Distance Function</span>
               <span class="quantum-kernel-code-badge" id="badge-quantum-kernel-code">SWAP</span>
+            </div>
+
+            <!-- Inactive notice banner (shown when classical method is selected) -->
+            <div class="quantum-kernel-inactive-notice" id="quantum-kernel-inactive-notice" style="display: none;">
+              <span class="inactive-notice-icon">ℹ️</span>
+              <span class="inactive-notice-text">Standby / Inactive for classical solver. Active on Paradigms 3, 5, 7, 9.</span>
             </div>
 
             <!-- Function Selector Dropdown -->
@@ -223,7 +229,7 @@
 
             <!-- Quantum Parameters Grid (Shots, Gamma) -->
             <div class="quantum-params-grid">
-              <div class="qparam-col">
+              <div class="qparam-col" id="qparam-col-shots">
                 <div class="input-label-row" style="margin-bottom: 2px;">
                   <label for="select-quantum-shots" style="font-size: 9.5px;">Sampling Shots</label>
                   <span class="badge-pill" id="badge-quantum-shots" style="font-size: 8.5px;">2,048</span>
@@ -237,9 +243,9 @@
                 </select>
               </div>
 
-              <div class="qparam-col">
+              <div class="qparam-col" id="qparam-col-gamma">
                 <div class="input-label-row" style="margin-bottom: 2px;">
-                  <label for="input-quantum-gamma" style="font-size: 9.5px;">Entanglement γ</label>
+                  <label for="input-quantum-gamma" style="font-size: 9.5px;" id="label-quantum-gamma">Entanglement γ</label>
                   <span class="badge-pill" id="badge-quantum-gamma" style="font-size: 8.5px;">1.0</span>
                 </div>
                 <input type="range" id="input-quantum-gamma" min="0.1" max="2.0" step="0.1" value="1.0" class="styled-slider" />
