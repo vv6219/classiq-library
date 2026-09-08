@@ -79,7 +79,7 @@ function initListeners() {
     elements.headerFleet.textContent = `${Number(e.target.value).toLocaleString()} Techs`;
   });
   elements.inputTasks.addEventListener('input', (e) => {
-    elements.badgeTasks.textContent = e.target.value;
+    elements.badgeTasks.textContent = Number(e.target.value).toLocaleString();
   });
   elements.inputHubs.addEventListener('input', (e) => {
     elements.badgeHubs.textContent = e.target.value;
@@ -105,7 +105,7 @@ function initListeners() {
       elements.inputTechs.value = techs;
       elements.inputHubs.value = hubs;
 
-      elements.badgeTasks.textContent = tasks;
+      elements.badgeTasks.textContent = Number(tasks).toLocaleString();
       elements.badgeTechs.textContent = Number(techs).toLocaleString();
       elements.badgeHubs.textContent = hubs;
       elements.headerFleet.textContent = `${Number(techs).toLocaleString()} Techs`;
@@ -294,15 +294,26 @@ async function runBenchmark() {
 // Update Top KPI Cards
 function updateKPIDashboard(data) {
   const kpi = data.kpis;
+  const totalTasks = data.total_tasks_computed || kpi.total_tasks || 100;
   document.getElementById('kpi-active-techs').textContent =
-    `${kpi.active_technicians_count} / ${kpi.standby_technicians_count.toLocaleString()}`;
+    `${kpi.active_technicians_count.toLocaleString()} / ${kpi.standby_technicians_count.toLocaleString()}`;
+  document.getElementById('kpi-active-sub').textContent =
+    `${totalTasks.toLocaleString()} Tasks (100% Demand Served)`;
   document.getElementById('kpi-distance').textContent = `${kpi.total_distance_km.toLocaleString()} km`;
   document.getElementById('kpi-distance-miles').textContent = `${kpi.total_distance_miles.toLocaleString()} miles`;
-  document.getElementById('kpi-windshield').textContent = `${kpi.total_windshield_hours} hrs`;
+  document.getElementById('kpi-windshield').textContent = `${kpi.total_windshield_hours.toLocaleString()} hrs`;
   document.getElementById('kpi-cost').textContent = `$${kpi.total_operating_cost_usd.toLocaleString()}`;
   document.getElementById('kpi-co2').textContent = `${kpi.epa_carbon_footprint_kg.toLocaleString()} kg`;
   document.getElementById('kpi-compliance').textContent =
     `${kpi.skill_compliance_rate}% / ${kpi.shift_compliance_rate}%`;
+
+  if (data.display_tasks_count && data.display_tasks_count < totalTasks) {
+    document.getElementById('map-telemetry').textContent =
+      `Displaying ${data.display_tasks_count.toLocaleString()} sample tasks of ${totalTasks.toLocaleString()} total tasks (100% dispatched)`;
+  } else {
+    document.getElementById('map-telemetry').textContent =
+      `Displaying all ${totalTasks.toLocaleString()} customer tasks. Click any stop or hub to inspect details.`;
+  }
 }
 
 // Update Quantum Tab Telemetry

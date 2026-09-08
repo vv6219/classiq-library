@@ -148,7 +148,8 @@ def generate_enterprise_service_problem(
 ) -> tuple[list[RegionalServiceHub], list[MultiTierTask]]:
     """Generates an enterprise-scale nationwide field service scenario with heterogeneous skills and equipment."""
     rng = np.random.default_rng(seed)
-    selected_hubs_meta = US_METRO_HUBS[:max(2, min(num_hubs, len(US_METRO_HUBS)))]
+    num_hubs = max(1, min(num_hubs, 10))
+    selected_hubs_meta = US_METRO_HUBS[:num_hubs]
     m_hubs = len(selected_hubs_meta)
 
     # Distribute technicians across hubs
@@ -158,8 +159,6 @@ def generate_enterprise_service_problem(
     hubs: list[RegionalServiceHub] = []
     global_tech_id = 0
 
-    # Fleet skill composition distribution:
-    # 40% Tier 1 (Residential), 30% Tier 2 (Fiber), 20% Tier 3 (Commercial Elec), 10% Tier 4 (Heavy Infra)
     skill_choices = [1, 2, 3, 4]
     skill_probs = [0.40, 0.30, 0.20, 0.10]
     equip_map = {
@@ -182,7 +181,6 @@ def generate_enterprise_service_problem(
 
         for _ in range(hub_tech_count):
             s_level = int(rng.choice(skill_choices, p=skill_probs))
-            # Equipment aligns with skill level or higher
             eq = equip_map[s_level]
             hub.technicians.append(
                 MultiTierTechnician(
@@ -197,43 +195,39 @@ def generate_enterprise_service_problem(
 
         hubs.append(hub)
 
-    # Generate customer tasks scattered across the hubs with cluster density
-    tasks: list[MultiTierTask] = []
+    # Vectorized fast generation for up to 250,000 tasks
     time_windows = ["08:00-12:00", "12:00-16:00", "08:00-17:00"]
-    time_probs = [0.40, 0.40, 0.20]
+    hub_anchors = [selected_hubs_meta[i % m_hubs] for i in range(num_tasks)]
+    anchor_xs = np.array([h["x"] for h in hub_anchors], dtype=float)
+    anchor_ys = np.array([h["y"] for h in hub_anchors], dtype=float)
 
-    for i in range(num_tasks):
-        # Choose a hub center as primary cluster anchor
-        anchor_hub = selected_hubs_meta[i % m_hubs]
-        # Cluster Gaussian distribution with occasional nationwide boundary orders
-        spread = 16.0 if rng.random() > 0.15 else 32.0
-        tx = float(np.clip(rng.normal(anchor_hub["x"], spread), 5.0, 95.0))
-        ty = float(np.clip(rng.normal(anchor_hub["y"], spread), 5.0, 95.0))
+    is_wide = rng.random(num_tasks) > 0.15
+    spreads = np.where(is_wide, 16.0, 32.0)
+    tx_arr = np.clip(rng.normal(anchor_xs, spreads), 5.0, 95.0)
+    ty_arr = np.clip(rng.normal(anchor_ys, spreads), 5.0, 95.0)
 
-        # Skill and Equipment required
-        task_skill = int(rng.choice(skill_choices, p=skill_probs))
-        task_equip = equip_map[task_skill]
+    task_skills = rng.choice(skill_choices, size=num_tasks, p=skill_probs)
+    is_emerg_arr = rng.random(num_tasks) < emergency_sla_ratio
+    priority_arr = np.where(is_emerg_arr, rng.uniform(0.85, 1.0, num_tasks), rng.uniform(0.40, 0.80, num_tasks))
+    dur_arr = np.where(task_skills >= 3, rng.uniform(45.0, 90.0, num_tasks), rng.uniform(20.0, 50.0, num_tasks))
+    weight_arr = np.where(task_skills >= 3, rng.uniform(15.0, 45.0, num_tasks), rng.uniform(5.0, 20.0, num_tasks))
 
-        # Emergency SLA status
-        is_emergency = rng.random() < emergency_sla_ratio
-        priority_sla = float(rng.uniform(0.85, 1.0) if is_emergency else rng.uniform(0.40, 0.80))
-        tw = "08:00-12:00" if is_emergency else str(rng.choice(time_windows, p=time_probs))
-        duration = float(rng.uniform(45.0, 90.0) if task_skill >= 3 else rng.uniform(20.0, 50.0))
-        weight = float(rng.uniform(15.0, 45.0) if task_skill >= 3 else rng.uniform(5.0, 20.0))
+    tw_choices = rng.choice(time_windows, size=num_tasks, p=[0.4, 0.4, 0.2])
 
-        tasks.append(
-            MultiTierTask(
-                id=i,
-                x=tx,
-                y=ty,
-                service_duration_min=duration,
-                weight_kg=weight,
-                skill_required=task_skill,
-                equipment_required=task_equip,
-                time_window=tw,
-                priority_sla=priority_sla,
-            )
+    tasks: list[MultiTierTask] = [
+        MultiTierTask(
+            id=i,
+            x=float(tx_arr[i]),
+            y=float(ty_arr[i]),
+            service_duration_min=float(dur_arr[i]),
+            weight_kg=float(weight_arr[i]),
+            skill_required=int(task_skills[i]),
+            equipment_required=equip_map[int(task_skills[i])],
+            time_window="08:00-12:00" if is_emerg_arr[i] else str(tw_choices[i]),
+            priority_sla=float(priority_arr[i]),
         )
+        for i in range(num_tasks)
+    ]
 
     return hubs, tasks
 
@@ -247,26 +241,29 @@ def compute_quantum_swap_fidelity(task_vec: np.ndarray, hub_vec: np.ndarray) -> 
 
 
 def two_opt_tour(hub_coord: tuple[float, float], task_coords: list[tuple[float, float]]) -> tuple[list[int], float]:
-    """Computes closed-loop tour via Nearest Neighbor + 2-Opt refinement."""
+    """Computes closed-loop tour via Nearest Neighbor + 2-Opt refinement (optimized with math.hypot)."""
+    import math
     n = len(task_coords)
     if n == 0:
         return [], 0.0
     if n == 1:
-        d = 2.0 * float(np.hypot(task_coords[0][0] - hub_coord[0], task_coords[0][1] - hub_coord[1]))
+        d = 2.0 * math.hypot(task_coords[0][0] - hub_coord[0], task_coords[0][1] - hub_coord[1])
         return [0], d
 
+    hx, hy = hub_coord
     # Greedy Nearest Neighbor
     unvisited = set(range(n))
-    curr = hub_coord
+    cx, cy = hx, hy
     route: list[int] = []
     while unvisited:
-        nxt = min(unvisited, key=lambda idx: np.hypot(task_coords[idx][0] - curr[0], task_coords[idx][1] - curr[1]))
+        nxt = min(unvisited, key=lambda idx: math.hypot(task_coords[idx][0] - cx, task_coords[idx][1] - cy))
         route.append(nxt)
-        curr = task_coords[nxt]
+        cx, cy = task_coords[nxt]
         unvisited.remove(nxt)
 
-    # 2-Opt local refinement
-    for _ in range(50):
+    # 2-Opt local refinement (adaptive bounds: 10-15 iterations are sufficient for small n)
+    max_iters = 12 if n <= 10 else 25
+    for _ in range(max_iters):
         improved = False
         for i in range(n - 1):
             for j in range(i + 1, n):
@@ -275,8 +272,8 @@ def two_opt_tour(hub_coord: tuple[float, float], task_coords: list[tuple[float, 
                 p_next = task_coords[route[j]]
                 p_after = hub_coord if j == n - 1 else task_coords[route[j + 1]]
 
-                d_old = np.hypot(p_curr[0] - p_prev[0], p_curr[1] - p_prev[1]) + np.hypot(p_after[0] - p_next[0], p_after[1] - p_next[1])
-                d_new = np.hypot(p_next[0] - p_prev[0], p_next[1] - p_prev[1]) + np.hypot(p_after[0] - p_curr[0], p_after[1] - p_curr[1])
+                d_old = math.hypot(p_curr[0] - p_prev[0], p_curr[1] - p_prev[1]) + math.hypot(p_after[0] - p_next[0], p_after[1] - p_next[1])
+                d_new = math.hypot(p_next[0] - p_prev[0], p_next[1] - p_prev[1]) + math.hypot(p_after[0] - p_curr[0], p_after[1] - p_curr[1])
 
                 if d_new < d_old - 1e-4:
                     route[i : j + 1] = route[i : j + 1][::-1]
@@ -286,7 +283,7 @@ def two_opt_tour(hub_coord: tuple[float, float], task_coords: list[tuple[float, 
 
     # Calculate final closed-loop distance
     pts = [hub_coord] + [task_coords[i] for i in route] + [hub_coord]
-    dist = sum(float(np.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1])) for k in range(len(pts) - 1))
+    dist = sum(math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]) for k in range(len(pts) - 1))
     return route, dist
 
 
@@ -309,57 +306,61 @@ def solve_multitier_dispatch(
     # TIER 1: Macro-Geographic Hub Partitioning (Continuous QFCM & Entropy Balancing)
     # -------------------------------------------------------------------------
     hub_coords = np.array([(h.x, h.y) for h in hubs])
-    task_coords = np.array([(t.x, t.y) for t in tasks])
     num_tasks = len(tasks)
 
-    # Compute task-to-hub quantum fidelity distances
-    q_dist = np.zeros((num_tasks, m_hubs), dtype=float)
-    for i, t in enumerate(tasks):
-        t_vec = np.array([t.x / 100.0, t.y / 100.0, t.priority_sla, t.skill_required / 4.0])
+    # -------------------------------------------------------------------------
+    # TIER 1: Macro-Geographic Hub Partitioning (Vectorized QFCM & Entropy Balancing)
+    # -------------------------------------------------------------------------
+    if m_hubs == 1:
+        assigned_hubs = [0] * num_tasks
+    else:
+        t_x = np.fromiter((t.x for t in tasks), dtype=float, count=num_tasks)
+        t_y = np.fromiter((t.y for t in tasks), dtype=float, count=num_tasks)
+        t_sla = np.fromiter((t.priority_sla for t in tasks), dtype=float, count=num_tasks)
+        t_sk = np.fromiter((t.skill_required / 4.0 for t in tasks), dtype=float, count=num_tasks)
+
+        q_dist = np.zeros((num_tasks, m_hubs), dtype=float)
         for d, h in enumerate(hubs):
-            h_vec = np.array([h.x / 100.0, h.y / 100.0, 0.5, 0.5])
+            dist_spatial = np.hypot(t_x - h.x, t_y - h.y)
             if method == "quantum_multitier_qfcm":
-                q_dist[i, d] = compute_quantum_swap_fidelity(t_vec, h_vec)
+                t_dot_h = (t_x * h.x / 10000.0) + (t_y * h.y / 10000.0) + (t_sla * 0.5) + (t_sk * 0.5)
+                t_norm = np.sqrt((t_x / 100.0) ** 2 + (t_y / 100.0) ** 2 + t_sla ** 2 + t_sk ** 2 + 1e-12)
+                h_norm = np.sqrt((h.x / 100.0) ** 2 + (h.y / 100.0) ** 2 + 0.5 ** 2 + 0.5 ** 2 + 1e-12)
+                fid = np.clip((t_dot_h / (t_norm * h_norm)) ** 2, 0.0, 1.0)
+                q_dist[:, d] = 1.0 - fid
             else:
-                q_dist[i, d] = float(np.hypot(t.x - h.x, t.y - h.y))
+                q_dist[:, d] = dist_spatial
 
-    # Calculate continuous fuzzy membership matrix U_id
-    if method == "quantum_multitier_qfcm":
-        eps = 1e-9
-        inv_m = 1.0 / (fuzziness_m - 1.0)
-        power_dist = np.power(q_dist + eps, -inv_m)
-        u_matrix = power_dist / np.sum(power_dist, axis=1, keepdims=True)
+        if method == "quantum_multitier_qfcm":
+            eps = 1e-9
+            inv_m = 1.0 / (fuzziness_m - 1.0)
+            power_dist = np.power(q_dist + eps, -inv_m)
+            u_matrix = power_dist / np.sum(power_dist, axis=1, keepdims=True)
 
-        # Shannon entropy of assignments
-        entropy = -np.sum(u_matrix * np.log(u_matrix + eps), axis=1)
+            entropy = -np.sum(u_matrix * np.log(u_matrix + eps), axis=1)
+            assigned_hubs = np.argmax(u_matrix, axis=1).tolist()
 
-        # Preliminary hub assignment
-        assigned_hubs = np.argmax(u_matrix, axis=1).tolist()
-
-        # Macro Entropy Rebalancing across Hubs
-        hub_counts = [assigned_hubs.count(d) for d in range(m_hubs)]
-        target_per_hub = num_tasks / m_hubs
-
-        for _ in range(30):
-            max_d = int(np.argmax(hub_counts))
-            min_d = int(np.argmin(hub_counts))
-            if hub_counts[max_d] - hub_counts[min_d] <= 1:
-                break
-            # Find candidate borderline tasks in max_d with highest membership in min_d
-            border_tasks = [
-                i for i, h_id in enumerate(assigned_hubs)
-                if h_id == max_d and entropy[i] > 0.40
-            ]
-            if not border_tasks:
-                break
-            candidate = max(border_tasks, key=lambda i: u_matrix[i, min_d])
-            assigned_hubs[candidate] = min_d
-            hub_counts[max_d] -= 1
-            hub_counts[min_d] += 1
-    elif method == "hard_kmeans":
-        assigned_hubs = np.argmin(q_dist, axis=1).tolist()
-    else:  # baseline FIFO / round robin
-        assigned_hubs = [i % m_hubs for i in range(num_tasks)]
+            # Macro Entropy Rebalancing across Hubs
+            hub_counts = [assigned_hubs.count(d) for d in range(m_hubs)]
+            for _ in range(min(30, num_tasks // 10 + 1)):
+                max_d = int(np.argmax(hub_counts))
+                min_d = int(np.argmin(hub_counts))
+                if hub_counts[max_d] - hub_counts[min_d] <= max(1, num_tasks // 200):
+                    break
+                border_tasks = [
+                    i for i, h_id in enumerate(assigned_hubs)
+                    if h_id == max_d and entropy[i] > 0.40
+                ]
+                if not border_tasks:
+                    break
+                candidate = max(border_tasks, key=lambda i: u_matrix[i, min_d])
+                assigned_hubs[candidate] = min_d
+                hub_counts[max_d] -= 1
+                hub_counts[min_d] += 1
+        elif method == "hard_kmeans":
+            assigned_hubs = np.argmin(q_dist, axis=1).tolist()
+        else:
+            assigned_hubs = [i % m_hubs for i in range(num_tasks)]
 
     # Assign hub IDs to tasks
     for i, h_id in enumerate(assigned_hubs):
@@ -382,7 +383,6 @@ def solve_multitier_dispatch(
         k_fleet = len(hub_techs)
 
         if not depot_tasks:
-            # All technicians remain standby in this hub
             for t in hub_techs:
                 t.assigned_tasks = []
                 t.total_distance_km = 0.0
@@ -392,19 +392,13 @@ def solve_multitier_dispatch(
                 all_technicians.append(t)
             continue
 
-        # Sort available hub technicians by skill tier (highest skills first to handle complex jobs)
         hub_coord = (hub.x, hub.y)
-
-        # Sizing the active pool:
-        # A technician can realistically handle 4-5 tasks in an 8-hour shift.
-        # So we activate at least ceil(len(depot_tasks) / 4) technicians, up to k_fleet.
         target_active_count = min(k_fleet, max(1, int(np.ceil(len(depot_tasks) / 3.5))))
 
         needed_skills = [t.skill_required for t in depot_tasks]
         active_pool: list[MultiTierTechnician] = []
         used_tech_ids = set()
 
-        # Ensure skill requirements are fully covered
         for req_s in sorted(set(needed_skills), reverse=True):
             count_needed = sum(1 for s in needed_skills if s == req_s)
             techs_needed = max(1, int(np.ceil(count_needed / 3.5)))
@@ -416,7 +410,6 @@ def solve_multitier_dispatch(
                 active_pool.append(tech)
                 used_tech_ids.add(tech.id)
 
-        # Fill remaining slots up to target_active_count or min(k_fleet, len(depot_tasks))
         for tech in hub_techs:
             if len(active_pool) >= target_active_count:
                 break
@@ -427,49 +420,77 @@ def solve_multitier_dispatch(
         k_active = len(active_pool)
 
         # Match tasks to active technicians in the hub
-        if method == "quantum_multitier_qfcm":
-            # Skill-Constrained Quantum F-Means:
-            # Compute distance matrix between depot tasks and active technicians with feasibility penalties
-            sc_dist = np.zeros((len(depot_tasks), k_active), dtype=float)
-            for i, dt in enumerate(depot_tasks):
-                for k, tech in enumerate(active_pool):
-                    if tech.skill_level < dt.skill_required:
-                        sc_dist[i, k] = 1e6  # Infeasible penalty
-                    else:
-                        # Base spatial distance + soft downgrade penalty (prevents wasting tier 4 techs on tier 1)
-                        downgrade_penalty = 1.5 * (tech.skill_level - dt.skill_required)
-                        # Priority SLA bonus for urgent calls
-                        priority_boost = -2.0 * dt.priority_sla if tech.skill_level >= dt.skill_required else 0.0
-                        base_d = float(np.hypot(dt.x - hub.x, dt.y - hub.y))
-                        sc_dist[i, k] = max(0.1, base_d + downgrade_penalty + priority_boost)
+        if len(depot_tasks) <= 400:
+            # Dense Skill-Constrained Matrix for benchmark and small-scale scenarios
+            if method == "quantum_multitier_qfcm":
+                sc_dist = np.zeros((len(depot_tasks), k_active), dtype=float)
+                for i, dt in enumerate(depot_tasks):
+                    for k, tech in enumerate(active_pool):
+                        if tech.skill_level < dt.skill_required:
+                            sc_dist[i, k] = 1e6
+                        else:
+                            downgrade_penalty = 1.5 * (tech.skill_level - dt.skill_required)
+                            priority_boost = -2.0 * dt.priority_sla if tech.skill_level >= dt.skill_required else 0.0
+                            base_d = float(np.hypot(dt.x - hub.x, dt.y - hub.y))
+                            sc_dist[i, k] = max(0.1, base_d + downgrade_penalty + priority_boost)
 
-            # Soft fuzzy assignment with feasibility
-            inv_m = 1.0 / (fuzziness_m - 1.0)
-            sc_power = np.power(sc_dist + 1e-6, -inv_m)
-            sc_u = sc_power / np.sum(sc_power, axis=1, keepdims=True)
-            initial_tech_assignments = np.argmax(sc_u, axis=1).tolist()
-        elif method == "hard_kmeans":
-            # Assign each task to nearest feasible technician without fuzzy weighting
-            initial_tech_assignments = []
-            for dt in depot_tasks:
-                feasible_ks = [
-                    k for k, tech in enumerate(active_pool)
-                    if tech.skill_level >= dt.skill_required
-                ]
-                if not feasible_ks:
-                    feasible_ks = list(range(k_active))
-                chosen = min(feasible_ks, key=lambda k: np.hypot(dt.x - hub.x, dt.y - hub.y))
-                initial_tech_assignments.append(chosen)
+                inv_m = 1.0 / (fuzziness_m - 1.0)
+                sc_power = np.power(sc_dist + 1e-6, -inv_m)
+                sc_u = sc_power / np.sum(sc_power, axis=1, keepdims=True)
+                initial_tech_assignments = np.argmax(sc_u, axis=1).tolist()
+            elif method == "hard_kmeans":
+                initial_tech_assignments = []
+                for dt in depot_tasks:
+                    feasible_ks = [
+                        k for k, tech in enumerate(active_pool)
+                        if tech.skill_level >= dt.skill_required
+                    ]
+                    chosen = min(feasible_ks, key=lambda k: np.hypot(dt.x - hub.x, dt.y - hub.y)) if feasible_ks else 0
+                    initial_tech_assignments.append(chosen)
+            else:
+                initial_tech_assignments = []
+                for idx, dt in enumerate(depot_tasks):
+                    feasible_ks = [
+                        k for k, tech in enumerate(active_pool)
+                        if tech.skill_level >= dt.skill_required
+                    ]
+                    chosen = feasible_ks[idx % len(feasible_ks)] if feasible_ks else (idx % k_active)
+                    initial_tech_assignments.append(chosen)
         else:
-            # Baseline FIFO: Round robin assignment among feasible technicians
-            initial_tech_assignments = []
-            for idx, dt in enumerate(depot_tasks):
-                feasible_ks = [
-                    k for k, tech in enumerate(active_pool)
-                    if tech.skill_level >= dt.skill_required
+            # High-Performance Spatial Sector Partitioning for 500 to 250,000 tasks
+            dt_x = np.fromiter((dt.x - hub.x for dt in depot_tasks), dtype=float, count=len(depot_tasks))
+            dt_y = np.fromiter((dt.y - hub.y for dt in depot_tasks), dtype=float, count=len(depot_tasks))
+            polar_angles = np.arctan2(dt_y, dt_x)
+
+            # Group active pool by skill tier
+            active_by_skill: dict[int, list[int]] = {s: [] for s in [1, 2, 3, 4]}
+            for k, tech in enumerate(active_pool):
+                active_by_skill[tech.skill_level].append(k)
+
+            initial_tech_assignments = [0] * len(depot_tasks)
+
+            # Route by skill requirements in angular sweeps
+            for s_req in [4, 3, 2, 1]:
+                req_task_indices = [
+                    i for i, dt in enumerate(depot_tasks) if dt.skill_required == s_req
                 ]
-                chosen = feasible_ks[idx % len(feasible_ks)] if feasible_ks else (idx % k_active)
-                initial_tech_assignments.append(chosen)
+                if not req_task_indices:
+                    continue
+                # Eligible technicians (skill >= s_req)
+                eligible_ks = []
+                for higher_s in range(s_req, 5):
+                    eligible_ks.extend(active_by_skill[higher_s])
+                if not eligible_ks:
+                    eligible_ks = list(range(k_active))
+
+                # Sort tasks by angle
+                sorted_task_sub = sorted(req_task_indices, key=lambda idx: polar_angles[idx])
+                chunk_size = max(1, len(sorted_task_sub) // len(eligible_ks) + 1)
+                for chunk_idx, k_cand in enumerate(eligible_ks):
+                    c_start = chunk_idx * chunk_size
+                    c_end = min(len(sorted_task_sub), c_start + chunk_size)
+                    for t_sub in sorted_task_sub[c_start:c_end]:
+                        initial_tech_assignments[t_sub] = k_cand
 
         # Group tasks per active technician
         tech_task_map: dict[int, list[int]] = {k: [] for k in range(k_active)}
@@ -477,7 +498,7 @@ def solve_multitier_dispatch(
             tech_task_map[k_idx].append(task_sub_idx)
 
         # ---------------------------------------------------------------------
-        # TIER 3: Fast Delta-Heap Shift Workload Leveler (O(N_active log N_active))
+        # TIER 3: Fast Shift Workload Leveler
         # ---------------------------------------------------------------------
         def eval_tech_shift(sub_indices: list[int]) -> tuple[float, float, float]:
             if not sub_indices:
@@ -488,7 +509,7 @@ def solve_multitier_dispatch(
             service_m = sum(depot_tasks[i].service_duration_min for i in sub_indices)
             return dist, travel_m, travel_m + service_m
 
-        if method == "quantum_multitier_qfcm":
+        if method == "quantum_multitier_qfcm" and len(depot_tasks) <= 400:
             # Maintain active technician shifts and rebalance overloaded shifts (> 480 min)
             for _ in range(35):
                 shifts = {k: eval_tech_shift(tech_task_map[k])[2] for k in range(len(active_pool))}
@@ -502,10 +523,7 @@ def solve_multitier_dispatch(
 
                 donor_tasks = tech_task_map[max_k]
 
-                # If the max technician exceeds 480 min and min technician is also busy,
-                # see if we can activate another standby qualified technician from the hub fleet!
                 if shifts[max_k] > 480.0 and shifts[min_k] > 360.0 and len(active_pool) < k_fleet:
-                    # Find a qualified standby technician in hub_techs
                     needed_s = max(depot_tasks[t_idx].skill_required for t_idx in donor_tasks)
                     standby = [
                         tech for tech in hub_techs
@@ -526,7 +544,6 @@ def solve_multitier_dispatch(
                 ]
                 if not candidates:
                     break
-                # Pick task closest to min_k's existing centroid or depot
                 best_task = min(
                     candidates,
                     key=lambda t_idx: np.hypot(depot_tasks[t_idx].x - hub.x, depot_tasks[t_idx].y - hub.y)

@@ -101,13 +101,13 @@ class MDFTDDispatchGUI:
         preset_frame.pack(fill=tk.X, pady=4)
 
         self.presets = {
+            "US National Fleet (250,000 pts, 35,000 techs, 8 depots)": (250000, 35000, 8),
+            "Metropolitan Mega-Fleet (50,000 pts, 10,000 techs, 4 depots)": (50000, 10000, 4),
+            "Regional Fleet (5,000 pts, 1,000 techs, 2 depots)": (5000, 1000, 2),
+            "Single Central Depot (500 pts, 500 techs, 1 depot)": (500, 500, 1),
             "Standard Benchmark (80 pts, 12 techs, 4 depots)": (80, 12, 4),
-            "Equitable Fleet (100 pts, 16 techs, 4 depots)": (100, 16, 4),
-            "Large Scale Fleet (100 pts, 1,000 techs, 4 depots)": (100, 1000, 4),
-            "Massive Enterprise Fleet (100 pts, 25,000 techs, 4 depots)": (100, 25000, 4),
-            "Dense Metro Grid (500 pts, 64 techs, 4 depots)": (500, 64, 4),
         }
-        self.preset_var = tk.StringVar(value="Standard Benchmark (80 pts, 12 techs, 4 depots)")
+        self.preset_var = tk.StringVar(value="US National Fleet (250,000 pts, 35,000 techs, 8 depots)")
         preset_cb = ttk.Combobox(
             preset_frame,
             textvariable=self.preset_var,
@@ -122,22 +122,22 @@ class MDFTDDispatchGUI:
         param_frame = ttk.LabelFrame(sidebar, text="Problem Parameters", padding=8)
         param_frame.pack(fill=tk.X, pady=6)
 
-        # Customer Points (N)
-        ttk.Label(param_frame, text="Customer Points (N):", font=("Helvetica", 9, "bold")).grid(row=0, column=0, sticky="w", pady=4)
-        self.n_var = tk.IntVar(value=80)
-        n_spin = ttk.Spinbox(param_frame, from_=10, to=2000, textvariable=self.n_var, width=10)
+        # Customer Points (N): 500 to 250,000
+        ttk.Label(param_frame, text="Customer Tasks (N):", font=("Helvetica", 9, "bold")).grid(row=0, column=0, sticky="w", pady=4)
+        self.n_var = tk.IntVar(value=5000)
+        n_spin = ttk.Spinbox(param_frame, from_=500, to=250000, textvariable=self.n_var, width=10)
         n_spin.grid(row=0, column=1, sticky="e", pady=4)
 
-        # Technicians (K)
+        # Technicians (K): 4 to 35,000
         ttk.Label(param_frame, text="Total Technicians (K):", font=("Helvetica", 9, "bold")).grid(row=1, column=0, sticky="w", pady=4)
-        self.k_var = tk.IntVar(value=12)
-        k_spin = ttk.Spinbox(param_frame, from_=4, to=25000, textvariable=self.k_var, width=10)
+        self.k_var = tk.IntVar(value=35000)
+        k_spin = ttk.Spinbox(param_frame, from_=4, to=35000, textvariable=self.k_var, width=10)
         k_spin.grid(row=1, column=1, sticky="e", pady=4)
 
-        # Regional Depots (M)
+        # Regional Depots (M): 1 to 10
         ttk.Label(param_frame, text="Regional Depots (M):", font=("Helvetica", 9, "bold")).grid(row=2, column=0, sticky="w", pady=4)
         self.m_var = tk.IntVar(value=4)
-        m_spin = ttk.Spinbox(param_frame, from_=2, to=8, textvariable=self.m_var, width=10)
+        m_spin = ttk.Spinbox(param_frame, from_=1, to=10, textvariable=self.m_var, width=10)
         m_spin.grid(row=2, column=1, sticky="e", pady=4)
 
         # Fuzziness Exponent (m)

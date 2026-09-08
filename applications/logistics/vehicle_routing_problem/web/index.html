@@ -45,21 +45,21 @@
         <div class="panel-section">
           <h2 class="section-title">⚡ Quick Presets</h2>
           <div class="preset-grid">
-            <button class="preset-btn active" id="preset-national" data-tasks="100" data-techs="35000" data-hubs="4">
+            <button class="preset-btn active" id="preset-national" data-tasks="250000" data-techs="35000" data-hubs="8">
               <span class="preset-icon">🇺🇸</span>
-              <span class="preset-name">US National (35k)</span>
+              <span class="preset-name">US National (250k)</span>
             </button>
-            <button class="preset-btn" id="preset-metro" data-tasks="80" data-techs="1000" data-hubs="4">
+            <button class="preset-btn" id="preset-metro" data-tasks="50000" data-techs="10000" data-hubs="4">
               <span class="preset-icon">🏙️</span>
-              <span class="preset-name">Metro Fleet (1k)</span>
+              <span class="preset-name">Metro Fleet (50k)</span>
             </button>
-            <button class="preset-btn" id="preset-equitable" data-tasks="100" data-techs="16" data-hubs="4">
+            <button class="preset-btn" id="preset-equitable" data-tasks="5000" data-techs="1000" data-hubs="2">
               <span class="preset-icon">⚖️</span>
-              <span class="preset-name">Equitable (16)</span>
+              <span class="preset-name">Regional (5k)</span>
             </button>
-            <button class="preset-btn" id="preset-quantum" data-tasks="80" data-techs="12" data-hubs="4">
+            <button class="preset-btn" id="preset-quantum" data-tasks="500" data-techs="500" data-hubs="1">
               <span class="preset-icon">🔬</span>
-              <span class="preset-name">Classiq QAOA</span>
+              <span class="preset-name">Single Hub (500)</span>
             </button>
           </div>
         </div>
@@ -76,22 +76,22 @@
             <input type="range" id="input-techs" min="4" max="35000" step="10" value="35000" class="styled-slider" />
           </div>
 
-          <!-- Customer tasks slider -->
+          <!-- Customer tasks slider: 500 to 250,000 -->
           <div class="input-group">
             <div class="input-label-row">
               <label for="input-tasks">Customer Tasks ($N$)</label>
-              <span class="val-badge" id="badge-tasks">100</span>
+              <span class="val-badge" id="badge-tasks">5,000</span>
             </div>
-            <input type="range" id="input-tasks" min="10" max="500" step="5" value="100" class="styled-slider" />
+            <input type="range" id="input-tasks" min="500" max="250000" step="500" value="5000" class="styled-slider" />
           </div>
 
-          <!-- Service Hubs slider -->
+          <!-- Service Hubs slider: 1 to 10 -->
           <div class="input-group">
             <div class="input-label-row">
               <label for="input-hubs">Regional Depots ($M$)</label>
               <span class="val-badge" id="badge-hubs">4</span>
             </div>
-            <input type="range" id="input-hubs" min="2" max="12" step="1" value="4" class="styled-slider" />
+            <input type="range" id="input-hubs" min="1" max="10" step="1" value="4" class="styled-slider" />
           </div>
 
           <!-- Emergency SLA ratio -->

@@ -130,9 +130,9 @@ class MultiTierWebHandler(SimpleHTTPRequestHandler):
         seed = int(params.get("seed", 42))
 
         # Clamp parameters to safe operational bounds
-        num_tasks = max(10, min(num_tasks, 50000))
+        num_tasks = max(10, min(num_tasks, 250000))
         total_technicians = max(4, min(total_technicians, 50000))
-        num_hubs = max(2, min(num_hubs, 16))
+        num_hubs = max(1, min(num_hubs, 10))
         fuzziness_m = max(1.1, min(fuzziness_m, 3.0))
 
         hubs, tasks = generate_enterprise_service_problem(
@@ -166,6 +166,12 @@ class MultiTierWebHandler(SimpleHTTPRequestHandler):
             for h in result.hubs
         ]
 
+        # For rendering, sample up to 2,000 tasks to keep the browser at 60 FPS while computing all 250,000
+        display_tasks = result.tasks
+        if len(result.tasks) > 2000:
+            step = len(result.tasks) // 2000
+            display_tasks = result.tasks[::step][:2000]
+
         serialized_tasks = [
             {
                 "id": t.id,
@@ -182,8 +188,14 @@ class MultiTierWebHandler(SimpleHTTPRequestHandler):
                 "assigned_depot": t.assigned_depot,
                 "assigned_tech": t.assigned_tech,
             }
-            for t in result.tasks
+            for t in display_tasks
         ]
+
+        # Sample up to 300 active routes for visualization
+        display_techs = result.active_technicians
+        if len(result.active_technicians) > 300:
+            step_tech = len(result.active_technicians) // 300
+            display_techs = result.active_technicians[::step_tech][:300]
 
         serialized_active_techs = [
             {
@@ -201,15 +213,18 @@ class MultiTierWebHandler(SimpleHTTPRequestHandler):
                 "is_shift_compliant": t.is_shift_compliant,
                 "is_skill_compliant": t.is_skill_compliant,
             }
-            for t in result.active_technicians
+            for t in display_techs
         ]
 
         response = {
             "hubs": serialized_hubs,
             "tasks": serialized_tasks,
+            "total_tasks_computed": len(result.tasks),
+            "display_tasks_count": len(serialized_tasks),
             "active_technicians": serialized_active_techs,
             "standby_technicians_count": result.standby_technicians_count,
             "kpis": {
+                "total_tasks": len(result.tasks),
                 "total_technicians": len(result.technicians),
                 "active_technicians_count": len(result.active_technicians),
                 "standby_technicians_count": result.standby_technicians_count,
