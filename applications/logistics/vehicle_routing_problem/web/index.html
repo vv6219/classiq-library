@@ -118,17 +118,17 @@
               <label for="select-method">Calculation Paradigm</label>
               <span class="val-badge" id="badge-method">5. SC-QFCM</span>
             </div>
-            <select id="select-method" class="styled-select" style="width: 100%; background: #111827; color: #00F0FF; border: 1px solid #1F2937; border-radius: 6px; padding: 7px 10px; font-size: 11.5px; font-weight: bold; margin-top: 4px; outline: none; cursor: pointer;">
-              <option value="quantum_multitier_qfcm" selected>⚡ 5. Fuzzy Means with Quantum (SC-QFCM)</option>
-              <option value="classic_fcm">🌀 4. Fuzzy Means without Quantum (Classical FCM)</option>
-              <option value="quantum_kmeans">⚛️ 3. K-Means with Quantum (Born's Swap-Test)</option>
-              <option value="classic_kmeans">📐 2. Classic K-Means without Quantum</option>
-              <option value="baseline_fifo">⏱️ 1. Classic FIFO Baseline</option>
-              <option value="pure_ga_classical">🧬 6. Pure Classical Genetic Algorithm</option>
-              <option value="pure_ga_quantum">⚛️🧬 7. Pure Quantum Genetic Algorithm (QGA)</option>
-              <option value="kmeans_depot_ga_classical">🏢🧬 8. K-Means + Classical GA (per Depot)</option>
-              <option value="kmeans_depot_ga_quantum">⚛️🏢 9. Quantum K-Means + Quantum GA (per Depot)</option>
-              <option value="simulated_annealing">🔥 10. Simulated Annealing Optimization</option>
+            <select id="select-method" class="styled-select" style="width: 100%; background: #111827; color: #00F0FF; color-scheme: dark; border: 1px solid #1F2937; border-radius: 6px; padding: 7px 10px; font-size: 11.5px; font-weight: bold; margin-top: 4px; outline: none; cursor: pointer;">
+              <option value="quantum_multitier_qfcm" style="background-color: #111827; color: #F1F5F9;" selected>⚡ 5. Fuzzy Means with Quantum (SC-QFCM)</option>
+              <option value="classic_fcm" style="background-color: #111827; color: #F1F5F9;">🌀 4. Fuzzy Means without Quantum (Classical FCM)</option>
+              <option value="quantum_kmeans" style="background-color: #111827; color: #F1F5F9;">⚛️ 3. K-Means with Quantum (Born's Swap-Test)</option>
+              <option value="classic_kmeans" style="background-color: #111827; color: #F1F5F9;">📐 2. Classic K-Means without Quantum</option>
+              <option value="baseline_fifo" style="background-color: #111827; color: #F1F5F9;">⏱️ 1. Classic FIFO Baseline</option>
+              <option value="pure_ga_classical" style="background-color: #111827; color: #F1F5F9;">🧬 6. Pure Classical Genetic Algorithm</option>
+              <option value="pure_ga_quantum" style="background-color: #111827; color: #F1F5F9;">⚛️🧬 7. Pure Quantum Genetic Algorithm (QGA)</option>
+              <option value="kmeans_depot_ga_classical" style="background-color: #111827; color: #F1F5F9;">🏢🧬 8. K-Means + Classical GA (per Depot)</option>
+              <option value="kmeans_depot_ga_quantum" style="background-color: #111827; color: #F1F5F9;">⚛️🏢 9. Quantum K-Means + Quantum GA (per Depot)</option>
+              <option value="simulated_annealing" style="background-color: #111827; color: #F1F5F9;">🔥 10. Simulated Annealing Optimization</option>
             </select>
           </div>
 
@@ -212,12 +212,12 @@
 
             <!-- Function Selector Dropdown -->
             <div class="input-group" style="margin-top: 6px;">
-              <select id="select-quantum-kernel" class="styled-select" style="font-size: 10.5px; padding: 4px 6px;">
-                <option value="swap_test" selected>1. Swap-Test Overlap Fidelity (D = 1 - |⟨ψ|c⟩|²)</option>
-                <option value="hadamard_test">2. Hadamard Interference Kernel (D = 1 - Re⟨ψ|c⟩)</option>
-                <option value="fubini_study">3. Fubini-Study Geodesic Angle (D = arccos|⟨ψ|c⟩|)</option>
-                <option value="quantum_euclidean">4. Quantum Hilbert-Euclidean (D = ‖|ψ⟩ - |c⟩‖)</option>
-                <option value="zz_feature_map">5. Entangled ZZ-Feature Map Kernel (D = 1 - K_ZZ)</option>
+              <select id="select-quantum-kernel" class="styled-select" style="width: 100%; font-size: 10.5px; padding: 5px 8px; background: #0F172A; color: #F8FAFC; color-scheme: dark; border: 1px solid rgba(59, 130, 246, 0.45); border-radius: 6px; outline: none; cursor: pointer;">
+                <option value="swap_test" style="background-color: #0F172A; color: #F1F5F9;" selected>1. Swap-Test Overlap Fidelity (D = 1 - |⟨ψ|c⟩|²)</option>
+                <option value="hadamard_test" style="background-color: #0F172A; color: #F1F5F9;">2. Hadamard Interference Kernel (D = 1 - Re⟨ψ|c⟩)</option>
+                <option value="fubini_study" style="background-color: #0F172A; color: #F1F5F9;">3. Fubini-Study Geodesic Angle (D = arccos|⟨ψ|c⟩|)</option>
+                <option value="quantum_euclidean" style="background-color: #0F172A; color: #F1F5F9;">4. Quantum Hilbert-Euclidean (D = ‖|ψ⟩ - |c⟩‖)</option>
+                <option value="zz_feature_map" style="background-color: #0F172A; color: #F1F5F9;">5. Entangled ZZ-Feature Map Kernel (D = 1 - K_ZZ)</option>
               </select>
             </div>
 
@@ -234,12 +234,12 @@
                   <label for="select-quantum-shots" style="font-size: 9.5px;">Sampling Shots</label>
                   <span class="badge-pill" id="badge-quantum-shots" style="font-size: 8.5px;">2,048</span>
                 </div>
-                <select id="select-quantum-shots" class="styled-select" style="font-size: 9.5px; padding: 3px 5px;">
-                  <option value="512">512 shots (Fast)</option>
-                  <option value="1024">1,024 shots</option>
-                  <option value="2048" selected>2,048 shots (Balanced)</option>
-                  <option value="4096">4,096 shots (Precise)</option>
-                  <option value="8192">8,192 shots (Ultra)</option>
+                <select id="select-quantum-shots" class="styled-select" style="font-size: 9.5px; padding: 3px 5px; background: #0F172A; color: #F8FAFC; color-scheme: dark; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 4px; outline: none; cursor: pointer;">
+                  <option value="512" style="background-color: #0F172A; color: #F1F5F9;">512 shots (Fast)</option>
+                  <option value="1024" style="background-color: #0F172A; color: #F1F5F9;">1,024 shots</option>
+                  <option value="2048" style="background-color: #0F172A; color: #F1F5F9;" selected>2,048 shots (Balanced)</option>
+                  <option value="4096" style="background-color: #0F172A; color: #F1F5F9;">4,096 shots (Precise)</option>
+                  <option value="8192" style="background-color: #0F172A; color: #F1F5F9;">8,192 shots (Ultra)</option>
                 </select>
               </div>
 

@@ -3,6 +3,7 @@
    ========================================================================== */
 
 :root {
+  color-scheme: dark;
   --bg-dark: #0B0F19;
   --bg-card: #111827;
   --bg-card-glass: rgba(17, 24, 39, 0.85);
@@ -39,7 +40,8 @@
   padding: 0;
 }
 
-body {
+html, body {
+  color-scheme: dark;
   background-color: var(--bg-dark);
   color: var(--text-main);
   font-family: var(--font-sans);
@@ -267,10 +269,11 @@ body {
   transform: scale(1.2);
 }
 
-.styled-number, .styled-select {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
+.styled-number, .styled-select, select {
+  color-scheme: dark;
+  background-color: #0F172A;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #F8FAFC;
   padding: 4px 8px;
   border-radius: 6px;
   font-family: var(--font-mono);
@@ -278,8 +281,37 @@ body {
   outline: none;
 }
 
-.styled-number:focus, .styled-select:focus {
+.styled-number:focus, .styled-select:focus, select:focus {
   border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.35);
+}
+
+/* Dropdown Menu Options - Explicit Dark Scheme & High Contrast */
+select option,
+.styled-select option {
+  color-scheme: dark;
+  background-color: #0F172A !important;
+  color: #F1F5F9 !important;
+  padding: 6px 10px;
+}
+
+select option:not(:checked),
+.styled-select option:not(:checked) {
+  background-color: #0F172A !important;
+  color: #CBD5E1 !important;
+}
+
+select option:checked,
+.styled-select option:checked {
+  background-color: #1E3A8A !important;
+  color: #00F0FF !important;
+  font-weight: 700;
+}
+
+select option:hover,
+.styled-select option:hover {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
 }
 
 /* Action Buttons */
@@ -1618,5 +1650,44 @@ body {
   accent-color: #6B7280;
   opacity: 0.4;
 }
+
+/* Dedicated High-Contrast Dark Styling for Quantum Kernel Select & Options */
+#select-quantum-kernel,
+#select-quantum-shots,
+#select-method,
+#timeline-speed {
+  color-scheme: dark !important;
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+  border: 1px solid rgba(59, 130, 246, 0.45) !important;
+}
+
+#select-quantum-kernel option,
+#select-quantum-shots option,
+#select-method option,
+#timeline-speed option {
+  color-scheme: dark !important;
+  background-color: #0F172A !important;
+  color: #F1F5F9 !important;
+  padding: 8px 12px;
+}
+
+#select-quantum-kernel option:not(:checked),
+#select-quantum-shots option:not(:checked),
+#select-method option:not(:checked),
+#timeline-speed option:not(:checked) {
+  background-color: #0F172A !important;
+  color: #CBD5E1 !important;
+}
+
+#select-quantum-kernel option:checked,
+#select-quantum-shots option:checked,
+#select-method option:checked,
+#timeline-speed option:checked {
+  background-color: #1E3A8A !important;
+  color: #00F0FF !important;
+  font-weight: 700;
+}
+
 
 
