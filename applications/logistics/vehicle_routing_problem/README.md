@@ -178,8 +178,16 @@ python -c "import pprint; from wms_quantum_optimization_pipeline import benchmar
 
 ---
 
-### 5.3 Running Unit Tests
+### 5.3 Multi-Depot Field-Technician Dispatch (9-Method Framework)
+
+For the complete architectural guide, mathematical formulations, and comparative benchmarks of all 9 dispatch paradigms (including Quantum-Inspired Genetic Algorithms, Hierarchical K-Means + GA, and MCDA multi-criteria winner scoring), see:
+- 📖 **[Comprehensive Algorithms Reference Manual (`ALGORITHMS.md`)](ALGORITHMS.md)**
+
+---
+
+### 5.4 Running Unit Tests
 
 ```powershell
 python -m unittest test_quantum_fmeans.py
+python -m unittest test_multitier_dispatch.py
 ```

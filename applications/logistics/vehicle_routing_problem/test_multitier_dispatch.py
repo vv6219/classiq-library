@@ -83,14 +83,28 @@ class TestMultiTierDispatch(unittest.TestCase):
         self.assertGreater(qm["circuit_depth"], 0)
         self.assertGreater(qm["cx_entangling_gates"], 0)
 
-    def test_06_three_way_benchmark(self):
-        """Validates that 3-way comparative benchmark runs cleanly."""
+    def test_06_five_way_benchmark(self):
+        """Validates that 5-way comparative benchmark runs cleanly with complete metrics."""
         bench = run_comprehensive_benchmark(num_tasks=50, total_technicians=1000, num_hubs=4, seed=42)
         sc = bench["scenarios"]
         self.assertIn("baseline_fifo", sc)
-        self.assertIn("hard_kmeans", sc)
+        self.assertIn("classic_kmeans", sc)
+        self.assertIn("quantum_kmeans", sc)
+        self.assertIn("classic_fcm", sc)
         self.assertIn("quantum_multitier_qfcm", sc)
+        self.assertIn("hard_kmeans", sc)  # Backward compatibility
+        self.assertEqual(len(bench["benchmarks"]), 5)
         self.assertIn("quantum_advantage", bench)
+
+    def test_07_all_five_methods_individual_execution(self):
+        """Validates that each of the 5 methods can be solved independently with 100% skill compliance."""
+        methods = ["baseline_fifo", "classic_kmeans", "quantum_kmeans", "classic_fcm", "quantum_multitier_qfcm"]
+        for m in methods:
+            h_sub, t_sub = generate_enterprise_service_problem(num_tasks=40, total_technicians=20, num_hubs=2, seed=123)
+            res = solve_multitier_dispatch(h_sub, t_sub, method=m)
+            self.assertEqual(res.skill_compliance_rate, 100.0, f"Method {m} must maintain 100% skill compliance")
+            self.assertGreater(res.total_fleet_distance_km, 0.0, f"Method {m} must produce non-zero distance")
+            self.assertGreater(len(res.active_technicians), 0, f"Method {m} must have active technicians")
 
 
 if __name__ == "__main__":
