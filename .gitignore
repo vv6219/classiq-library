@@ -167,3 +167,11 @@ Export/
 
 # Firebase cache
 .firebase/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+
+# DispatchEngine database
+**/dispatchengine.db

@@ -1,0 +1,24 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.35102.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "classiq-library", "classiq-library.pyproj", "{8F124016-D922-4D3E-A00A-9EC29C8B56C7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8F124016-D922-4D3E-A00A-9EC29C8B56C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F124016-D922-4D3E-A00A-9EC29C8B56C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F124016-D922-4D3E-A00A-9EC29C8B56C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F124016-D922-4D3E-A00A-9EC29C8B56C7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B5D5C148-5264-4CE1-B348-7D9AECEE83D0}
+	EndGlobalSection
+EndGlobal

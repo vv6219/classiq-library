@@ -1,0 +1,8 @@
+classiq
+numpy
+scipy
+matplotlib
+pillow
+networkx
+reportlab
+pytest>=7.0

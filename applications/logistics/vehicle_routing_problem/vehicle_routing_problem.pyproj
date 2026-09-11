@@ -1,0 +1,120 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{F9CCA412-FACB-4566-A7D1-99CD24D34C0D}</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>wms_quantum_optimization_pipeline.py</StartupFile>
+    <SearchPath></SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>vehicle_routing_problem</Name>
+    <RootNamespace>vehicle_routing_problem</RootNamespace>
+    <InterpreterId>MSBuild|classiq_env|$(MSBuildProjectFullPath)</InterpreterId>
+    <TestFramework>pytest</TestFramework>
+    <UnitTestPattern>test*.py</UnitTestPattern>
+    <UnitTestRootDirectory>.</UnitTestRootDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Interpreter Include="..\..\..\..\..\..\.gemini\antigravity-ide\scratch\classiq_env\">
+      <Id>classiq_env</Id>
+      <Version>3.11</Version>
+      <Description>classiq_env (Python 3.11)</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\python.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="web\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="export_pdf_report.py" />
+    <Compile Include="generate_comparison_visualization.py" />
+    <Compile Include="generate_multi_depot_quantum_benchmark.py" />
+    <Compile Include="gui_multi_depot_dispatch.py" />
+    <Compile Include="parameter_sweep_limits.py" />
+    <Compile Include="test_multi_depot_dispatch.py" />
+    <Compile Include="test_multitier_dispatch.py" />
+    <Compile Include="test_quantum_fmeans.py" />
+    <Compile Include="test_simulated_annealing.py" />
+    <Compile Include="test_tensor_qimdp.py" />
+    <Compile Include="web_gui_server.py" />
+    <Compile Include="wms_field_technician_dispatch.py" />
+    <Compile Include="wms_multi_depot_qfcm.py" />
+    <Compile Include="wms_multitier_dispatch.py" />
+    <Compile Include="wms_quantum_fmeans.py" />
+    <Compile Include="wms_quantum_optimization_pipeline.py" />
+    <Compile Include="wms_tensor_qimdp.py" />
+    <Compile Include="wms_visual_simulator.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ALGORITHMS.md" />
+    <Content Include="F-means_implementation_plan.md" />
+    <Content Include="FMEANS_VS_KMEANS_40_POINTS_CASE_STUDY.md" />
+    <Content Include="FMEANS_VS_KMEANS_80_POINTS_CASE_STUDY.md" />
+    <Content Include="KMEANS_VS_FMEANS_COMPARISON.md" />
+    <Content Include="MDFTD_VRP_DETAILED_RESULTS_EXPLANATION.md" />
+    <Content Include="mdf_comprehensive_benchmark.png" />
+    <Content Include="mdf_dispatch_100_1000tech.png" />
+    <Content Include="mdf_dispatch_80.png" />
+    <Content Include="mdf_presentation_100pts_16techs.png" />
+    <Content Include="metric_fubini_study.svg" />
+    <Content Include="metric_hadamard_test.svg" />
+    <Content Include="metric_quantum_euclidean.svg" />
+    <Content Include="metric_swap_test.svg" />
+    <Content Include="metric_zz_feature_map.svg" />
+    <Content Include="MULTI_DEPOT_FIELD_TECHNICIAN_VRP_CASE_STUDY.md" />
+    <Content Include="pyproject.toml" />
+    <Content Include="QI-MDP_tensorprompt.md" />
+    <Content Include="QUANTUM_KMEANS_EXPLANATION.md" />
+    <Content Include="README.md" />
+    <Content Include="README_FMEANS.md" />
+    <Content Include="README_TENSOR_QIMDP.md" />
+    <Content Include="requirements.txt" />
+    <Content Include="run_gui.bat" />
+    <Content Include="Tensor_implementation.md" />
+    <Content Include="vehicle_routing_problem.ipynb" />
+    <Content Include="vehicle_routing_problem.metadata.json" />
+    <Content Include="vehicle_routing_problem.qmod" />
+    <Content Include="vehicle_routing_problem.synthesis_options.json" />
+    <Content Include="web\app.js" />
+    <Content Include="web\auth.js" />
+    <Content Include="web\case-study.html" />
+    <Content Include="web\index.html" />
+    <Content Include="web\mdf_comprehensive_benchmark.png" />
+    <Content Include="web\metric_fubini_study.svg" />
+    <Content Include="web\metric_hadamard_test.svg" />
+    <Content Include="web\metric_quantum_euclidean.svg" />
+    <Content Include="web\metric_swap_test.svg" />
+    <Content Include="web\metric_zz_feature_map.svg" />
+    <Content Include="web\MULTI_DEPOT_FIELD_TECHNICIAN_VRP_CASE_STUDY.md" />
+    <Content Include="web\styles.css" />
+    <Content Include="wms_comparison_80.png" />
+    <Content Include="wms_quantum_optimization_pipeline.ipynb" />
+    <Content Include="wms_simulation.gif" />
+    <Content Include="wms_simulation.png" />
+    <Content Include="wms_simulation_60.gif" />
+    <Content Include="wms_simulation_60.png" />
+    <Content Include="wms_simulation_80.gif" />
+    <Content Include="wms_simulation_80.png" />
+    <Content Include="wms_tensor_simulation.gif" />
+    <Content Include="wms_tensor_simulation.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets')" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" Condition="!Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets') and Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets')" />
+  <Target Name="CoreCompile" />
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>
