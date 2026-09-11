@@ -202,13 +202,233 @@ state_b:   |φ> ─────────── x ──── │ ───�
 
 ### 4.3 The 5 Supported Quantum Distance Metrics
 
-| Metric ID | Quantum Kernel Name | Mathematical Formulation | Circuit Primitive | Operational Characteristics |
-| :--- | :--- | :--- | :--- | :--- |
-| `swap_test` | **Swap-Test Overlap Fidelity** | $D_Q = 1 - \|\langle\psi\|c\rangle\|^2 = 2 \cdot P(\|1\rangle_{\text{anc}})$ | Ancilla $H \to \text{CSWAP} \to H$ | Robust baseline overlap metric; sensitive to orthogonal features. |
-| `hadamard_test` | **Hadamard Interference Kernel** | $D_Q = 1 - \text{Re}\langle\psi\|c\rangle = 2 \cdot P(\|1\rangle_{\text{had}})$ | Controlled-$U \to H$ | Linear transition amplitude; lower gate depth ($\approx 28$ vs $42$). |
-| `fubini_study` | **Fubini-Study Geodesic Angle** | $D_Q = \arccos(\|\langle\psi\|c\rangle\|)$ | Projective arc length | True Riemannian distance on complex projective space $\mathbb{C}P^n$. |
-| `quantum_euclidean` | **Quantum Hilbert-Euclidean** | $D_Q = \|| \|\psi\rangle - \|c\rangle \||_2 = \sqrt{2(1 - \|\langle\psi\|c\rangle\|)}$ | Direct vector norm in $\mathcal{H}$ | Preserves physical metric distances in quantum feature space. |
-| `zz_feature_map` | **Entangled ZZ-Feature Map** | $D_Q = 1 - \|\langle 0^{\otimes n}\| U_\Phi^\dagger(c) U_\Phi(x) \|0^{\otimes n}\rangle\|^2$ | $R_z \to \text{CNOT} \to R_z \to \text{CNOT}$ | Captures non-linear cross-correlations between customer features. |
+| Metric ID | Quantum Kernel Name | Circuit Architecture | Mathematical Formulation | Circuit Primitive | Operational Characteristics |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| `swap_test` | **Swap-Test Overlap Fidelity** | [![Swap Test](metric_swap_test.svg)](metric_swap_test.svg) | $D_Q = 1 - \|\langle\psi\|c\rangle\|^2 = 2 \cdot P(\|1\rangle_{\text{anc}})$ | Ancilla $H \to \text{CSWAP} \to H$ | Robust baseline overlap metric; sensitive to orthogonal features. |
+| `hadamard_test` | **Hadamard Interference Kernel** | [![Hadamard Test](metric_hadamard_test.svg)](metric_hadamard_test.svg) | $D_Q = 1 - \text{Re}\langle\psi\|c\rangle = 2 \cdot P(\|1\rangle_{\text{had}})$ | Controlled-$U \to H$ | Linear transition amplitude; lower gate depth ($\approx 28$ vs $42$). |
+| `fubini_study` | **Fubini-Study Geodesic Angle** | [![Fubini Study](metric_fubini_study.svg)](metric_fubini_study.svg) | $D_Q = \arccos(\|\langle\psi\|c\rangle\|)$ | Projective arc length | True Riemannian distance on complex projective space $\mathbb{C}P^n$. |
+| `quantum_euclidean` | **Quantum Hilbert-Euclidean** | [![Quantum Euclidean](metric_quantum_euclidean.svg)](metric_quantum_euclidean.svg) | $D_Q = \|| \|\psi\rangle - \|c\rangle \||_2 = \sqrt{2(1 - \|\langle\psi\|c\rangle\|)}$ | Direct vector norm in $\mathcal{H}$ | Preserves physical metric distances in quantum feature space. |
+| `zz_feature_map` | **Entangled ZZ-Feature Map** | [![ZZ Feature Map](metric_zz_feature_map.svg)](metric_zz_feature_map.svg) | $D_Q = 1 - \|\langle 0^{\otimes n}\| U_\Phi^\dagger(c) U_\Phi(x) \|0^{\otimes n}\rangle\|^2$ | $R_z \to \text{CNOT} \to R_z \to \text{CNOT}$ | Captures non-linear cross-correlations between customer features. |
+
+#### Breakdown of the 5 Metrics:
+1. **`swap_test` (Swap-Test Overlap Fidelity)**
+   * **Operational Characteristics:** Standard overlap metric; highly sensitive to orthogonal features.
+   * **What it measures:** The standard quantum "cosine similarity" squared. It checks how much state $|\psi\rangle$ overlaps with $|c\rangle$.
+   * **How it works:** It uses an extra helper qubit (ancilla) and a Controlled-SWAP gate. Measuring how often the helper qubit ends up in state $|1\rangle$ directly gives the distance.
+   * **Best for:** General-purpose comparisons where you need high sensitivity to whether two states are distinct.
+   * **Illustration Circuit:**
+     ![Swap-Test Overlap Fidelity Circuit](metric_swap_test.svg)
+   * **Classiq Path & Implementation:**
+     `applications.logistics.vehicle_routing_problem.wms_multitier_dispatch.compute_quantum_distance_matrix`
+     <details>
+     <summary><b>View Classiq Python Implementation</b></summary>
+
+     ```python
+     # 1. Import Classiq quantum primitives and standard logic gates:
+     from classiq import qfunc, QArray, QBit, H, control, SWAP
+
+     # 2. Import high-level multi-depot quantum distance calculator:
+     from applications.logistics.vehicle_routing_problem \
+         .wms_multitier_dispatch import (
+             compute_quantum_distance_matrix,
+         )
+
+     # 3. Classiq quantum function definition for swap-test overlap kernel:
+     @qfunc
+     def swap_test_kernel(
+         reg_a: QArray[QBit],  # Register encoding task feature state |ψ⟩
+         reg_b: QArray[QBit],  # Register encoding hub centroid state |c⟩
+         ancilla: QBit,        # Dedicated probe qubit for interference readout
+     ):
+         # Step A: Place probe ancilla into equal superposition (|0⟩ + |1⟩)/√2
+         H(ancilla)
+
+         # Step B: Conditionally swap corresponding feature register qubits
+         for i in range(reg_a.len):
+             control(ancilla, lambda: SWAP(reg_a[i], reg_b[i]))
+
+         # Step C: Re-interfere ancilla; state |1⟩ probability reveals overlap
+         H(ancilla)
+
+     # Step D: Execute sampling over 2048 shots to calculate D_Q = 2 · P(|1⟩)
+     D = compute_quantum_distance_matrix(
+         t_x, t_y, t_sla, t_sk, hubs,  # Task coordinates, SLA & fleet hubs
+         kernel="swap_test",           # Swap-test overlap fidelity selector
+         shots=2048,                   # Hardware/simulator measurement budget
+     )
+     ```
+     </details>
+
+2. **`hadamard_test` (Hadamard Interference Kernel)**
+   * **Operational Characteristics:** Linear transition amplitude; shallower gate depth ($\approx 28$ vs $42$).
+   * **What it measures:** The real part of the direct amplitude, $\text{Re}\langle \psi | c \rangle$, rather than the squared probability.
+   * **How it works:** Uses interference via Hadamard and Controlled-$U$ operations.
+   * **Advantage:** Requires a shallower circuit depth ($\approx 28$ gates vs. $42$), making it faster and less prone to hardware noise on current quantum devices.
+   * **Illustration Circuit:**
+     ![Hadamard Interference Kernel Circuit](metric_hadamard_test.svg)
+   * **Classiq Path & Implementation:**
+     `applications.logistics.vehicle_routing_problem.wms_multitier_dispatch.compute_quantum_distance_matrix`
+     <details>
+     <summary><b>View Classiq Python Implementation</b></summary>
+
+     ```python
+     # 1. Import Classiq synthesis primitives and control gates:
+     from classiq import qfunc, QArray, QBit, H, control
+
+     # 2. Import production multi-tier quantum distance pipeline:
+     from applications.logistics.vehicle_routing_problem \
+         .wms_multitier_dispatch import (
+             compute_quantum_distance_matrix,
+         )
+
+     # 3. Classiq quantum function (low-depth ~28 gates vs ~42 for swap-test):
+     @qfunc
+     def hadamard_test_kernel(
+         reg: QArray[QBit],       # Quantum register holding state |ψ⟩
+         ancilla: QBit,           # Ancilla probe measuring transition amplitude
+         unitary_shift: qfunc,    # Relative rotation U(θ_task - θ_hub)
+     ):
+         # Step A: Create superposition on probe ancilla (|0⟩ + |1⟩)/√2
+         H(ancilla)
+
+         # Step B: Conditionally apply relative phase shift unitary U(Δθ)
+         control(ancilla, lambda: unitary_shift(reg))
+
+         # Step C: Close interference loop; encodes Re⟨ψ|c⟩ into ancilla basis
+         H(ancilla)
+
+     # Step D: Sample expectation value to compute D_Q = 1 - Re⟨ψ|c⟩
+     D = compute_quantum_distance_matrix(
+         t_x, t_y, t_sla, t_sk, hubs,  # Order coordinates & fleet hub anchors
+         kernel="hadamard_test",       # Low-depth hardware-friendly kernel
+         shots=2048,                   # Shot count for expectation value
+     )
+     ```
+     </details>
+
+3. **`fubini_study` (Fubini-Study Geodesic Angle)**
+   * **Operational Characteristics:** True Riemannian distance on complex projective Hilbert space $\mathbb{C}P^n$.
+   * **What it measures:** The "curved path" angle between two quantum rays on the surface of the quantum state space (complex projective space $\mathbb{C}P^n$).
+   * **Intuition:** Instead of cutting straight through space, it measures the shortest path along the spherical surface (like measuring flight distance along Earth's curvature using $\arccos$).
+   * **Best for:** Geometric machine learning and optimization where true Riemannian distance matters.
+   * **Illustration:**
+     ![Fubini-Study Geodesic Riemannian Manifold](metric_fubini_study.svg)
+   * **Classiq Path & Implementation:**
+     `applications.logistics.vehicle_routing_problem.wms_multitier_dispatch.compute_quantum_distance_matrix`
+     <details>
+     <summary><b>View Classiq Python Implementation</b></summary>
+
+     ```python
+     # 1. Import NumPy for numerical manifold operations:
+     import numpy as np
+
+     # 2. Import Classiq-powered multi-tier dispatch optimization module:
+     from applications.logistics.vehicle_routing_problem \
+         .wms_multitier_dispatch import (
+             compute_quantum_distance_matrix,
+         )
+
+     # 3. Geometric Riemannian distance calculation on CP^n manifold:
+     #    - Step A: Quantum circuit samples state overlap fidelity F = |⟨ψ|c⟩|²
+     #    - Step B: Amplitude magnitude is recovered via √F = |⟨ψ|c⟩|
+     #    - Step C: True geodesic arc length computed via θ_FS = arccos(|⟨ψ|c⟩|)
+     #    - Preserves curved state-space geometry without flat-space distortion
+     D = compute_quantum_distance_matrix(
+         t_x, t_y, t_sla, t_sk, hubs,  # Task features (GPS, SLA, skill tier)
+         kernel="fubini_study",        # Riemannian geodesic metric on CP^n
+         shots=2048,                   # Quantum circuit sampling shots
+     )
+     ```
+     </details>
+
+4. **`quantum_euclidean` (Quantum Hilbert-Euclidean)**
+   * **Operational Characteristics:** Preserves physical metric distances in quantum state space.
+   * **What it measures:** The straight-line Euclidean distance between two state vectors in Hilbert space: $\sqrt{\langle\psi - c|\psi - c\rangle}$.
+   * **Intuition:** The exact quantum equivalent of traditional classical Euclidean distance ($L_2$ norm).
+   * **Best for:** Clustering or classification algorithms (e.g., $k$-means, nearest neighbors) transferred directly from classical machine learning.
+   * **Illustration:**
+     ![Quantum Hilbert-Euclidean Vector Norm](metric_quantum_euclidean.svg)
+   * **Classiq Path & Implementation:**
+     `applications.logistics.vehicle_routing_problem.wms_multitier_dispatch.compute_quantum_distance_matrix`
+     <details>
+     <summary><b>View Classiq Python Implementation</b></summary>
+
+     ```python
+     # 1. Import NumPy for vector norm scaling and precision clipping:
+     import numpy as np
+
+     # 2. Import Classiq multi-depot optimization distance matrix engine:
+     from applications.logistics.vehicle_routing_problem \
+         .wms_multitier_dispatch import (
+             compute_quantum_distance_matrix,
+         )
+
+     # 3. Quantum Hilbert-space Euclidean distance (L2 norm):
+     #    - Step A: Evaluates quantum state overlap fidelity F = |⟨ψ|c⟩|²
+     #    - Step B: Maps overlap to Hilbert vector difference:
+     #              D_Q = || |ψ⟩ - |c⟩ ||₂ = √(2 · (1 - √F))
+     #    - Step C: Provides an exact zero-distortion drop-in replacement
+     #              for classical Euclidean k-means / fuzzy clustering
+     D = compute_quantum_distance_matrix(
+         t_x, t_y, t_sla, t_sk, hubs,  # Task coordinates, SLA & skills
+         kernel="quantum_euclidean",   # Hilbert-space Euclidean norm
+         shots=2048,                   # Hardware-synthesized circuit shots
+     )
+     ```
+     </details>
+
+5. **`zz_feature_map` (Entangled ZZ-Feature Map)**
+   * **Operational Characteristics:** Captures non-linear cross-correlations between customer service features.
+   * **What it measures:** Distance after projecting raw classical features ($x$ and $c$) into an entangled quantum state using rotations ($R_z$) and CNOT entangling gates.
+   * **Intuition:** A non-linear quantum kernel. It maps input variables into a high-dimensional space where complex interactions between features become linearly separable.
+   * **Best for:** Tabular or structured data with complex cross-correlations (e.g., customer behavior features).
+   * **Illustration Circuit:**
+     ![Entangled ZZ-Feature Map Circuit](metric_zz_feature_map.svg)
+   * **Classiq Path & Implementation:**
+     `applications.logistics.vehicle_routing_problem.wms_multitier_dispatch.compute_quantum_distance_matrix`
+     <details>
+     <summary><b>View Classiq Python Implementation</b></summary>
+
+     ```python
+     # 1. Import Classiq quantum gates and functional utilities:
+     from classiq import qfunc, QArray, QBit, H, RZ, CX, apply_to_all
+
+     # 2. Import quantum distance matrix computation pipeline:
+     from applications.logistics.vehicle_routing_problem \
+         .wms_multitier_dispatch import (
+             compute_quantum_distance_matrix,
+         )
+
+     # 3. Define non-linear entangled quantum feature map circuit (Havlichek et al.):
+     @qfunc
+     def zz_feature_map_circuit(
+         q: QArray[QBit],     # Register of feature qubits
+         x: list[float],      # Continuous input features (coordinates, SLA, skills)
+         gamma: float = 1.0,  # Entanglement coupling strength hyperparameter
+     ):
+         # Step A: Initialize all qubits into equal superposition |+⟩
+         apply_to_all(H, q)
+
+         # Step B: Encode single-feature non-linear rotations via RZ(2·x_i)
+         for i in range(q.len):
+             RZ(2.0 * x[i], q[i])
+
+         # Step C: Synthesize 2-qubit ZZ entanglement via CNOT-RZ-CNOT ladder
+         for i in range(q.len - 1):
+             CX(q[i], q[i + 1])  # Entangle adjacent feature qubits
+             # Cross-feature non-linear interaction phase:
+             RZ(2.0 * gamma * (np.pi - x[i]) * (np.pi - x[i + 1]), q[i + 1])
+             CX(q[i], q[i + 1])  # Disentangle to complete ZZ interaction
+
+     # Step D: Compute distance matrix using the entangled quantum kernel
+     D = compute_quantum_distance_matrix(
+         t_x, t_y, t_sla, t_sk, hubs,  # Order parameters and hub centers
+         kernel="zz_feature_map",      # Entangled non-linear kernel
+         gamma=1.0,                    # Coupling strength factor
+         shots=2048,                   # Sampling measurement budget
+     )
+     ```
+     </details>
 
 ---
 

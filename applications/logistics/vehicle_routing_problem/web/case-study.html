@@ -13,6 +13,8 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '\\(', right: '\\)', display: false}]});"></script>
   <link rel="stylesheet" href="styles.css" />
+  <!-- Security Gateway Authentication Barrier -->
+  <script src="auth.js"></script>
   <style>
     :root {
       --bg-dark: #0B0F19;
@@ -305,7 +307,10 @@
       border-left: 3px solid var(--cyan-accent);
       border-radius: 6px;
       padding: 16px 20px;
-      overflow-x: auto;
+      overflow-x: hidden;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      word-break: break-word;
       font-family: var(--font-mono);
       font-size: 12px;
       color: #E2E8F0;
@@ -338,6 +343,7 @@
       padding: 11px 16px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       color: #CBD5E1;
+      vertical-align: middle;
     }
     .benchmark-table tr:last-child td {
       border-bottom: none;
@@ -480,6 +486,251 @@
       color: #64748B;
       font-size: 12px;
     }
+    /* 4.3 Metric Breakdown Cards */
+    .metrics-breakdown-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+      margin: 20px 0 32px;
+    }
+    @media (min-width: 900px) {
+      .metrics-breakdown-grid {
+        grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      }
+    }
+    .metric-detail-card {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 22px;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .metric-detail-card:hover {
+      border-color: rgba(255, 255, 255, 0.22);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .metric-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .metric-card-top code {
+      color: var(--cyan-accent);
+      background: rgba(0, 240, 255, 0.08);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12.5px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+    .metric-detail-card h5 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: #F8FAFC;
+    }
+    .metric-item {
+      font-size: 13px;
+      line-height: 1.55;
+      color: #CBD5E1;
+    }
+    .metric-label {
+      font-weight: 700;
+      color: #94A3B8;
+      display: inline-block;
+      margin-right: 5px;
+    }
+    .metric-desc {
+      color: #E2E8F0;
+    }
+    .metric-svg-wrapper {
+      margin: 8px 0;
+      background: #090D16;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .metric-svg-img {
+      width: 100%;
+      height: auto;
+      max-height: 220px;
+      display: block;
+    }
+    .classiq-path-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      width: 100%;
+      background: rgba(14, 165, 233, 0.06);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 8px 0 6px 0;
+      box-sizing: border-box;
+    }
+    .classiq-path-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #38BDF8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .classiq-path-badge code {
+      font-family: var(--font-mono);
+      color: #BAE6FD;
+      font-size: 11px;
+      line-height: 1.45;
+      word-break: break-all;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .metric-code-snippet {
+      background: #060911;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-left: 3px solid var(--cyan-accent);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 4px 0 0 0;
+      overflow-x: hidden;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      word-break: break-word;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #E2E8F0;
+      line-height: 1.55;
+    }
+    .metric-code-snippet code {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      word-break: break-word;
+      font-family: inherit;
+    }
+    /* Expandable / Collapsible Python Code Toggle */
+    .metric-code-toggle {
+      margin-top: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      background: #060911;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    .metric-code-toggle[open] {
+      border-color: rgba(56, 189, 248, 0.35);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+    .metric-code-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #94A3B8;
+      background: rgba(255, 255, 255, 0.025);
+      transition: all 0.2s ease;
+      list-style: none;
+    }
+    .metric-code-summary::-webkit-details-marker {
+      display: none;
+    }
+    .metric-code-summary:hover {
+      background: rgba(56, 189, 248, 0.06);
+      color: var(--cyan-accent);
+    }
+    .code-summary-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .code-summary-left svg {
+      color: var(--cyan-accent);
+      flex-shrink: 0;
+    }
+    .code-summary-action {
+      font-size: 10.5px;
+      font-family: var(--font-mono);
+      color: var(--cyan-accent);
+      padding: 2px 8px;
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+    .metric-code-toggle[open] .code-summary-action {
+      color: #94A3B8;
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .metric-code-toggle:not([open]) .code-summary-action::after {
+      content: "View Code \2193";
+    }
+    .metric-code-toggle[open] .code-summary-action::after {
+      content: "Hide Code \2191";
+    }
+    .metric-code-toggle .metric-code-snippet {
+      margin: 0;
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0;
+    }
+    .metric-opchar {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 6px 0 10px 0;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    .metric-opchar .metric-label {
+      color: var(--cyan-accent);
+      font-weight: 700;
+      margin-right: 6px;
+    }
+    .metric-opchar .metric-desc {
+      color: #F8FAFC;
+      font-weight: 500;
+    }
+    .table-metric-thumb {
+      width: 175px;
+      height: 60px;
+      object-fit: contain;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: #090D16;
+      padding: 3px 6px;
+      transition: all 0.25s ease;
+      display: block;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+    }
+    .table-metric-thumb:hover {
+      transform: scale(1.08);
+      border-color: var(--cyan-accent);
+      box-shadow: 0 4px 16px rgba(0, 240, 255, 0.35);
+    }
   </style>
 </head>
 <body>
@@ -503,6 +754,10 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Raw Markdown
         </a>
+        <button class="sub-btn btn-lock-session" title="Lock session and sign out" style="border-color: rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.08); color: #FDA4AF; cursor: pointer;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          🔒 Lock Session
+        </button>
       </div>
     </div>
 
@@ -780,6 +1035,7 @@ state_b:   |φ> ─────────── x ──── │ ───�
             <tr>
               <th>Metric ID</th>
               <th>Quantum Kernel Name</th>
+              <th>Circuit Architecture</th>
               <th>Mathematical Formulation</th>
               <th>Circuit Primitive</th>
               <th>Operational Characteristics</th>
@@ -789,6 +1045,11 @@ state_b:   |φ> ─────────── x ──── │ ───�
             <tr>
               <td><code>swap_test</code></td>
               <td><strong>Swap-Test Overlap Fidelity</strong></td>
+              <td>
+                <a href="metric_swap_test.svg" target="_blank" title="Click to view Swap-Test Circuit Diagram">
+                  <img src="metric_swap_test.svg" alt="Swap-Test Circuit Diagram" class="table-metric-thumb" />
+                </a>
+              </td>
               <td>\(D_Q = 1 - |\langle\psi|c\rangle|^2 = 2 \cdot P(|1\rangle_{\text{anc}})\)</td>
               <td>Ancilla \(H \to \text{CSWAP} \to H\)</td>
               <td>Standard overlap metric; highly sensitive to orthogonal features.</td>
@@ -796,6 +1057,11 @@ state_b:   |φ> ─────────── x ──── │ ───�
             <tr>
               <td><code>hadamard_test</code></td>
               <td><strong>Hadamard Interference Kernel</strong></td>
+              <td>
+                <a href="metric_hadamard_test.svg" target="_blank" title="Click to view Hadamard Interference Circuit Diagram">
+                  <img src="metric_hadamard_test.svg" alt="Hadamard Interference Circuit Diagram" class="table-metric-thumb" />
+                </a>
+              </td>
               <td>\(D_Q = 1 - \text{Re}\langle\psi|c\rangle = 2 \cdot P(|1\rangle_{\text{had}})\)</td>
               <td>Controlled-\(U \to H\)</td>
               <td>Linear transition amplitude; shallower gate depth (\(\approx 28\) vs \(42\)).</td>
@@ -803,6 +1069,11 @@ state_b:   |φ> ─────────── x ──── │ ───�
             <tr>
               <td><code>fubini_study</code></td>
               <td><strong>Fubini-Study Geodesic Angle</strong></td>
+              <td>
+                <a href="metric_fubini_study.svg" target="_blank" title="Click to view Fubini-Study Circuit Diagram">
+                  <img src="metric_fubini_study.svg" alt="Fubini-Study Circuit Diagram" class="table-metric-thumb" />
+                </a>
+              </td>
               <td>\(D_Q = \arccos(|\langle\psi|c\rangle|)\)</td>
               <td>Projective arc length</td>
               <td>True Riemannian distance on complex projective Hilbert space \(\mathbb{C}P^n\).</td>
@@ -810,6 +1081,11 @@ state_b:   |φ> ─────────── x ──── │ ───�
             <tr>
               <td><code>quantum_euclidean</code></td>
               <td><strong>Quantum Hilbert-Euclidean</strong></td>
+              <td>
+                <a href="metric_quantum_euclidean.svg" target="_blank" title="Click to view Quantum Hilbert-Euclidean Diagram">
+                  <img src="metric_quantum_euclidean.svg" alt="Quantum Hilbert-Euclidean Diagram" class="table-metric-thumb" />
+                </a>
+              </td>
               <td>\(D_Q = \|| |\psi\rangle - |c\rangle \||_2 = \sqrt{2(1 - |\langle\psi|c\rangle|)}\)</td>
               <td>Direct vector norm in \(\mathcal{H}\)</td>
               <td>Preserves physical metric distances in quantum state space.</td>
@@ -817,12 +1093,389 @@ state_b:   |φ> ─────────── x ──── │ ───�
             <tr>
               <td><code>zz_feature_map</code></td>
               <td><strong>Entangled ZZ-Feature Map</strong></td>
+              <td>
+                <a href="metric_zz_feature_map.svg" target="_blank" title="Click to view Entangled ZZ-Feature Map Circuit Diagram">
+                  <img src="metric_zz_feature_map.svg" alt="Entangled ZZ-Feature Map Circuit Diagram" class="table-metric-thumb" />
+                </a>
+              </td>
               <td>\(D_Q = 1 - |\langle 0^{\otimes n}| U_\Phi^\dagger(c) U_\Phi(x) |0^{\otimes n}\rangle|^2\)</td>
               <td>\(R_z \to \text{CNOT} \to R_z \to \text{CNOT}\)</td>
               <td>Captures non-linear cross-correlations between customer service features.</td>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <h4>Breakdown of the 5 Metrics</h4>
+      <div class="metrics-breakdown-grid">
+        <!-- 1. swap_test -->
+        <div class="metric-detail-card" style="border-left: 3px solid var(--cyan-accent);">
+          <div class="metric-card-top">
+            <code>swap_test</code>
+            <span class="badge badge-cyan">Overlap Fidelity</span>
+          </div>
+          <h5>Swap-Test Overlap Fidelity</h5>
+          <div class="metric-opchar">
+            <span class="metric-label">Operational Characteristics:</span>
+            <span class="metric-desc">Standard overlap metric; highly sensitive to orthogonal features.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">What it measures:</span>
+            <span class="metric-desc">The standard quantum &ldquo;cosine similarity&rdquo; squared. It checks how much state \(|\psi\rangle\) overlaps with \(|c\rangle\).</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">How it works:</span>
+            <span class="metric-desc">It uses an extra helper qubit (ancilla) and a Controlled-SWAP gate. Measuring how often the helper qubit ends up in state \(|1\rangle\) directly gives the distance.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Best for:</span>
+            <span class="metric-desc">General-purpose comparisons where you need high sensitivity to whether two states are distinct.</span>
+          </div>
+          
+          <div class="metric-svg-wrapper">
+            <img src="metric_swap_test.svg" alt="Swap-Test Overlap Fidelity Circuit Diagram" class="metric-svg-img" loading="lazy" />
+          </div>
+
+          <div class="classiq-path-badge">
+            <div class="classiq-path-header">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <span>Classiq Path</span>
+            </div>
+            <code>applications.logistics.vehicle_routing_problem.wms_multitier_dispatch.compute_quantum_distance_matrix</code>
+          </div>
+          <details class="metric-code-toggle">
+            <summary class="metric-code-summary">
+              <span class="code-summary-left">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span>Classiq Python Implementation</span>
+              </span>
+              <span class="code-summary-action"></span>
+            </summary>
+            <pre class="metric-code-snippet"><code># 1. Import Classiq quantum primitives and standard logic gates:
+from classiq import qfunc, QArray, QBit, H, control, SWAP
+
+# 2. Import high-level multi-depot quantum distance calculator:
+from applications.logistics.vehicle_routing_problem \
+    .wms_multitier_dispatch import (
+        compute_quantum_distance_matrix,
+    )
+
+# 3. Classiq quantum function definition for swap-test overlap kernel:
+@qfunc
+def swap_test_kernel(
+    reg_a: QArray[QBit],  # Register encoding task feature state |ψ⟩
+    reg_b: QArray[QBit],  # Register encoding hub centroid state |c⟩
+    ancilla: QBit,        # Dedicated probe qubit for interference readout
+):
+    # Step A: Place probe ancilla into equal superposition (|0⟩ + |1⟩)/√2
+    H(ancilla)
+
+    # Step B: Conditionally swap corresponding feature register qubits
+    for i in range(reg_a.len):
+        control(ancilla, lambda: SWAP(reg_a[i], reg_b[i]))
+
+    # Step C: Re-interfere ancilla; state |1⟩ probability reveals overlap
+    H(ancilla)
+
+# Step D: Execute sampling over 2048 shots to calculate D_Q = 2 · P(|1⟩)
+D = compute_quantum_distance_matrix(
+    t_x, t_y, t_sla, t_sk, hubs,  # Task coordinates, SLA & fleet hubs
+    kernel="swap_test",           # Swap-test overlap fidelity selector
+    shots=2048,                   # Hardware/simulator measurement budget
+)</code></pre>
+          </details>
+        </div>
+
+        <!-- 2. hadamard_test -->
+        <div class="metric-detail-card" style="border-left: 3px solid var(--emerald-accent);">
+          <div class="metric-card-top">
+            <code>hadamard_test</code>
+            <span class="badge badge-emerald">Low-Depth Kernel</span>
+          </div>
+          <h5>Hadamard Interference Kernel</h5>
+          <div class="metric-opchar">
+            <span class="metric-label">Operational Characteristics:</span>
+            <span class="metric-desc">Linear transition amplitude; shallower gate depth (\(\approx 28\) vs \(42\)).</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">What it measures:</span>
+            <span class="metric-desc">The real part of the direct amplitude, \(\text{Re}\langle \psi | c \rangle\), rather than the squared probability.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">How it works:</span>
+            <span class="metric-desc">Uses interference via Hadamard and Controlled-\(U\) operations.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Advantage:</span>
+            <span class="metric-desc">Requires a shallower circuit depth (\(\approx 28\) gates vs. \(42\)), making it faster and less prone to hardware noise on current quantum devices.</span>
+          </div>
+
+          <div class="metric-svg-wrapper">
+            <img src="metric_hadamard_test.svg" alt="Hadamard Interference Kernel Circuit Diagram" class="metric-svg-img" loading="lazy" />
+          </div>
+
+          <div class="classiq-path-badge">
+            <div class="classiq-path-header">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <span>Classiq Path</span>
+            </div>
+            <code>applications.logistics.vehicle_routing_problem.wms_multitier_dispatch.compute_quantum_distance_matrix</code>
+          </div>
+          <details class="metric-code-toggle">
+            <summary class="metric-code-summary">
+              <span class="code-summary-left">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span>Classiq Python Implementation</span>
+              </span>
+              <span class="code-summary-action"></span>
+            </summary>
+            <pre class="metric-code-snippet"><code># 1. Import Classiq synthesis primitives and control gates:
+from classiq import qfunc, QArray, QBit, H, control
+
+# 2. Import production multi-tier quantum distance pipeline:
+from applications.logistics.vehicle_routing_problem \
+    .wms_multitier_dispatch import (
+        compute_quantum_distance_matrix,
+    )
+
+# 3. Classiq quantum function (low-depth ~28 gates vs ~42 for swap-test):
+@qfunc
+def hadamard_test_kernel(
+    reg: QArray[QBit],       # Quantum register holding state |ψ⟩
+    ancilla: QBit,           # Ancilla probe measuring transition amplitude
+    unitary_shift: qfunc,    # Relative rotation U(θ_task - θ_hub)
+):
+    # Step A: Create superposition on probe ancilla (|0⟩ + |1⟩)/√2
+    H(ancilla)
+
+    # Step B: Conditionally apply relative phase shift unitary U(Δθ)
+    control(ancilla, lambda: unitary_shift(reg))
+
+    # Step C: Close interference loop; encodes Re⟨ψ|c⟩ into ancilla basis
+    H(ancilla)
+
+# Step D: Sample expectation value to compute D_Q = 1 - Re⟨ψ|c⟩
+D = compute_quantum_distance_matrix(
+    t_x, t_y, t_sla, t_sk, hubs,  # Order coordinates & fleet hub anchors
+    kernel="hadamard_test",       # Low-depth hardware-friendly kernel
+    shots=2048,                   # Shot count for expectation value
+)</code></pre>
+          </details>
+        </div>
+
+        <!-- 3. fubini_study -->
+        <div class="metric-detail-card" style="border-left: 3px solid var(--blue-accent);">
+          <div class="metric-card-top">
+            <code>fubini_study</code>
+            <span class="badge badge-blue">Riemannian Metric</span>
+          </div>
+          <h5>Fubini-Study Geodesic Angle</h5>
+          <div class="metric-opchar">
+            <span class="metric-label">Operational Characteristics:</span>
+            <span class="metric-desc">True Riemannian distance on complex projective Hilbert space \(\mathbb{C}P^n\).</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">What it measures:</span>
+            <span class="metric-desc">The &ldquo;curved path&rdquo; angle between two quantum rays on the surface of the quantum state space (complex projective space \(\mathbb{C}P^n\)).</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Intuition:</span>
+            <span class="metric-desc">Instead of cutting straight through space, it measures the shortest path along the spherical surface (like measuring flight distance along Earth's curvature using \(\arccos\)).</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Best for:</span>
+            <span class="metric-desc">Geometric machine learning and optimization where true Riemannian distance matters.</span>
+          </div>
+
+          <div class="metric-svg-wrapper">
+            <img src="metric_fubini_study.svg" alt="Fubini-Study Geodesic Riemannian Manifold on CP^n" class="metric-svg-img" loading="lazy" />
+          </div>
+
+          <div class="classiq-path-badge">
+            <div class="classiq-path-header">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <span>Classiq Path</span>
+            </div>
+            <code>applications.logistics.vehicle_routing_problem.wms_multitier_dispatch.compute_quantum_distance_matrix</code>
+          </div>
+          <details class="metric-code-toggle">
+            <summary class="metric-code-summary">
+              <span class="code-summary-left">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span>Classiq Python Implementation</span>
+              </span>
+              <span class="code-summary-action"></span>
+            </summary>
+            <pre class="metric-code-snippet"><code># 1. Import NumPy for numerical manifold operations:
+import numpy as np
+
+# 2. Import Classiq-powered multi-tier dispatch optimization module:
+from applications.logistics.vehicle_routing_problem \
+    .wms_multitier_dispatch import (
+        compute_quantum_distance_matrix,
+    )
+
+# 3. Geometric Riemannian distance calculation on CP^n manifold:
+#    - Step A: Quantum circuit samples state overlap fidelity F = |⟨ψ|c⟩|²
+#    - Step B: Amplitude magnitude is recovered via √F = |⟨ψ|c⟩|
+#    - Step C: True geodesic arc length computed via θ_FS = arccos(|⟨ψ|c⟩|)
+#    - Preserves curved state-space geometry without flat-space distortion
+D = compute_quantum_distance_matrix(
+    t_x, t_y, t_sla, t_sk, hubs,  # Task features (GPS, SLA, skill tier)
+    kernel="fubini_study",        # Riemannian geodesic metric on CP^n
+    shots=2048,                   # Quantum circuit sampling shots
+)</code></pre>
+          </details>
+        </div>
+
+        <!-- 4. quantum_euclidean -->
+        <div class="metric-detail-card" style="border-left: 3px solid var(--amber-accent);">
+          <div class="metric-card-top">
+            <code>quantum_euclidean</code>
+            <span class="badge badge-amber">Hilbert L₂ Norm</span>
+          </div>
+          <h5>Quantum Hilbert-Euclidean</h5>
+          <div class="metric-opchar">
+            <span class="metric-label">Operational Characteristics:</span>
+            <span class="metric-desc">Preserves physical metric distances in quantum state space.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">What it measures:</span>
+            <span class="metric-desc">The straight-line Euclidean distance between two state vectors in Hilbert space: \(\sqrt{\langle\psi - c|\psi - c\rangle}\).</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Intuition:</span>
+            <span class="metric-desc">The exact quantum equivalent of traditional classical Euclidean distance (\(L_2\) norm).</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Best for:</span>
+            <span class="metric-desc">Clustering or classification algorithms (e.g., \(k\)-means, nearest neighbors) transferred directly from classical machine learning.</span>
+          </div>
+
+          <div class="metric-svg-wrapper">
+            <img src="metric_quantum_euclidean.svg" alt="Quantum Hilbert-Euclidean Vector Norm Diagram" class="metric-svg-img" loading="lazy" />
+          </div>
+
+          <div class="classiq-path-badge">
+            <div class="classiq-path-header">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <span>Classiq Path</span>
+            </div>
+            <code>applications.logistics.vehicle_routing_problem.wms_multitier_dispatch.compute_quantum_distance_matrix</code>
+          </div>
+          <details class="metric-code-toggle">
+            <summary class="metric-code-summary">
+              <span class="code-summary-left">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span>Classiq Python Implementation</span>
+              </span>
+              <span class="code-summary-action"></span>
+            </summary>
+            <pre class="metric-code-snippet"><code># 1. Import NumPy for vector norm scaling and precision clipping:
+import numpy as np
+
+# 2. Import Classiq multi-depot optimization distance matrix engine:
+from applications.logistics.vehicle_routing_problem \
+    .wms_multitier_dispatch import (
+        compute_quantum_distance_matrix,
+    )
+
+# 3. Quantum Hilbert-space Euclidean distance (L2 norm):
+#    - Step A: Evaluates quantum state overlap fidelity F = |⟨ψ|c⟩|²
+#    - Step B: Maps overlap to Hilbert vector difference:
+#              D_Q = || |ψ⟩ - |c⟩ ||₂ = √(2 · (1 - √F))
+#    - Step C: Provides an exact zero-distortion drop-in replacement
+#              for classical Euclidean k-means / fuzzy clustering
+D = compute_quantum_distance_matrix(
+    t_x, t_y, t_sla, t_sk, hubs,  # Task coordinates, SLA & skills
+    kernel="quantum_euclidean",   # Hilbert-space Euclidean norm
+    shots=2048,                   # Hardware-synthesized circuit shots
+)</code></pre>
+          </details>
+        </div>
+
+        <!-- 5. zz_feature_map -->
+        <div class="metric-detail-card" style="border-left: 3px solid var(--rose-accent);">
+          <div class="metric-card-top">
+            <code>zz_feature_map</code>
+            <span class="badge badge-rose">Entangled Kernel</span>
+          </div>
+          <h5>Entangled ZZ-Feature Map</h5>
+          <div class="metric-opchar">
+            <span class="metric-label">Operational Characteristics:</span>
+            <span class="metric-desc">Captures non-linear cross-correlations between customer service features.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">What it measures:</span>
+            <span class="metric-desc">Distance after projecting raw classical features (\(x\) and \(c\)) into an entangled quantum state using rotations (\(R_z\)) and CNOT entangling gates.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Intuition:</span>
+            <span class="metric-desc">A non-linear quantum kernel. It maps input variables into a high-dimensional space where complex interactions between features become linearly separable.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Best for:</span>
+            <span class="metric-desc">Tabular or structured data with complex cross-correlations (e.g., customer behavior features).</span>
+          </div>
+
+          <div class="metric-svg-wrapper">
+            <img src="metric_zz_feature_map.svg" alt="Entangled ZZ Feature Map Quantum Circuit" class="metric-svg-img" loading="lazy" />
+          </div>
+
+          <div class="classiq-path-badge">
+            <div class="classiq-path-header">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <span>Classiq Path</span>
+            </div>
+            <code>applications.logistics.vehicle_routing_problem.wms_multitier_dispatch.compute_quantum_distance_matrix</code>
+          </div>
+          <details class="metric-code-toggle">
+            <summary class="metric-code-summary">
+              <span class="code-summary-left">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span>Classiq Python Implementation</span>
+              </span>
+              <span class="code-summary-action"></span>
+            </summary>
+            <pre class="metric-code-snippet"><code># 1. Import Classiq quantum gates and functional utilities:
+from classiq import qfunc, QArray, QBit, H, RZ, CX, apply_to_all
+
+# 2. Import quantum distance matrix computation pipeline:
+from applications.logistics.vehicle_routing_problem \
+    .wms_multitier_dispatch import (
+        compute_quantum_distance_matrix,
+    )
+
+# 3. Define non-linear entangled quantum feature map circuit (Havlichek et al.):
+@qfunc
+def zz_feature_map_circuit(
+    q: QArray[QBit],     # Register of feature qubits
+    x: list[float],      # Continuous input features (coordinates, SLA, skills)
+    gamma: float = 1.0,  # Entanglement coupling strength hyperparameter
+):
+    # Step A: Initialize all qubits into equal superposition |+⟩
+    apply_to_all(H, q)
+
+    # Step B: Encode single-feature non-linear rotations via RZ(2·x_i)
+    for i in range(q.len):
+        RZ(2.0 * x[i], q[i])
+
+    # Step C: Synthesize 2-qubit ZZ entanglement via CNOT-RZ-CNOT ladder
+    for i in range(q.len - 1):
+        CX(q[i], q[i + 1])  # Entangle adjacent feature qubits
+        # Cross-feature non-linear interaction phase:
+        RZ(2.0 * gamma * (np.pi - x[i]) * (np.pi - x[i + 1]), q[i + 1])
+        CX(q[i], q[i + 1])  # Disentangle to complete ZZ interaction
+
+# Step D: Compute distance matrix using the entangled quantum kernel
+D = compute_quantum_distance_matrix(
+    t_x, t_y, t_sla, t_sk, hubs,  # Order parameters and hub centers
+    kernel="zz_feature_map",      # Entangled non-linear kernel
+    gamma=1.0,                    # Coupling strength factor
+    shots=2048,                   # Sampling measurement budget
+)</code></pre>
+          </details>
+        </div>
       </div>
 
       <pre class="code-block"><code>def compute_quantum_distance_matrix(

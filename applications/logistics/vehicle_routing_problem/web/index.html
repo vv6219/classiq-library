@@ -11,6 +11,8 @@
   <!-- Chart.js for executive analytics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="styles.css" />
+  <!-- Security Gateway Authentication Barrier -->
+  <script src="auth.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -47,6 +49,10 @@
           <span class="stat-label" style="color: #60A5FA;">Whitepaper</span>
           <span class="stat-val" style="color: #F8FAFC; font-size: 11px;">📄 Google Doc</span>
         </a>
+        <button class="header-stat btn-lock-session" title="Lock session and sign out" style="cursor: pointer; border: 1px solid rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.08);">
+          <span class="stat-label" style="color: #F43F5E;">Security</span>
+          <span class="stat-val" style="color: #FDA4AF; font-size: 11px;">🔒 Lock</span>
+        </button>
       </div>
     </header>
 
