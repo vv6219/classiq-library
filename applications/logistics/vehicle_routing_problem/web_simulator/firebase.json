@@ -18,6 +18,18 @@
         "destination": "/api/v1/presentation/runs/RUN-ACTIVE-001/graphs/:graph.png"
       },
       {
+        "source": "/docs",
+        "destination": "/docs.html"
+      },
+      {
+        "source": "/redoc",
+        "destination": "/redoc.html"
+      },
+      {
+        "source": "/sqlite",
+        "destination": "/sqlite.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

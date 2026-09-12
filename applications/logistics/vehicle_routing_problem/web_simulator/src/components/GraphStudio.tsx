@@ -42,11 +42,13 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
   const [viewMode, setViewMode] = useState<'figure' | 'vector'>('figure');
   const [copiedNotification, setCopiedNotification] = useState<boolean>(false);
   const [dossierTab, setDossierTab] = useState<'all' | 'meaning' | 'elements' | 'acronyms' | 'results'>('all');
+  const [activeStudioTab, setActiveStudioTab] = useState<'chart' | 'dossier'>('chart');
 
   const graphOptions = [
     {
       id: 'spatial',
       title: 'Spatial Routing Network G=(V, A)',
+      shortTitle: 'Spatial G=(V,A)',
       icon: Network,
       desc: 'Multi-AMR directed tour overlay, depots, picking bins & chutes',
       tooltip: 'Spatial Directed Network G=(V, A): Visualizes origin depots, picking bins, drop chutes, and charging bays. Directed arcs demonstrate collision-free tours with one-way aisle flow and MTZ subtour elimination.',
@@ -54,6 +56,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
     {
       id: 'lifo',
       title: '3D LIFO Extraction DAG',
+      shortTitle: '3D LIFO DAG',
       icon: GitFork,
       desc: 'Topological extraction precedence & Invariant R10 acyclicity',
       tooltip: '3D LIFO Extraction Precedence DAG: Proves strict acyclicity of the item extraction graph. Ensures zero occluded item reshuffling at consolidation drop chutes pursuant to Invariant R10.',
@@ -61,6 +64,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
     {
       id: 'chutes',
       title: 'Chute Accumulation Qc(t)',
+      shortTitle: 'Chute Qc(t)',
       icon: TrendingUp,
       desc: 'Continuous accumulation curves vs max buffer limits',
       tooltip: 'Dynamic Chute Accumulation Qc(t): Continuous volumetric loading curves at each consolidation pack station plotted against physical capacity ceiling Qc_max (3.5 m³) to guarantee zero overflow.',
@@ -68,6 +72,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
     {
       id: 'velocity',
       title: 'Fleet Kinematics vk(t)',
+      shortTitle: 'Kinematics vk(t)',
       icon: Gauge,
       desc: 'ISO 3691-4 HRI pedestrian speed throttle (0.4 m/s)',
       tooltip: 'Fleet Kinematics vk(t): Velocity and acceleration ramps over time, demonstrating autonomous throttling to v_safe <= 0.4 m/s when traversing Human-Robot Shared Zones per ISO 3691-4.',
@@ -75,6 +80,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
     {
       id: 'qaoa',
       title: 'QAOA Energy Surface',
+      shortTitle: 'QAOA Surface',
       icon: Cpu,
       desc: '2D contour map & bitstring measurement spectrum',
       tooltip: 'Classiq QAOA Variational Energy Landscape: 2D contour grid <gamma, beta | H_C | gamma, beta> and 2048-shot bitstring measurement spectrum identifying the minimum-energy optimal tour.',
@@ -82,6 +88,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
     {
       id: 'benders',
       title: 'Benders Convergence',
+      shortTitle: 'Benders Bounds',
       icon: GitCommit,
       desc: 'Master Lower Bound vs Subproblem Upper Bound closure',
       tooltip: 'Logic-Based Benders Decomposition Convergence: Plots Master Problem lower bound against 3D packing feasibility upper bound, proving closure within < 1.0% optimality tolerance.',
@@ -89,6 +96,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
     {
       id: 'packing_3d',
       title: '3D AMR Bay Packing & CoG Stability',
+      shortTitle: '3D Bay CoG',
       icon: BarChart3,
       desc: 'Container placement layout, center of gravity & geometric origin',
       tooltip: '3D Bay Packing Layout: Precise item coordinate placement [x, y, z] inside AMR cargo bays with Center-of-Gravity (CoG) balancing, friction mu=0.45, and minimum 85% bottom support area.',
@@ -96,6 +104,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
     {
       id: 'battery_soc',
       title: 'Fleet Battery SOC Trajectories',
+      shortTitle: 'Battery SOC',
       icon: Gauge,
       desc: 'State-of-charge depletion and recovery profiles vs 20% alarm line',
       tooltip: 'Fleet Battery State-of-Charge (SOC): Continuous charge depletion curves across all active AMRs, verifying no vehicle violates the 20% minimum emergency battery threshold.',
@@ -103,6 +112,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
     {
       id: 'spatiotemporal_heatmap',
       title: 'Aisle Spatio-Temporal Heatmap',
+      shortTitle: 'Aisle Heatmap',
       icon: Network,
       desc: 'Spatial congestion density & intersection conflict probability over time',
       tooltip: 'Spatio-Temporal Aisle Occupancy Heatmap: Density map of AMR positions across time and storage aisles, highlighting bottleneck intersections and validating PBS-SIPP deconfliction.',
@@ -578,93 +588,146 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
   };
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', padding: '20px 24px 48px 24px', display: 'flex', flexDirection: 'column', gap: '20px', minHeight: 0 }}>
-      {/* Header */}
-      <div className="glass-panel" style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#00f0ff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Run ID: {effectiveRunId}
-            </span>
-            <span style={{ fontSize: '10px', background: 'rgba(0, 240, 255, 0.15)', color: '#00f0ff', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
-              9 Cyber-Physical Graphs
-            </span>
-          </div>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#f3f4f6', margin: 0 }}>Graph Result Analytics Studio</h2>
-          <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0 0' }}>High-Resolution Publication-Grade Vector Figures &amp; Mathematical Invariant Auditing</p>
+    <div className="graph-studio-fit">
+      {/* Compact Studio Header with View Mode & Controls */}
+      <div
+        className="glass-panel"
+        style={{
+          padding: '6px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '8px',
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#00f0ff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            {effectiveRunId}
+          </span>
+          <span style={{ color: '#475569' }}>|</span>
+          <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#f3f4f6', margin: 0 }}>
+            Analytics &amp; Graphs (10 Charts)
+          </h2>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Mode Switcher */}
-          <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.8)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        {/* View Mode Switcher: Chart Canvas vs Mathematical Dossier */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.8)', padding: '2px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
             <button
-              onClick={() => setViewMode('figure')}
+              onClick={() => setActiveStudioTab('chart')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
-                padding: '5px 10px',
-                borderRadius: '6px',
+                gap: '4px',
+                padding: '3px 8px',
+                borderRadius: '4px',
                 fontSize: '11px',
                 fontWeight: 600,
                 cursor: 'pointer',
                 border: 'none',
-                background: viewMode === 'figure' ? 'rgba(0, 240, 255, 0.2)' : 'transparent',
-                color: viewMode === 'figure' ? '#00f0ff' : '#94a3b8',
+                background: activeStudioTab === 'chart' ? 'rgba(0, 240, 255, 0.2)' : 'transparent',
+                color: activeStudioTab === 'chart' ? '#00f0ff' : '#94a3b8',
                 transition: 'all 0.15s ease',
               }}
+              title="Fit-to-Screen Chart Canvas (Zero Scrolling)"
             >
-              <Eye size={13} />
-              <span>Publication Figure</span>
+              <BarChart3 size={12} />
+              <span>Chart View</span>
             </button>
             <button
-              onClick={() => setViewMode('vector')}
+              onClick={() => setActiveStudioTab('dossier')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
-                padding: '5px 10px',
-                borderRadius: '6px',
+                gap: '4px',
+                padding: '3px 8px',
+                borderRadius: '4px',
                 fontSize: '11px',
                 fontWeight: 600,
                 cursor: 'pointer',
                 border: 'none',
-                background: viewMode === 'vector' ? 'rgba(0, 240, 255, 0.2)' : 'transparent',
-                color: viewMode === 'vector' ? '#00f0ff' : '#94a3b8',
+                background: activeStudioTab === 'dossier' ? 'rgba(0, 240, 255, 0.2)' : 'transparent',
+                color: activeStudioTab === 'dossier' ? '#00f0ff' : '#94a3b8',
                 transition: 'all 0.15s ease',
               }}
+              title="Mathematical Invariant Audit & LaTeX Proofs"
             >
-              <Layers size={13} />
-              <span>Interactive Vector</span>
+              <BookOpen size={12} />
+              <span>Dossier &amp; Invariants</span>
             </button>
           </div>
+
+          {/* Publication Figure / Interactive Vector toggle */}
+          {activeStudioTab === 'chart' && (
+            <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.8)', padding: '2px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <button
+                onClick={() => setViewMode('figure')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 7px',
+                  borderRadius: '4px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: viewMode === 'figure' ? 'rgba(0, 240, 255, 0.2)' : 'transparent',
+                  color: viewMode === 'figure' ? '#00f0ff' : '#94a3b8',
+                }}
+              >
+                <Eye size={11} />
+                <span>Publication</span>
+              </button>
+              <button
+                onClick={() => setViewMode('vector')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 7px',
+                  borderRadius: '4px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: viewMode === 'vector' ? 'rgba(0, 240, 255, 0.2)' : 'transparent',
+                  color: viewMode === 'vector' ? '#00f0ff' : '#94a3b8',
+                }}
+              >
+                <Layers size={11} />
+                <span>Vector SVG</span>
+              </button>
+            </div>
+          )}
 
           {/* Download Button */}
           <button
             onClick={handleDownload}
             className="btn-secondary"
-            style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ fontSize: '10px', padding: '3px 7px', display: 'flex', alignItems: 'center', gap: '4px' }}
             title="Download publication-quality high-resolution PNG figure (180 DPI)"
           >
-            {copiedNotification ? <Check size={14} color="#10b981" /> : <Download size={14} />}
-            <span>{copiedNotification ? 'Downloaded' : 'Download PNG'}</span>
+            {copiedNotification ? <Check size={12} color="#10b981" /> : <Download size={12} />}
+            <span>PNG</span>
           </button>
 
           {/* Refresh Button */}
           <button
             onClick={handleRefresh}
             className="btn-secondary"
-            style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-            title="Force instantaneous re-fetch and cache-busting render of high-resolution vector analytics charts."
+            style={{ fontSize: '10px', padding: '3px 6px', display: 'flex', alignItems: 'center', gap: '3px' }}
+            title="Force instantaneous re-fetch of figures"
           >
-            <RefreshCw size={14} />
-            <span>Refresh</span>
+            <RefreshCw size={11} />
           </button>
         </div>
       </div>
 
-      {/* Graph Selector Pills */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      {/* Single-Row 10-Graph Selector Strip */}
+      <div className="graph-pills-strip">
         {graphOptions.map((opt) => {
           const Icon = opt.icon;
           const isActive = activeGraph === opt.id;
@@ -677,134 +740,177 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '8px 14px',
-                fontSize: '12px',
+                gap: '5px',
+                padding: '4px 8px',
+                fontSize: '11px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                background: isActive ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(37, 99, 235, 0.3))' : 'rgba(31, 41, 55, 0.5)',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                background: isActive
+                  ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(37, 99, 235, 0.3))'
+                  : 'rgba(31, 41, 55, 0.5)',
                 borderColor: isActive ? '#00f0ff' : 'rgba(75, 85, 99, 0.4)',
                 color: isActive ? '#00f0ff' : '#9ca3af',
-                boxShadow: isActive ? '0 0 16px rgba(0, 240, 255, 0.2)' : 'none',
+                boxShadow: isActive ? '0 0 10px rgba(0, 240, 255, 0.25)' : 'none',
                 transition: 'all 0.15s ease',
               }}
             >
-              <Icon size={16} color={isActive ? '#00f0ff' : '#9ca3af'} />
-              <span>{opt.title}</span>
+              <Icon size={12} color={isActive ? '#00f0ff' : '#9ca3af'} />
+              <span>{opt.shortTitle || opt.title}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Main Graph Viewer Display */}
-      <div
-        className="glass-card"
-        style={{
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '520px',
-          position: 'relative',
-          overflow: 'hidden',
-          backgroundColor: '#070c18',
-          border: '1px solid rgba(0, 240, 255, 0.2)',
-          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.6)',
-        }}
-        title={`Active Analytics Graph: ${activeOption.title}`}
-      >
-        {/* If Interactive Vector mode is toggled or image has permanently errored */}
-        {viewMode === 'vector' || imageState === 'error' ? (
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', alignSelf: 'flex-start' }}>
-              <Sparkles size={16} color="#00f0ff" />
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#38bdf8' }}>
-                Interactive Vector Engine (Pure Client-Side SVG)
-              </span>
+      {/* Main Graph Viewer Display (Fit-to-Screen) */}
+      {activeStudioTab === 'chart' && (
+        <div
+          className="glass-card"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            padding: '8px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            backgroundColor: '#070c18',
+            border: '1px solid rgba(0, 240, 255, 0.2)',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.6)',
+          }}
+          title={`Active Analytics Graph: ${activeOption.title}`}
+        >
+          {/* If Interactive Vector mode is toggled or image has permanently errored */}
+          {viewMode === 'vector' || imageState === 'error' ? (
+            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', alignSelf: 'flex-start', flexShrink: 0 }}>
+                <Sparkles size={13} color="#00f0ff" />
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8' }}>
+                  Interactive Vector Engine (Pure Client-Side SVG)
+                </span>
+              </div>
+              <div style={{ width: '100%', flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {renderVectorFallback()}
+              </div>
             </div>
-            {renderVectorFallback()}
-          </div>
-        ) : (
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-            {/* Animated Loading Overlay */}
-            {imageState === 'loading' && (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '16px',
-                  background: 'rgba(7, 12, 24, 0.85)',
-                  backdropFilter: 'blur(6px)',
-                  zIndex: 10,
-                  borderRadius: '8px',
-                }}
-              >
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+              {/* Animated Loading Overlay */}
+              {imageState === 'loading' && (
                 <div
                   style={{
-                    width: '42px',
-                    height: '42px',
-                    border: '3px solid rgba(0, 240, 255, 0.15)',
-                    borderTop: '3px solid #00f0ff',
-                    borderRadius: '50%',
-                    animation: 'spin 0.8s linear infinite',
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    background: 'rgba(7, 12, 24, 0.85)',
+                    backdropFilter: 'blur(6px)',
+                    zIndex: 10,
+                    borderRadius: '8px',
                   }}
-                />
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#00f0ff', letterSpacing: '0.05em' }}>
-                    RENDERING HIGH-RESOLUTION GRAPH...
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                    Fetching 180 DPI vector figures for {activeOption.title}
+                >
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      border: '3px solid rgba(0, 240, 255, 0.15)',
+                      borderTop: '3px solid #00f0ff',
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite',
+                    }}
+                  />
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#00f0ff', letterSpacing: '0.04em' }}>
+                      RENDERING GRAPH...
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Publication Figure PNG */}
-            <img
-              key={`${activeGraph}-${effectiveRunId}-${reloadKey}`}
-              src={primaryUrl}
-              alt={activeGraph}
-              title={activeOption.tooltip}
+              {/* Publication Figure PNG */}
+              <img
+                key={`${activeGraph}-${effectiveRunId}-${reloadKey}`}
+                src={primaryUrl}
+                alt={activeGraph}
+                title={activeOption.tooltip}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: 'calc(100vh - 225px)',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  borderRadius: '6px',
+                  boxShadow: '0 6px 25px rgba(0,0,0,0.5)',
+                  opacity: imageState === 'loaded' ? 1 : 0.01,
+                  transition: 'opacity 0.25s ease',
+                }}
+                onLoad={() => setImageState('loaded')}
+                onError={(e) => {
+                  if (!triedFallback) {
+                    setTriedFallback(true);
+                    (e.target as HTMLImageElement).src = staticFallbackUrl;
+                  } else {
+                    setImageState('error');
+                  }
+                }}
+              />
+            </div>
+          )}
+
+          {/* Caption & Quick Invariant Link */}
+          <div
+            style={{
+              marginTop: '6px',
+              fontSize: '11px',
+              color: '#9ca3af',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+              width: '100%',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              paddingTop: '4px',
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <strong style={{ color: '#00f0ff' }}>{activeOption.title}:</strong>{' '}
+              <span>{activeOption.desc}</span>
+            </div>
+            <button
+              onClick={() => setActiveStudioTab('dossier')}
               style={{
-                maxWidth: '100%',
-                maxHeight: '520px',
-                objectFit: 'contain',
-                borderRadius: '8px',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-                opacity: imageState === 'loaded' ? 1 : 0.01,
-                transition: 'opacity 0.25s ease',
+                background: 'none',
+                border: 'none',
+                color: '#38bdf8',
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
-              onLoad={() => setImageState('loaded')}
-              onError={(e) => {
-                if (!triedFallback) {
-                  setTriedFallback(true);
-                  (e.target as HTMLImageElement).src = staticFallbackUrl;
-                } else {
-                  setImageState('error');
-                }
-              }}
-            />
+            >
+              <span>Read Invariant Audit &rarr;</span>
+            </button>
           </div>
-        )}
-
-        {/* Caption and Algorithmic Explanation */}
-        <div style={{ marginTop: '20px', fontSize: '12px', color: '#9ca3af', textAlign: 'center', maxWidth: '800px', lineHeight: '1.6', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '14px', width: '100%' }}>
-          <strong style={{ color: '#00f0ff' }}>{activeOption.title}:</strong>{' '}
-          <span>{activeOption.desc}</span>
         </div>
-      </div>
+      )}
 
       {/* ============================================================ */}
       {/* DEEP GRAPH INTELLIGENCE & ALGORITHMIC AUDIT DOSSIER PANEL   */}
       {/* ============================================================ */}
-      {(() => {
-        const dossier = GRAPH_DOSSIERS[activeGraph] || GRAPH_DOSSIERS['spatial'];
+      {activeStudioTab === 'dossier' && (
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '16px' }}>
+          {(() => {
+            const dossier = GRAPH_DOSSIERS[activeGraph] || GRAPH_DOSSIERS['spatial'];
 
         // Helper to render KaTeX safely
         const renderFormula = (latex: string) => {
@@ -1353,5 +1459,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
         </div>
       </div>
     </div>
+  )}
+</div>
   );
 };

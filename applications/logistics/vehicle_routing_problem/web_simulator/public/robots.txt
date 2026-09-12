@@ -1,0 +1,39 @@
+# robots.txt for WMS Quantum Digital Twin 3D Simulator
+# Legal Owner: YesAndNo Group (https://t.me/yesandnoQ)
+# Base URL: https://acoustic-architect-3cgfo.web.app/
+
+User-agent: *
+Allow: /
+Allow: /docs.html
+Allow: /redoc.html
+Allow: /sqlite.html
+Allow: /openapi.json
+Allow: /llms.txt
+
+# LLM Crawlers & AI Agents (Open Access for Search & Citations)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+# Sitemap Index
+Sitemap: https://acoustic-architect-3cgfo.web.app/sitemap.xml

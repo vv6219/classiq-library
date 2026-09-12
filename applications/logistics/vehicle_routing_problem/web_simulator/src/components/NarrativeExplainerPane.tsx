@@ -200,7 +200,7 @@ ${narrative.classical_vs_quantum}
     <div
       style={{
         position: 'fixed',
-        bottom: 0,
+        bottom: '28px',
         left: 0,
         right: 0,
         zIndex: 90,

@@ -2,6 +2,13 @@ import React from 'react';
 import { Play, FileText, Cpu, ShieldCheck, Zap, RotateCcw, Sliders, History, BookOpen, Lightbulb, Database, Code } from 'lucide-react';
 import { WaveExecutionResponse, RunSummaryDTO } from '../services/api';
 import { CodeLmnBadge } from './CodeLmnBadge';
+import {
+  trackButtonClick,
+  trackLinkClick,
+  trackTelegramClick,
+  trackModeToggle,
+  trackHistoricalRunSelect,
+} from '../utils/analytics';
 
 interface TopbarHUDProps {
   lastWave: WaveExecutionResponse | null;
@@ -116,6 +123,7 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
               href="https://t.me/yesandnoQ"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackTelegramClick('Topbar_HUD')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -151,7 +159,10 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
               <History size={12} color="#60a5fa" />
               <select
                 value={currentRunId}
-                onChange={(e) => onSelectRun(e.target.value)}
+                onChange={(e) => {
+                  trackHistoricalRunSelect(e.target.value);
+                  onSelectRun(e.target.value);
+                }}
                 style={{
                   backgroundColor: '#0a0f1d',
                   border: '1px solid rgba(96, 165, 250, 0.4)',
@@ -249,7 +260,10 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {/* Pre-Request Config Drawer Button */}
         <button
-          onClick={onOpenConfig}
+          onClick={() => {
+            trackButtonClick('Config_and_Limits_Drawer', 'TopLevel_HUD');
+            onOpenConfig();
+          }}
           className="btn-secondary"
           style={{
             fontSize: '12px',
@@ -270,7 +284,10 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
         {/* Highlighted Iconographic Concept Explanation Button */}
         {onOpenConceptModal && (
           <button
-            onClick={onOpenConceptModal}
+            onClick={() => {
+              trackButtonClick('Concept_Explanation_Modal', 'TopLevel_HUD');
+              onOpenConceptModal();
+            }}
             style={{
               fontSize: '12px',
               fontWeight: 700,
@@ -296,7 +313,10 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
         {/* Mission Explainer Button */}
         {onToggleExplainer && (
           <button
-            onClick={onToggleExplainer}
+            onClick={() => {
+              trackButtonClick('Mission_Explainer_Toggle', 'TopLevel_HUD');
+              onToggleExplainer();
+            }}
             className="btn-secondary"
             style={{
               fontSize: '12px',
@@ -318,7 +338,10 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
         {/* Quantum Utilization Button */}
         {onToggleQuantumPanel && (
           <button
-            onClick={onToggleQuantumPanel}
+            onClick={() => {
+              trackButtonClick('Quantum_Utilization_Panel', 'TopLevel_HUD');
+              onToggleQuantumPanel();
+            }}
             className="btn-secondary"
             style={{
               fontSize: '12px',
@@ -339,7 +362,11 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
 
         {/* Mode Toggle */}
         <button
-          onClick={() => setOperationalMode(operationalMode === 'QUANTUM' ? 'CLASSICAL' : 'QUANTUM')}
+          onClick={() => {
+            const nextMode = operationalMode === 'QUANTUM' ? 'CLASSICAL' : 'QUANTUM';
+            trackModeToggle(operationalMode, nextMode);
+            setOperationalMode(nextMode);
+          }}
           className="btn-secondary"
           style={{ fontSize: '12px', padding: '7px 12px' }}
           title="Toggle Quantum vs Classical Solver Mode"
@@ -352,7 +379,10 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
 
         {/* Re-Run Wave Button */}
         <button
-          onClick={onReRunClick}
+          onClick={() => {
+            trackButtonClick('ReRun_Last_Wave', 'TopLevel_HUD', { mode: operationalMode, run_id: currentRunId });
+            onReRunClick();
+          }}
           disabled={isSolving}
           className="btn-secondary"
           style={{
@@ -372,7 +402,10 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
 
         {/* Dispatch Solve Button */}
         <button
-          onClick={onDispatchClick}
+          onClick={() => {
+            trackButtonClick('Dispatch_Wave_Solve', 'TopLevel_HUD', { mode: operationalMode, run_id: currentRunId });
+            onDispatchClick();
+          }}
           disabled={isSolving}
           className="btn-quantum"
           style={{ fontSize: '12px', padding: '8px 16px' }}
@@ -383,7 +416,10 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
 
         {/* PDF Export Button */}
         <button
-          onClick={onOpenPDF}
+          onClick={() => {
+            trackButtonClick('Export_PDF_Audit', 'TopLevel_HUD', { run_id: currentRunId });
+            onOpenPDF();
+          }}
           disabled={!currentRunId}
           className="btn-primary"
           style={{ fontSize: '12px', padding: '8px 14px' }}
@@ -398,6 +434,7 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
           href="/docs"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackLinkClick('/docs', 'Swagger_UI_OpenAPI')}
           className="btn-secondary"
           style={{
             fontSize: '12px',
@@ -421,6 +458,7 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
           href="/sqlite"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackLinkClick('/sqlite', 'SQLite_Database_Studio')}
           className="btn-secondary"
           style={{
             fontSize: '12px',

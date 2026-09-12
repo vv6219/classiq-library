@@ -1,0 +1,30 @@
+# WMS Quantum Digital Twin 3D Simulator
+
+> Industrial Multi-Tier Cyber-Physical Warehouse Optimization & 3D Digital Twin Simulator with Classiq Quantum Acceleration.
+
+- **Legal Owner / Publisher**: YesAndNo Group
+- **Official Telegram Channel**: https://t.me/yesandnoQ
+- **Production URL**: https://acoustic-architect-3cgfo.web.app/
+- **API Documentation**: https://acoustic-architect-3cgfo.web.app/docs.html
+- **API Reference (ReDoc)**: https://acoustic-architect-3cgfo.web.app/redoc.html
+- **Database Studio**: https://acoustic-architect-3cgfo.web.app/sqlite.html
+
+## Overview
+The WMS Quantum Digital Twin 3D Simulator is an industrial logistics optimization platform created by **YesAndNo Group**. It couples a real-time Three.js cyber-physical warehouse digital twin with Classiq quantum synthesis and hybrid classical-quantum solvers (QAOA and VQE) to solve complex Vehicle Routing Problems (VRP), Capacity-Constrained VRP (CVRP), and dynamic intra-facility dispatching.
+
+## Key Capabilities
+1. **Interactive 3D Digital Twin**: Multi-tier warehouse floor with automated guided vehicles (AGVs), dynamic congestion zones, charging bays, and real-time path telemetry.
+2. **Quantum Routing Acceleration**: Formulates vehicle routing constraints as Quadratic Unconstrained Binary Optimization (QUBO) models, synthesizing optimal quantum circuits using the Classiq Python SDK and native Qmod.
+3. **Hardware-Aware Quantum Synthesis**: Evaluates circuit width, two-qubit gate depth, and transpilation fidelity across quantum hardware backends (IBM Quantum Eagle/Heron, IonQ Forte, Rigetti Aspen).
+4. **Real-Time Telemetry & REST API**: Full FastAPI / SQLite engine running in dual-mode (mock streaming for browser deployments and live bidirectional RPC with local Python compute kernels).
+5. **Analytics & Diagnostics**: Built-in Google Analytics 4 telemetry, execution comparison, energy landscape plots, and PDF engineering report generation.
+
+## Technical Stack
+- **Quantum Platform**: Classiq Engine & Qmod
+- **Frontend & 3D Visualization**: React 18, TypeScript, Three.js, Canvas HUD, Vite
+- **Backend & Database**: Python 3.11, FastAPI, Uvicorn, SQLite3, NetworkX, NumPy, SciPy
+- **Hosting & Infrastructure**: Firebase Hosting (Google Cloud Platform)
+
+## Copyright & Attribution
+© 2026 YesAndNo Group. All rights reserved.
+Developed by the YesAndNo Quantum Team for industrial logistics and cyber-physical systems optimization.

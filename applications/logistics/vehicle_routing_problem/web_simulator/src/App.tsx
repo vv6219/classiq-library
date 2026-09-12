@@ -13,6 +13,8 @@ import { NarrativeExplainerPane } from './components/NarrativeExplainerPane';
 import { QuantumUtilizationPanel } from './components/QuantumUtilizationPanel';
 import { PDFModal } from './components/PDFModal';
 import { ConceptExplanationModal } from './components/ConceptExplanationModal';
+import { LegalFooterBar } from './components/LegalFooterBar';
+import { LegalModal } from './components/LegalModal';
 import {
   dispatchWave,
   fetchSchedule,
@@ -25,6 +27,7 @@ import {
   WaveExecutionResponse,
 } from './services/api';
 import { RouteMap2DStudio } from './components/RouteMap2DStudio';
+import { trackTabChange, trackButtonClick } from './utils/analytics';
 import {
   Box,
   MapPin,
@@ -52,6 +55,7 @@ export const App: React.FC = () => {
   const [isQuickDrawerOpen, setIsQuickDrawerOpen] = useState(false);
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
   const [isQuantumPanelOpen, setIsQuantumPanelOpen] = useState(false);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
 
   // Operational State
   const [mode, setMode] = useState<'QUANTUM' | 'CLASSICAL'>('QUANTUM');
@@ -111,6 +115,22 @@ export const App: React.FC = () => {
     loadHistoricalRuns();
     handleDispatch(true);
   }, []);
+
+  // Synchronize document.title with Active Studio Tab for SEO & Navigation Clarity
+  useEffect(() => {
+    const tabTitles: Record<string, string> = {
+      '3d-sim': '3D Warehouse Twin',
+      '2d-route-map': '2D Route Map & Details',
+      'dataset': 'Dataset & Mock Data CRUD',
+      'tiers': 'Calculations Tiers & Algos',
+      'quantum': 'Classiq Quantum Studio',
+      'graphs': 'Analytics & Graphs',
+      'comparison': 'Run Comparisons & Diffing',
+      'telemetry': 'Live Progress & Telemetry',
+    };
+    const currentTabName = tabTitles[activeTab] || '3D Digital Twin';
+    document.title = `${currentTabName} | Quantum WMS Optimizer | YesAndNo Group`;
+  }, [activeTab]);
 
   const loadHistoricalRuns = async () => {
     try {
@@ -247,51 +267,94 @@ export const App: React.FC = () => {
         onOpenConceptModal={() => setIsConceptModalOpen(true)}
       />
 
-      {/* Main Workspace Bar (7 Navigation Tabs + Quick Scenario Controls) */}
+      {/* Main Workspace Bar (8 Navigation Tabs + Quick Scenario Controls) */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '6px 18px',
+          padding: '4px 12px',
           backgroundColor: '#090d16',
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           zIndex: 10,
-          overflowX: 'auto',
+          gap: '8px',
         }}
       >
         {/* Navigation Tabs (8 Studios) */}
-        <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+        <div className="workspace-tabs-container">
           {[
-            { id: '3d-sim', label: '3D Warehouse Twin', icon: <Box size={15} /> },
-            { id: '2d-route-map', label: '2D Route Map & Details', icon: <MapPin size={15} /> },
-            { id: 'dataset', label: 'Dataset & Mock Data (CRUD)', icon: <Database size={15} /> },
-            { id: 'tiers', label: 'Calculations Tiers & Algos', icon: <Layers size={15} /> },
-            { id: 'quantum', label: 'Classiq Quantum Studio', icon: <Atom size={15} /> },
-            { id: 'graphs', label: 'Analytics & Graphs (10 Charts)', icon: <BarChart3 size={15} /> },
-            { id: 'comparison', label: 'Run Comparisons & Diffing', icon: <GitCompare size={15} /> },
-            { id: 'telemetry', label: 'Live Progress & Log Console', icon: <Terminal size={15} /> },
+            {
+              id: '3d-sim',
+              full: '3D Warehouse Twin',
+              short: '3D Warehouse',
+              compact: '3D Twin',
+              icon: <Box size={14} />,
+            },
+            {
+              id: '2d-route-map',
+              full: '2D Route Map & Details',
+              short: '2D Route Map',
+              compact: '2D Map',
+              icon: <MapPin size={14} />,
+            },
+            {
+              id: 'dataset',
+              full: 'Dataset & Mock Data (CRUD)',
+              short: 'Dataset (CRUD)',
+              compact: 'Dataset',
+              icon: <Database size={14} />,
+            },
+            {
+              id: 'tiers',
+              full: 'Calculations Tiers & Algos',
+              short: 'Tiers & Algos',
+              compact: 'Tiers',
+              icon: <Layers size={14} />,
+            },
+            {
+              id: 'quantum',
+              full: 'Classiq Quantum Studio',
+              short: 'Quantum Studio',
+              compact: 'Quantum',
+              icon: <Atom size={14} />,
+            },
+            {
+              id: 'graphs',
+              full: 'Analytics & Graphs (10 Charts)',
+              short: 'Analytics (10)',
+              compact: 'Graphs',
+              icon: <BarChart3 size={14} />,
+            },
+            {
+              id: 'comparison',
+              full: 'Run Comparisons & Diffing',
+              short: 'Comparisons',
+              compact: 'Diff',
+              icon: <GitCompare size={14} />,
+            },
+            {
+              id: 'telemetry',
+              full: 'Live Progress & Log Console',
+              short: 'Telemetry',
+              compact: 'Logs',
+              icon: <Terminal size={14} />,
+            },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                className="workspace-tab-btn"
+                onClick={() => {
+                  trackTabChange(activeTab, tab.id, { label: tab.full });
+                  setActiveTab(tab.id as any);
+                }}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '7px 12px',
                   backgroundColor: isActive ? 'rgba(0, 240, 255, 0.15)' : 'transparent',
                   border: isActive ? '1px solid #00f0ff' : '1px solid transparent',
-                  borderRadius: '6px',
                   color: isActive ? '#00f0ff' : '#94a3b8',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap',
                 }}
+                title={tab.full}
                 onMouseEnter={(e) => {
                   if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
                 }}
@@ -300,7 +363,9 @@ export const App: React.FC = () => {
                 }}
               >
                 {tab.icon}
-                {tab.label}
+                <span className="tab-text-full">{tab.full}</span>
+                <span className="tab-text-short">{tab.short}</span>
+                <span className="tab-text-compact">{tab.compact}</span>
               </button>
             );
           })}
@@ -309,12 +374,16 @@ export const App: React.FC = () => {
         {/* Quick Scenario Drawer Toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           <button
-            onClick={() => setIsQuickDrawerOpen(!isQuickDrawerOpen)}
+            onClick={() => {
+              const nextState = !isQuickDrawerOpen;
+              trackButtonClick(nextState ? 'Open_Quick_Controls' : 'Close_Quick_Controls', 'TopLevel_Navigation');
+              setIsQuickDrawerOpen(nextState);
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
+              gap: '5px',
+              padding: '5px 10px',
               backgroundColor: isQuickDrawerOpen ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
               border: isQuickDrawerOpen ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '6px',
@@ -327,7 +396,7 @@ export const App: React.FC = () => {
             title="Toggle Quick Controls drawer to adjust industrial warehouse archetypes, AMR fleet sizing, order batch volume, and random seeds."
           >
             <Sliders size={13} />
-            <span>Quick Controls</span>
+            <span className="quick-controls-text">Quick Controls</span>
             {isQuickDrawerOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
           </button>
         </div>
@@ -355,6 +424,7 @@ export const App: React.FC = () => {
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
+            paddingBottom: '70px',
           }}
         >
           {activeTab === '3d-sim' && (
@@ -479,6 +549,15 @@ export const App: React.FC = () => {
         activeTiers={activeTiers}
         qaoaLayers={preRequestConfig.qaoa_p_layers}
         qaoaShots={preRequestConfig.qaoa_shots}
+      />
+
+      {/* Permanently Frozen Legal & Copyright Footer Bar (Multi-Resolution Responsive) */}
+      <LegalFooterBar onOpenLegalModal={() => setIsLegalModalOpen(true)} />
+
+      {/* Full Corporate Governance, Patent & Intellectual Property Modal */}
+      <LegalModal
+        isOpen={isLegalModalOpen}
+        onClose={() => setIsLegalModalOpen(false)}
       />
     </div>
   );

@@ -30,6 +30,7 @@ import katex from 'katex';
 import { TelemetryEvent, fetchTelemetryEvents } from '../services/api';
 import { CodeLmnBadge } from './CodeLmnBadge';
 import { STAGE_DOSSIERS } from '../data/stageDossiers';
+import { trackTelegramClick } from '../utils/analytics';
 
 interface TelemetryConsoleProps {
   runId?: string;
@@ -744,6 +745,7 @@ export const TelemetryConsole: React.FC<TelemetryConsoleProps> = ({ runId, isSol
               href="https://t.me/yesandnoQ"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackTelegramClick('TelemetryConsole_Toolbar')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -757,6 +759,7 @@ export const TelemetryConsole: React.FC<TelemetryConsoleProps> = ({ runId, isSol
                 textDecoration: 'none',
                 boxShadow: '0 0 8px rgba(34, 158, 217, 0.4)',
                 marginLeft: '6px',
+                cursor: 'pointer',
               }}
               title="Join YesAndNo Quantum Computing Team on Telegram: t.me/yesandnoQ"
             >
