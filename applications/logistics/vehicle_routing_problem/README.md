@@ -1,5 +1,11 @@
 # Warehouse Management System (WMS) Quantum Vehicle Routing Problem (VRP) & Visual Simulator
 
+> 💼 **Executive Summary for Investors & Strategic Clients**: For a high-level strategic, financial, and architectural briefing detailing the $35B+ warehouse automation market opportunity, 38% fleet travel reduction, zero restacking ROI, and quantum supremacy roadmap, see [EXECUTIVE_SUMMARY.md](file:///c:/Users/vladimir.dobrouchkin/source/repos/classiq-library/applications/logistics/vehicle_routing_problem/EXECUTIVE_SUMMARY.md) (or [md/EXECUTIVE_SUMMARY.md](file:///c:/Users/vladimir.dobrouchkin/source/repos/classiq-library/applications/logistics/vehicle_routing_problem/md/EXECUTIVE_SUMMARY.md)).
+>
+> 📖 **Comprehensive Operational & Advanced User Guide**: For the full 5-pillar user guide covering the 3D Digital Twin, Data Simulation & SQLite manipulation (`dispatchengine.db`), OpenAPI 3.1 & Swagger integration, Classiq QMOD quantum programming, and KaTeX mathematical formulations, see [USER_GUIDE.md](file:///c:/Users/vladimir.dobrouchkin/source/repos/classiq-library/applications/logistics/vehicle_routing_problem/USER_GUIDE.md) (or [md/USER_GUIDE.md](file:///c:/Users/vladimir.dobrouchkin/source/repos/classiq-library/applications/logistics/vehicle_routing_problem/md/USER_GUIDE.md)).
+>
+> 📘 **Senior System Architecture Guide**: For an exhaustive, senior-system-architect-level technical breakdown with KaTeX formulations, 4-tier engine decomposition, OpenAPI/Swagger specifications, and 3D digital twin architecture, see [ARCHITECTURE_GUIDE.md](file:///c:/Users/vladimir.dobrouchkin/source/repos/classiq-library/applications/logistics/vehicle_routing_problem/ARCHITECTURE_GUIDE.md) (or [md/ARCHITECTURE_GUIDE.md](file:///c:/Users/vladimir.dobrouchkin/source/repos/classiq-library/applications/logistics/vehicle_routing_problem/md/ARCHITECTURE_GUIDE.md)).
+
 ## 1. Project Overview
 
 This project implements a hybrid **Quantum-Classical Warehouse Management System (WMS)** optimization pipeline and visual simulator for the **Capacitated Vehicle Routing Problem (CVRP)** and **Batch Picking / Automated Guided Vehicle (AGV) Routing**.
