@@ -28,6 +28,7 @@ import {
   CRITICAL_SAFETY_BUFFER_M,
 } from '../utils/floorBoundsCalculator';
 import { CodeLmnBadge } from './CodeLmnBadge';
+import { Scene3DLegendPanel } from './Scene3DLegendPanel';
 
 interface ThreeWarehouseCanvasProps {
   schedule: ScheduleDetails | null;
@@ -45,6 +46,7 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
   const [showPerimeterBarrier, setShowPerimeterBarrier] = useState<boolean>(true);
   const [showRacks, setShowRacks] = useState<boolean>(true);
   const [showStopWaypoints, setShowStopWaypoints] = useState<boolean>(true);
+  const [isLegendOpen, setIsLegendOpen] = useState<boolean>(false);
 
   // References for Three.js objects
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -618,6 +620,17 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
     cameraRef.current.lookAt(cX, 0, cZ);
   };
 
+  // Handler to Focus on a Specific Vehicle
+  const handleFocusVehicle = (vehId: string) => {
+    const mesh = amrMeshesRef.current.get(vehId);
+    if (!mesh || !cameraRef.current) return;
+    const pos = mesh.position;
+    cameraTargetRef.current.set(pos.x, 0, pos.z);
+    cameraRef.current.position.set(pos.x, 42, pos.z + 50);
+    cameraRef.current.lookAt(pos.x, 0, pos.z);
+    setSelectedVehicle(vehId);
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
       {/* 3D WebGL Canvas Container */}
@@ -758,6 +771,25 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
           >
             Reset Camera
           </button>
+          <button
+            onClick={() => setIsLegendOpen(!isLegendOpen)}
+            style={{
+              padding: '3px 8px',
+              fontSize: '10px',
+              fontWeight: 600,
+              borderRadius: '4px',
+              backgroundColor: isLegendOpen ? 'rgba(0, 240, 255, 0.25)' : 'rgba(0, 240, 255, 0.1)',
+              border: '1px solid #00f0ff',
+              color: '#00f0ff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            title="Open 3D Scene Legend & Explanations Panel"
+          >
+            <Layers size={11} /> Legend &amp; Tours
+          </button>
         </div>
       </div>
 
@@ -835,6 +867,29 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
         </div>
 
         {/* 2D Map & Routes Switch Button */}
+        {/* 3D Legend & Tours Button */}
+        <button
+          onClick={() => setIsLegendOpen(!isLegendOpen)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            fontSize: '11px',
+            fontWeight: 600,
+            backgroundColor: isLegendOpen ? 'rgba(0, 240, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+            border: isLegendOpen ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: '6px',
+            color: isLegendOpen ? '#00f0ff' : '#e2e8f0',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          title="Open 3D Scene Legend & Explanations Panel"
+        >
+          <Layers size={13} /> 3D Legend &amp; Tours
+        </button>
+
+        {/* 2D Map & Routes Switch Button */}
         {onNavigateTo2D && (
           <button
             onClick={onNavigateTo2D}
@@ -866,10 +921,11 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
           style={{
             position: 'absolute',
             top: '20px',
-            right: '20px',
+            right: isLegendOpen ? '440px' : '20px',
             width: '260px',
             padding: '16px',
             zIndex: 10,
+            transition: 'right 0.25s ease',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
@@ -902,6 +958,19 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
           </div>
         </div>
       )}
+
+      {/* 3D Scene Intelligence & Legend Drawer Panel */}
+      <Scene3DLegendPanel
+        isOpen={isLegendOpen}
+        onClose={() => setIsLegendOpen(false)}
+        routes={activeRoutes}
+        selectedVehicleId={selectedVehicle}
+        onSelectVehicle={(vehId) => {
+          setSelectedVehicle(vehId);
+          handleFocusVehicle(vehId);
+        }}
+        onFocusVehicle={handleFocusVehicle}
+      />
     </div>
   );
 };
