@@ -1,0 +1,18 @@
+{
+  "run_id": "RUN-00CE0A36",
+  "scenario_id": "SCEN-00CE0A36",
+  "wave_id": "WAVE-00CE0A36",
+  "operational_mode": "QUANTUM",
+  "algorithm_ranks_used": {
+    "tier1": "RANK_1Q_QUANTUM_FCM",
+    "tier2": "RANK_1_CP_SAT_DIFFN",
+    "tier3": "RANK_1Q_QAOA_VRP",
+    "tier4": "RANK_1_PBS_SIPP"
+  },
+  "total_fleet_makespan_sec": 1100.9,
+  "total_distance_km": 3.24,
+  "chute_balance_variance": 0.45,
+  "total_solve_latency_sec": 0.142,
+  "falsification_ratio_phi": 0.88,
+  "is_falsified": false
+}

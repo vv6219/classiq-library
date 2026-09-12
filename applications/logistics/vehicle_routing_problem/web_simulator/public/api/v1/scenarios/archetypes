@@ -1,0 +1,28 @@
+{
+  "archetypes": [
+    {
+      "archetype_key": "UNIFORM_RANDOM",
+      "title": "Uniform Random Baseline",
+      "description": "Uniform spatial distribution across aisles with standard SKU masses and dimensions.",
+      "stress_target": "Baseline capacity and standard routing"
+    },
+    {
+      "archetype_key": "PARETO_HOT_ZONE",
+      "title": "Pareto Hot-Zone (80/20 Clustering)",
+      "description": "80% of orders concentrated in fast-mover front aisles 1-5 near packing chutes.",
+      "stress_target": "Consolidation chute balance and density bottlenecks"
+    },
+    {
+      "archetype_key": "DUAL_DEPOT_CROSS_DOCK",
+      "title": "Dual-Depot Cross-Dock Transit",
+      "description": "Orders split between opposing perimeter depots, requiring long inter-depot transit.",
+      "stress_target": "AMR battery endurance and fleet travel distance"
+    },
+    {
+      "archetype_key": "PEAK_SURGE_HEAVY_TAIL",
+      "title": "Peak Demand Surge & Heavy-Tail Deadlines",
+      "description": "Arrival burst with ultra-tight delivery windows (80-240s) stressing deadline feasibility.",
+      "stress_target": "Dynamic SLA falsification envelope"
+    }
+  ]
+}

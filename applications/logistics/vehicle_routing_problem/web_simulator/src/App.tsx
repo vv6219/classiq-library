@@ -8,6 +8,7 @@ import { GraphStudio } from './components/GraphStudio';
 import { RunComparisonStudio } from './components/RunComparisonStudio';
 import { TelemetryConsole } from './components/TelemetryConsole';
 import { PreRequestConfigDrawer } from './components/PreRequestConfigDrawer';
+import { QuickControlsPanel } from './components/QuickControlsPanel';
 import { NarrativeExplainerPane } from './components/NarrativeExplainerPane';
 import { QuantumUtilizationPanel } from './components/QuantumUtilizationPanel';
 import { PDFModal } from './components/PDFModal';
@@ -395,169 +396,34 @@ export const App: React.FC = () => {
           {activeTab === 'telemetry' && <TelemetryConsole runId={currentRunId} />}
         </div>
 
-        {/* Quick Scenario Sidebar */}
-        {isQuickDrawerOpen && (
-          <div
-            style={{
-              width: '300px',
-              backgroundColor: '#0c101c',
-              borderLeft: '1px solid rgba(0, 240, 255, 0.2)',
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.6)',
-              zIndex: 20,
-              overflowY: 'auto',
-            }}
-          >
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#00f0ff' }}
-              title="Quick Controls Panel: Rapidly reconfigure scenario parameters without opening full config drawers."
-            >
-              <Settings2 size={16} />
-              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>Quick Controls</h3>
-            </div>
-
-            {/* Industrial Archetype */}
-            <div title="Industrial Archetype: Select predefined physical facility layouts and demand characteristics (Automotive, E-Commerce, Cold-Chain, Pharma).">
-              <label style={{ display: 'block', fontSize: '11px', color: '#94a3b8', marginBottom: '5px' }}>
-                Industrial Archetype
-              </label>
-              <select
-                value={selectedArchetype}
-                onChange={(e) => setSelectedArchetype(e.target.value)}
-                title="Choose warehouse archetype profile for simulated customer orders, SKU distributions, and depot locations."
-                style={{
-                  width: '100%',
-                  padding: '7px 10px',
-                  backgroundColor: '#060913',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '6px',
-                  color: '#f0f4f8',
-                  fontSize: '11px',
-                  outline: 'none',
-                }}
-              >
-                {archetypes.map((arch) => (
-                  <option key={arch.archetype_key} value={arch.archetype_key}>
-                    {arch.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Fleet Size Slider */}
-            <div title="Fleet Size (AMRs): Number of autonomous mobile robots deployed simultaneously. Scaling AMR count increases parallel capacity while increasing spatial traffic contention.">
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '5px' }}>
-                <span style={{ color: '#94a3b8' }}>Fleet Size (AMRs)</span>
-                <span style={{ color: '#00f0ff', fontWeight: 600 }}>{numVehicles} AMRs</span>
-              </div>
-              <input
-                type="range"
-                min="2"
-                max="8"
-                step="1"
-                value={numVehicles}
-                title={`Active robot count: ${numVehicles} AMRs. Drag to adjust fleet between 2 and 8 robots.`}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-                  setNumVehicles(val);
-                  setPreRequestConfig((prev) => ({ ...prev, fleet_size: val }));
-                }}
-                style={{ width: '100%', accentColor: '#00f0ff' }}
-              />
-            </div>
-
-            {/* Order Count Slider */}
-            <div title="Order Batch Size: Total picking lines to allocate in the current wave. Higher values stress 3D bin packing density and QAOA circuit compilation.">
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '5px' }}>
-                <span style={{ color: '#94a3b8' }}>Order Batch Size</span>
-                <span style={{ color: '#00f0ff', fontWeight: 600 }}>{numOrders} Orders</span>
-              </div>
-              <input
-                type="range"
-                min="6"
-                max="50"
-                step="1"
-                value={numOrders}
-                title={`Order wave size: ${numOrders} orders. Drag to adjust batch size between 6 and 50 orders.`}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-                  setNumOrders(val);
-                  setPreRequestConfig((prev) => ({ ...prev, num_orders: val }));
-                }}
-                style={{ width: '100%', accentColor: '#00f0ff' }}
-              />
-            </div>
-
-            {/* Random Seed */}
-            <div title="Simulation Seed: Deterministic pseudo-random number generator seed. Ensures identical SKU coordinates, weights, and deadlines across repeated benchmark runs.">
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '5px' }}>
-                <span style={{ color: '#94a3b8' }}>Simulation Seed</span>
-                <button
-                  onClick={() => {
-                    const nextSeed = Math.floor(Math.random() * 10000);
-                    setSeed(nextSeed);
-                    setPreRequestConfig((prev) => ({ ...prev, seed: nextSeed }));
-                  }}
-                  title="Generate random seed between 0 and 9999 for stochastic warehouse scenario generation."
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#00f0ff',
-                    cursor: 'pointer',
-                    fontSize: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <RotateCcw size={10} /> Randomize
-                </button>
-              </div>
-              <input
-                type="number"
-                value={seed}
-                title="Numeric random seed value. Enter an integer or click Randomize."
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 0;
-                  setSeed(val);
-                  setPreRequestConfig((prev) => ({ ...prev, seed: val }));
-                }}
-                style={{
-                  width: '100%',
-                  padding: '7px 10px',
-                  backgroundColor: '#060913',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '6px',
-                  color: '#f0f4f8',
-                  fontSize: '11px',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            {/* Active Calculation Engine */}
-            <div
-              title={mode === 'QUANTUM' ? 'Active Engine: Classiq QAOA Hybrid Solver synthesizes quantum circuits with multi-angle QAOA ansatz and classical COBYLA optimizer.' : 'Active Engine: Classical Adaptive Large Neighborhood Search (ALNS) metaheuristic.'}
-              style={{
-                padding: '10px',
-                borderRadius: '6px',
-                backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                fontSize: '11px',
-                cursor: 'help',
-              }}
-            >
-              <div style={{ color: '#94a3b8', marginBottom: '4px' }}>Active Engine Mode:</div>
-              <div style={{ color: mode === 'QUANTUM' ? '#00f0ff' : '#a855f7', fontWeight: 600 }}>
-                {mode === 'QUANTUM' ? 'Classiq QAOA Hybrid Solver' : 'ALNS Classical Metaheuristic'}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Quick Controls & Mission Dossier Sidebar */}
+        <QuickControlsPanel
+          isOpen={isQuickDrawerOpen}
+          onClose={() => setIsQuickDrawerOpen(false)}
+          selectedArchetype={selectedArchetype}
+          setSelectedArchetype={setSelectedArchetype}
+          numVehicles={numVehicles}
+          setNumVehicles={(val) => {
+            setNumVehicles(val);
+            setPreRequestConfig((prev) => ({ ...prev, fleet_size: val }));
+          }}
+          numOrders={numOrders}
+          setNumOrders={(val) => {
+            setNumOrders(val);
+            setPreRequestConfig((prev) => ({ ...prev, num_orders: val }));
+          }}
+          seed={seed}
+          setSeed={(val) => {
+            setSeed(val);
+            setPreRequestConfig((prev) => ({ ...prev, seed: val }));
+          }}
+          mode={mode as any}
+          setMode={(m) => setMode(m as any)}
+          archetypes={archetypes}
+          isSolving={isSolving}
+          onDispatch={() => handleDispatch(false)}
+          onOpenFullConfig={() => setIsConfigDrawerOpen(true)}
+        />
       </div>
 
       {/* Pre-Request Configuration Drawer (Advanced Tuning, Limits & Presets) */}

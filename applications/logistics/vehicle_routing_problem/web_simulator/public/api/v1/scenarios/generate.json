@@ -1,0 +1,13 @@
+{
+  "scenario_id": "SCEN-00CE0A36",
+  "name": "Wave-2026-Pareto-ZoneA",
+  "order_count": 100,
+  "fleet_size": 4,
+  "depot_count": 2,
+  "chute_count": 2,
+  "is_mock_data": true,
+  "created_at": "2026-09-12T15:12:43.726415+00:00",
+  "archetype": "PARETO_HOT_ZONE",
+  "hazard_ratio": 0.1,
+  "seed": 42
+}

@@ -12,8 +12,24 @@ import {
   Clock,
   Play,
   ArrowRight,
+  BookOpen,
+  Sparkles,
+  Layers,
+  Cpu,
+  FileText,
+  Tag,
+  HelpCircle,
+  Lightbulb,
+  Workflow,
+  ChevronRight,
+  Info,
+  Scale,
+  Zap,
 } from 'lucide-react';
+import katex from 'katex';
 import { TelemetryEvent, fetchTelemetryEvents } from '../services/api';
+import { CodeLmnBadge } from './CodeLmnBadge';
+import { STAGE_DOSSIERS } from '../data/stageDossiers';
 
 interface TelemetryConsoleProps {
   runId?: string;
@@ -25,6 +41,8 @@ export const TelemetryConsole: React.FC<TelemetryConsoleProps> = ({ runId, isSol
   const [filterLevel, setFilterLevel] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [autoScroll, setAutoScroll] = useState<boolean>(true);
+  const [selectedStageId, setSelectedStageId] = useState<number>(1);
+  const [stageSubTab, setStageSubTab] = useState<'all' | 'steps' | 'problem' | 'acronyms' | 'calc'>('all');
   const logContainerRef = useRef<HTMLDivElement>(null);
 
   // Stages with rich hover descriptions
@@ -62,8 +80,8 @@ export const TelemetryConsole: React.FC<TelemetryConsoleProps> = ({ runId, isSol
     {
       id: 6,
       name: '4-Gate Audit',
-      desc: 'Code lmn compliance (Φ < 1.0)',
-      tooltip: 'Stage 6: Multi-Tier Invariant Verification & Compliance Audit. Automatically evaluates all 4 mathematical gates, certifying zero subtour cycles, zero overload, zero tipping, and invariant token Code \'lmn\' (Phi < 1.0).',
+      desc: 'Verified compliance (Φ < 1.0)',
+      tooltip: 'Stage 6: Multi-Tier Invariant Verification & Compliance Audit. Automatically evaluates all 4 mathematical gates, certifying zero subtour cycles, zero overload, zero tipping, and invariant token \'Verified\' (Phi < 1.0).',
     },
     {
       id: 7,
@@ -149,7 +167,7 @@ export const TelemetryConsole: React.FC<TelemetryConsoleProps> = ({ runId, isSol
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShieldCheck size={20} color="#10b981" />
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f3f4f6', margin: 0 }}>
-              Four-Gate Invariant Preservation Engine (Enforced Code: 'lmn')
+              <CodeLmnBadge variant="title" label="Four-Gate Invariant Preservation Engine (Enforced: Verified)" />
             </h3>
           </div>
           <span
@@ -235,32 +253,52 @@ export const TelemetryConsole: React.FC<TelemetryConsoleProps> = ({ runId, isSol
           {stages.map((st) => {
             const isCompleted = activeStageId > st.id;
             const isCurrent = activeStageId === st.id;
+            const isSelected = selectedStageId === st.id;
             return (
               <React.Fragment key={st.id}>
                 <div
-                  title={st.tooltip}
+                  onClick={() => setSelectedStageId(st.id)}
+                  title={`${st.tooltip} (Click to inspect detailed stage dossier)`}
                   style={{
                     flex: 1,
                     minWidth: '120px',
                     padding: '10px 12px',
-                    backgroundColor: isCurrent ? 'rgba(0, 240, 255, 0.12)' : isCompleted ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                    border: isCurrent ? '1px solid #00f0ff' : isCompleted ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.06)',
+                    backgroundColor: isSelected
+                      ? 'rgba(0, 240, 255, 0.16)'
+                      : isCurrent
+                      ? 'rgba(0, 240, 255, 0.10)'
+                      : isCompleted
+                      ? 'rgba(16, 185, 129, 0.08)'
+                      : 'rgba(255, 255, 255, 0.02)',
+                    border: isSelected
+                      ? '2px solid #00f0ff'
+                      : isCurrent
+                      ? '1px solid #00f0ff'
+                      : isCompleted
+                      ? '1px solid #10b981'
+                      : '1px solid rgba(255, 255, 255, 0.06)',
+                    boxShadow: isSelected ? '0 0 14px rgba(0, 240, 255, 0.35)' : 'none',
                     borderRadius: '8px',
-                    cursor: 'help',
+                    cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                    <span style={{ fontSize: '10px', color: isCurrent ? '#00f0ff' : isCompleted ? '#10b981' : '#64748b', fontWeight: 700 }}>
+                    <span style={{ fontSize: '10px', color: isSelected ? '#00f0ff' : isCurrent ? '#00f0ff' : isCompleted ? '#10b981' : '#64748b', fontWeight: 700 }}>
                       STAGE {st.id}
                     </span>
-                    {isCompleted && <CheckCircle2 size={12} color="#10b981" />}
-                    {isCurrent && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#00f0ff', boxShadow: '0 0 8px #00f0ff' }} />}
+                    {isSelected && (
+                      <span style={{ fontSize: '8px', fontWeight: 800, background: '#00f0ff', color: '#0b1329', padding: '1px 4px', borderRadius: '3px' }}>
+                        ACTIVE
+                      </span>
+                    )}
+                    {!isSelected && isCompleted && <CheckCircle2 size={12} color="#10b981" />}
+                    {!isSelected && isCurrent && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#00f0ff', boxShadow: '0 0 8px #00f0ff' }} />}
                   </div>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: isCurrent ? '#fff' : isCompleted ? '#e2e8f0' : '#94a3b8' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: isSelected || isCurrent ? '#fff' : isCompleted ? '#e2e8f0' : '#94a3b8' }}>
                     {st.name}
                   </div>
-                  <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: '9px', color: isSelected ? '#38bdf8' : '#64748b', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {st.desc}
                   </div>
                 </div>
@@ -270,6 +308,428 @@ export const TelemetryConsole: React.FC<TelemetryConsoleProps> = ({ runId, isSol
           })}
         </div>
       </div>
+
+      {/* ============================================================ */}
+      {/* STAGE DEEP INTELLIGENCE & ALGORITHMIC AUDIT PANEL            */}
+      {/* ============================================================ */}
+      {(() => {
+        const stageData = STAGE_DOSSIERS[selectedStageId] || STAGE_DOSSIERS[1];
+
+        const renderLatex = (latex: string) => {
+          try {
+            return katex.renderToString(latex, {
+              displayMode: true,
+              throwOnError: false,
+            });
+          } catch {
+            return `<div style="color: #00f0ff; font-family: monospace;">${latex}</div>`;
+          }
+        };
+
+        return (
+          <div
+            className="glass-panel"
+            style={{
+              padding: '24px',
+              border: '1px solid rgba(0, 240, 255, 0.22)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+            }}
+          >
+            {/* Header: Title, Subtitle, Stage Buttons & Sub-Tabs */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    background: 'rgba(0, 240, 255, 0.12)',
+                    border: '1px solid rgba(0, 240, 255, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Workflow size={22} color="#00f0ff" />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#f8fafc', margin: 0 }}>
+                      {stageData.name}
+                    </h2>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        background: 'rgba(0, 240, 255, 0.15)',
+                        border: '1px solid rgba(0, 240, 255, 0.35)',
+                        color: '#00f0ff',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      {stageData.tag}
+                    </span>
+                    {activeStageId >= stageData.id ? (
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', color: '#34d399', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle2 size={10} color="#34d399" /> EXECUTED
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: 'rgba(148, 163, 184, 0.15)', border: '1px solid #64748b', color: '#94a3b8' }}>
+                        QUEUED
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>
+                    {stageData.subtitle}
+                  </p>
+                </div>
+              </div>
+
+              {/* Stage Quick Switcher Pills */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(15, 23, 42, 0.7)', padding: '4px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <span style={{ fontSize: '10px', color: '#64748b', padding: '0 6px', fontWeight: 600 }}>SELECT STAGE:</span>
+                {[1, 2, 3, 4, 5, 6, 7].map((sId) => {
+                  const isCur = selectedStageId === sId;
+                  return (
+                    <button
+                      key={sId}
+                      onClick={() => setSelectedStageId(sId)}
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: isCur ? 800 : 600,
+                        background: isCur ? 'rgba(0, 240, 255, 0.2)' : 'transparent',
+                        border: isCur ? '1px solid #00f0ff' : '1px solid transparent',
+                        color: isCur ? '#00f0ff' : '#94a3b8',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title={`Inspect Stage ${sId}: ${STAGE_DOSSIERS[sId]?.name || ''}`}
+                    >
+                      {sId}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Stage Summary Description */}
+            <div style={{ fontSize: '13px', lineHeight: '1.65', color: '#cbd5e1', background: 'rgba(15, 23, 42, 0.45)', padding: '14px 18px', borderRadius: '8px', borderLeft: '3px solid #00f0ff' }}>
+              <strong style={{ color: '#00f0ff' }}>Executive Operational Overview:</strong> {stageData.summary}
+            </div>
+
+            {/* Sub-Tab Navigation Bar */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'rgba(15, 23, 42, 0.65)',
+                padding: '4px',
+                borderRadius: '10px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                alignSelf: 'flex-start',
+                flexWrap: 'wrap',
+              }}
+            >
+              {[
+                { id: 'all', label: 'All Sections', icon: FileText },
+                { id: 'steps', label: '1. Step-by-Step Workflow', icon: Workflow },
+                { id: 'problem', label: '2. Problem Solving & Theory', icon: Lightbulb },
+                { id: 'acronyms', label: '3. Acronyms & Glossary', icon: Tag },
+                { id: 'calc', label: '4. Mathematical Calculations', icon: Activity },
+              ].map((tab) => {
+                const IconComp = tab.icon;
+                const isActive = stageSubTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setStageSubTab(tab.id as any)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 12px',
+                      fontSize: '11px',
+                      fontWeight: isActive ? 700 : 500,
+                      color: isActive ? '#00f0ff' : '#94a3b8',
+                      background: isActive ? 'rgba(0, 240, 255, 0.12)' : 'transparent',
+                      border: isActive ? '1px solid rgba(0, 240, 255, 0.35)' : '1px solid transparent',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <IconComp size={13} color={isActive ? '#00f0ff' : '#64748b'} />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* SECTION 1: DETAILED STEP-BY-STEP STAGE EXECUTION */}
+            {(stageSubTab === 'all' || stageSubTab === 'steps') && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(15, 23, 42, 0.45)', padding: '18px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Workflow size={16} color="#00f0ff" />
+                    <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#f3f4f6', margin: 0 }}>
+                      1. Detailed Step-by-Step Stage Execution Workflow
+                    </h3>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#64748b' }}>
+                    {stageData.steps.length} sequential execution phases
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '12px' }}>
+                  {stageData.steps.map((st) => (
+                    <div
+                      key={st.stepNumber}
+                      style={{
+                        padding: '14px',
+                        borderRadius: '8px',
+                        background: 'rgba(30, 41, 59, 0.35)',
+                        border: '1px solid rgba(0, 240, 255, 0.18)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span
+                          style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            background: 'rgba(0, 240, 255, 0.15)',
+                            border: '1px solid #00f0ff',
+                            color: '#00f0ff',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {st.stepNumber}
+                        </span>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                          {st.title}
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: '12px', lineHeight: '1.55', color: '#94a3b8' }}>
+                        {st.description}
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', fontSize: '10.5px' }}>
+                        <div style={{ color: '#64748b' }}>
+                          <strong style={{ color: '#94a3b8' }}>Input:</strong> {st.inputArtifact}
+                        </div>
+                        <div style={{ color: '#38bdf8' }}>
+                          <strong style={{ color: '#00f0ff' }}>Output:</strong> {st.outputArtifact}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 2: PROBLEM SOLVING & THEORETICAL METHODOLOGY */}
+            {(stageSubTab === 'all' || stageSubTab === 'problem') && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(15, 23, 42, 0.45)', padding: '18px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Lightbulb size={16} color="#fbbf24" />
+                  <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#f3f4f6', margin: 0 }}>
+                    2. Problem Solving, Computational Bottlenecks &amp; Mathematical Resolution
+                  </h3>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '12px' }}>
+                  {/* Problem Statement */}
+                  <div style={{ padding: '14px', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.35)', borderLeft: '4px solid #f59e0b', borderTop: '1px solid rgba(255, 255, 255, 0.05)', borderRight: '1px solid rgba(255, 255, 255, 0.05)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Operational Challenge &amp; Problem Statement
+                    </div>
+                    <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#cbd5e1' }}>
+                      {stageData.problemSolving.problemStatement}
+                    </div>
+                  </div>
+
+                  {/* Classical Failure Mode */}
+                  <div style={{ padding: '14px', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.35)', borderLeft: '4px solid #ef4444', borderTop: '1px solid rgba(255, 255, 255, 0.05)', borderRight: '1px solid rgba(255, 255, 255, 0.05)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Classical Heuristic &amp; Naive Failure Mode
+                    </div>
+                    <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#cbd5e1' }}>
+                      {stageData.problemSolving.classicalFailureMode}
+                    </div>
+                  </div>
+
+                  {/* Mathematical Resolution */}
+                  <div style={{ padding: '14px', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.35)', borderLeft: '4px solid #00f0ff', borderTop: '1px solid rgba(255, 255, 255, 0.05)', borderRight: '1px solid rgba(255, 255, 255, 0.05)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Mathematical &amp; Algorithmic Resolution
+                    </div>
+                    <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#cbd5e1' }}>
+                      {stageData.problemSolving.mathematicalResolution}
+                    </div>
+                  </div>
+
+                  {/* Algorithmic Engine */}
+                  <div style={{ padding: '14px', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.35)', borderLeft: '4px solid #10b981', borderTop: '1px solid rgba(255, 255, 255, 0.05)', borderRight: '1px solid rgba(255, 255, 255, 0.05)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Deployed Algorithmic Engine &amp; Solvers
+                    </div>
+                    <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#cbd5e1' }}>
+                      {stageData.problemSolving.algorithmicEngine}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 3: ABBREVIATIONS & ACRONYMS GLOSSARY */}
+            {(stageSubTab === 'all' || stageSubTab === 'acronyms') && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(15, 23, 42, 0.45)', padding: '18px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Tag size={16} color="#a855f7" />
+                    <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#f3f4f6', margin: 0 }}>
+                      3. Stage Abbreviations &amp; Acronyms Glossary
+                    </h3>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#64748b' }}>
+                    Domain lexicon for {stageData.name}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
+                  {stageData.acronyms.map((ac, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: '8px',
+                        background: 'rgba(30, 41, 59, 0.35)',
+                        border: '1px solid rgba(168, 85, 247, 0.2)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
+                        <span
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            color: '#a855f7',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            background: 'rgba(168, 85, 247, 0.15)',
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          {ac.term}
+                        </span>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#f1f5f9' }}>
+                          {ac.expansion}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '11.5px', lineHeight: '1.5', color: '#94a3b8' }}>
+                        {ac.definition}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 4: MATHEMATICAL CALCULATIONS & OPERATIONAL MEANING */}
+            {(stageSubTab === 'all' || stageSubTab === 'calc') && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: 'rgba(15, 23, 42, 0.45)', padding: '18px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Activity size={16} color="#10b981" />
+                    <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#f3f4f6', margin: 0 }}>
+                      4. Mathematical Calculations &amp; Quantitative Operational Meaning
+                    </h3>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#64748b' }}>
+                    Governing equations &amp; calculated stage values
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {stageData.calculations.map((calc, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '16px',
+                        borderRadius: '8px',
+                        background: 'rgba(30, 41, 59, 0.35)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                          {calc.metricName}
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            background: 'rgba(16, 185, 129, 0.15)',
+                            border: '1px solid #10b981',
+                            color: '#34d399',
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          {calc.calculatedValue}
+                        </span>
+                      </div>
+
+                      {/* Render Formula with KaTeX */}
+                      {calc.formulaLatex && (
+                        <div
+                          style={{
+                            padding: '12px',
+                            background: 'rgba(10, 18, 36, 0.85)',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(0, 240, 255, 0.2)',
+                            overflowX: 'auto',
+                            textAlign: 'center',
+                          }}
+                          dangerouslySetInnerHTML={{ __html: renderLatex(calc.formulaLatex) }}
+                        />
+                      )}
+
+                      <div style={{ fontSize: '12px', lineHeight: '1.55', color: '#cbd5e1', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '8px' }}>
+                        <strong style={{ color: '#34d399' }}>Operational Interpretation:</strong> {calc.operationalMeaning}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Live Log Console */}
       <div className="glass-panel" style={{ flex: 1, minHeight: '260px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

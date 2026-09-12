@@ -21,6 +21,7 @@ import {
   Minimize2,
   Terminal,
 } from 'lucide-react';
+import { CodeLmnBadge } from './CodeLmnBadge';
 
 interface QuantumUtilizationPanelProps {
   isOpen: boolean;
@@ -511,7 +512,10 @@ export const QuantumUtilizationPanel: React.FC<QuantumUtilizationPanelProps> = (
               }}
             >
               <ShieldCheck size={14} />
-              <span>Optimal ground state sampled with 99.2% statistical significance (Code 'lmn' verified).</span>
+              <span>
+                Optimal ground state sampled with 99.2% statistical significance (
+                <CodeLmnBadge variant="compact" label="Verified" /> verified).
+              </span>
             </div>
           </div>
         )}
@@ -603,7 +607,7 @@ export const QuantumUtilizationPanel: React.FC<QuantumUtilizationPanelProps> = (
         <span>
           Coupling: <strong style={{ color: '#00f0ff' }}>Heavy-Hexagonal</strong>
         </span>
-        <span style={{ color: '#6ee7b7' }}>Invariant 'lmn' Compliant</span>
+        <CodeLmnBadge variant="token" label="Invariant Verified" />
       </div>
     </div>
   );

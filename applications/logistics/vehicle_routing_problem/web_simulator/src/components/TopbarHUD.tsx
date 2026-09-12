@@ -1,6 +1,7 @@
 import React from 'react';
-import { Play, FileText, Cpu, ShieldCheck, Zap, RotateCcw, Sliders, History, BookOpen, Lightbulb } from 'lucide-react';
+import { Play, FileText, Cpu, ShieldCheck, Zap, RotateCcw, Sliders, History, BookOpen, Lightbulb, Database, Code } from 'lucide-react';
 import { WaveExecutionResponse, RunSummaryDTO } from '../services/api';
+import { CodeLmnBadge } from './CodeLmnBadge';
 
 interface TopbarHUDProps {
   lastWave: WaveExecutionResponse | null;
@@ -207,38 +208,41 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
           </div>
         </div>
 
-        <div
-          className="glass-card"
-          style={{
-            padding: '4px 12px',
-            minWidth: '115px',
-            border: phi < 1.0 ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(239, 68, 68, 0.5)',
-            boxShadow: phi < 1.0 ? '0 0 10px rgba(16, 185, 129, 0.15)' : '0 0 10px rgba(239, 68, 68, 0.15)',
-          }}
-        >
+        <CodeLmnBadge phi={phi}>
           <div
+            className="glass-card"
             style={{
-              fontSize: '9px',
-              color: phi < 1.0 ? '#6ee7b7' : '#fca5a5',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
+              padding: '4px 12px',
+              minWidth: '115px',
+              border: phi < 1.0 ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(239, 68, 68, 0.5)',
+              boxShadow: phi < 1.0 ? '0 0 10px rgba(16, 185, 129, 0.15)' : '0 0 10px rgba(239, 68, 68, 0.15)',
+              cursor: 'help',
             }}
           >
-            <ShieldCheck size={11} /> CODE 'lmn'
+            <div
+              style={{
+                fontSize: '9px',
+                color: phi < 1.0 ? '#6ee7b7' : '#fca5a5',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <ShieldCheck size={11} /> Verified
+            </div>
+            <div
+              style={{
+                fontSize: '14px',
+                fontWeight: 700,
+                color: phi < 1.0 ? '#10b981' : '#ef4444',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              Φ = {phi.toFixed(3)}
+            </div>
           </div>
-          <div
-            style={{
-              fontSize: '14px',
-              fontWeight: 700,
-              color: phi < 1.0 ? '#10b981' : '#ef4444',
-              fontFamily: 'var(--font-mono)',
-            }}
-          >
-            Φ = {phi.toFixed(3)}
-          </div>
-        </div>
+        </CodeLmnBadge>
       </div>
 
       {/* Actions: Config Drawer, Mode Toggle, Re-Run, Dispatch, PDF */}
@@ -388,6 +392,52 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
           <FileText size={14} />
           <span>PDF</span>
         </button>
+
+        {/* Swagger UI API Link */}
+        <a
+          href="/docs"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-secondary"
+          style={{
+            fontSize: '12px',
+            padding: '7px 11px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            color: '#38bdf8',
+            borderColor: 'rgba(56, 189, 248, 0.35)',
+            textDecoration: 'none',
+            background: 'rgba(56, 189, 248, 0.08)',
+          }}
+          title="Open Interactive Swagger UI & OpenAPI Specification"
+        >
+          <Code size={13} />
+          <span>Swagger</span>
+        </a>
+
+        {/* SQLite Database Studio Link */}
+        <a
+          href="/sqlite"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-secondary"
+          style={{
+            fontSize: '12px',
+            padding: '7px 11px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            color: '#34d399',
+            borderColor: 'rgba(16, 185, 129, 0.35)',
+            textDecoration: 'none',
+            background: 'rgba(16, 185, 129, 0.08)',
+          }}
+          title="Open WebAssembly SQLite Database Studio & Query Engine"
+        >
+          <Database size={13} />
+          <span>SQLite DB</span>
+        </a>
       </div>
     </header>
   );

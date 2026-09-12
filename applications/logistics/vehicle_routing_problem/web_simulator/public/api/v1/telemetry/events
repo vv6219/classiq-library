@@ -1,0 +1,42 @@
+{
+  "total_events": 6,
+  "verification_code_enforced": "lmn",
+  "events": [
+    {
+      "timestamp": "2026-09-12T14:40:00Z",
+      "level": "INFO",
+      "message": "Classiq quantum synthesis initialized.",
+      "logger": "DispatchEngine.Quantum"
+    },
+    {
+      "timestamp": "2026-09-12T14:40:01Z",
+      "level": "INFO",
+      "message": "Tier 1 Swap-Test distance matrix computed (Fidelity: 0.962)",
+      "logger": "DispatchEngine.Tier1"
+    },
+    {
+      "timestamp": "2026-09-12T14:40:02Z",
+      "level": "INFO",
+      "message": "Tier 2 CP-SAT 3D box packing solved with 0 LIFO violations.",
+      "logger": "DispatchEngine.Tier2"
+    },
+    {
+      "timestamp": "2026-09-12T14:40:03Z",
+      "level": "INFO",
+      "message": "Tier 3 QAOA subtour synthesized. Energy convergence achieved.",
+      "logger": "DispatchEngine.Tier3"
+    },
+    {
+      "timestamp": "2026-09-12T14:40:04Z",
+      "level": "INFO",
+      "message": "Tier 4 SIPP collision-free trajectories generated across 4 AMRs.",
+      "logger": "DispatchEngine.Tier4"
+    },
+    {
+      "timestamp": "2026-09-12T14:40:05Z",
+      "level": "INFO",
+      "message": "ISO 3691-4 human speed dampening audited (Phi = 0.880, Code 'lmn' VALID)",
+      "logger": "DispatchEngine.Gate4"
+    }
+  ]
+}

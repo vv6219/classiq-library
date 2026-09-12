@@ -1,0 +1,1448 @@
+{
+  "scenario_id": "SCEN-D148745B",
+  "name": "Scenario-80Orders",
+  "order_count": 80,
+  "fleet_size": 4,
+  "orders": [
+    {
+      "order_id": "ORD_00001",
+      "sku_id": "SKU_8270",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_15",
+      "pickup_pos": [
+        82.73199394181141,
+        56.90609389379256,
+        2.138195724645583
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 1.26,
+      "volume_m3": 0.0045,
+      "open_window_start": 3.7,
+      "drop_deadline": 885.6,
+      "is_atomic": true,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00002",
+      "sku_id": "SKU_7420",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_12",
+      "pickup_pos": [
+        66.11165316048829,
+        15.494641365380218,
+        0.7421554629348655
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 3.85,
+      "volume_m3": 0.0192,
+      "open_window_start": 16.3,
+      "drop_deadline": 687.3,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00003",
+      "sku_id": "SKU_4556",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_07",
+      "pickup_pos": [
+        38.170524123687294,
+        19.553611508969567,
+        10.46329814116
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 15.67,
+      "volume_m3": 0.0368,
+      "open_window_start": 79.2,
+      "drop_deadline": 452.4,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00004",
+      "sku_id": "SKU_2585",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_04",
+      "pickup_pos": [
+        21.81171107608941,
+        51.40476148244676,
+        6.2404579331044365
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 1.42,
+      "volume_m3": 0.0437,
+      "open_window_start": 107.6,
+      "drop_deadline": 960.7,
+      "is_atomic": true,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00005",
+      "sku_id": "SKU_7439",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_16",
+      "pickup_pos": [
+        88.24732011013738,
+        52.77844926723559,
+        6.660887239470406
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 15.62,
+      "volume_m3": 0.0281,
+      "open_window_start": 2.8,
+      "drop_deadline": 556.8,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00006",
+      "sku_id": "SKU_6618",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_08",
+      "pickup_pos": [
+        44.22900716804099,
+        68.9889242680162,
+        1.2774688432079488
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 2.5,
+      "volume_m3": 0.007,
+      "open_window_start": 11.4,
+      "drop_deadline": 498.0,
+      "is_atomic": true,
+      "hazard_class": "HAZ_A"
+    },
+    {
+      "order_id": "ORD_00007",
+      "sku_id": "SKU_9154",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_01",
+      "pickup_pos": [
+        5.38292687475379,
+        83.01984667723727,
+        9.41359515479388
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 6.26,
+      "volume_m3": 0.0121,
+      "open_window_start": 20.0,
+      "drop_deadline": 583.6,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00008",
+      "sku_id": "SKU_6116",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_04",
+      "pickup_pos": [
+        22.407566473926092,
+        32.450456040421244,
+        4.809020691874112
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 6.84,
+      "volume_m3": 0.0118,
+      "open_window_start": 167.3,
+      "drop_deadline": 952.2,
+      "is_atomic": true,
+      "hazard_class": "HAZ_A"
+    },
+    {
+      "order_id": "ORD_00009",
+      "sku_id": "SKU_4627",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_11",
+      "pickup_pos": [
+        60.32434502100527,
+        23.546156829047135,
+        4.2411272998082366
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 11.18,
+      "volume_m3": 0.0137,
+      "open_window_start": 54.9,
+      "drop_deadline": 453.7,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00010",
+      "sku_id": "SKU_1663",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_22",
+      "pickup_pos": [
+        120.71876421957307,
+        54.06714014121388,
+        4.740279796109428
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 0.8,
+      "volume_m3": 0.0129,
+      "open_window_start": 26.7,
+      "drop_deadline": 925.3,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00011",
+      "sku_id": "SKU_1854",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_01",
+      "pickup_pos": [
+        5.634351344701364,
+        62.64938160883368,
+        6.074813124829932
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 3.17,
+      "volume_m3": 0.0258,
+      "open_window_start": 43.6,
+      "drop_deadline": 825.5,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00012",
+      "sku_id": "SKU_7287",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_09",
+      "pickup_pos": [
+        49.320780064971736,
+        28.0562957279898,
+        0.9281389863250211
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 4.52,
+      "volume_m3": 0.0311,
+      "open_window_start": 116.1,
+      "drop_deadline": 520.7,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00013",
+      "sku_id": "SKU_9155",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_18",
+      "pickup_pos": [
+        99.42469361827857,
+        76.41375473666866,
+        3.2083870910091337
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 5.35,
+      "volume_m3": 0.0371,
+      "open_window_start": 16.8,
+      "drop_deadline": 855.1,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00014",
+      "sku_id": "SKU_3255",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_20",
+      "pickup_pos": [
+        110.38708642426512,
+        69.59128821003367,
+        7.241332284620022
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 0.9,
+      "volume_m3": 0.009,
+      "open_window_start": 18.3,
+      "drop_deadline": 716.4,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00015",
+      "sku_id": "SKU_3869",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_16",
+      "pickup_pos": [
+        88.49445746261082,
+        27.314767687414175,
+        0.6897913179629691
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 3.56,
+      "volume_m3": 0.0097,
+      "open_window_start": 55.5,
+      "drop_deadline": 681.0,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00016",
+      "sku_id": "SKU_2693",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_06",
+      "pickup_pos": [
+        32.89309772466676,
+        77.44325886239793,
+        7.12695557297126
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 7.63,
+      "volume_m3": 0.0236,
+      "open_window_start": 130.0,
+      "drop_deadline": 598.5,
+      "is_atomic": false,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00017",
+      "sku_id": "SKU_3205",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_14",
+      "pickup_pos": [
+        77.41486439022044,
+        40.9111090178811,
+        0.662294473553108
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 12.36,
+      "volume_m3": 0.0204,
+      "open_window_start": 53.0,
+      "drop_deadline": 584.1,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00018",
+      "sku_id": "SKU_2816",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_22",
+      "pickup_pos": [
+        121.19602979667498,
+        54.90428190625555,
+        1.5203531845930696
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 4.8,
+      "volume_m3": 0.0446,
+      "open_window_start": 133.3,
+      "drop_deadline": 851.5,
+      "is_atomic": true,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00019",
+      "sku_id": "SKU_3806",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_03",
+      "pickup_pos": [
+        16.256206943594457,
+        57.80595976059764,
+        1.3567388942025238
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 0.52,
+      "volume_m3": 0.029,
+      "open_window_start": 9.1,
+      "drop_deadline": 841.1,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00020",
+      "sku_id": "SKU_1853",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_22",
+      "pickup_pos": [
+        121.09083326056901,
+        17.13501749573346,
+        0.8921559818667514
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 8.28,
+      "volume_m3": 0.0175,
+      "open_window_start": 38.8,
+      "drop_deadline": 712.5,
+      "is_atomic": false,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00021",
+      "sku_id": "SKU_5142",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_23",
+      "pickup_pos": [
+        126.1383530924178,
+        24.292179557007888,
+        10.68013710469867
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 6.14,
+      "volume_m3": 0.0038,
+      "open_window_start": 45.2,
+      "drop_deadline": 455.8,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00022",
+      "sku_id": "SKU_2664",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_01",
+      "pickup_pos": [
+        5.442352229731105,
+        31.785115141018228,
+        1.4856695458535634
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 1.41,
+      "volume_m3": 0.0422,
+      "open_window_start": 78.4,
+      "drop_deadline": 816.4,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00023",
+      "sku_id": "SKU_8253",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_14",
+      "pickup_pos": [
+        76.59179906581345,
+        21.59098917879921,
+        3.769839748608589
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 18.0,
+      "volume_m3": 0.0095,
+      "open_window_start": 62.3,
+      "drop_deadline": 641.1,
+      "is_atomic": false,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00024",
+      "sku_id": "SKU_3849",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_10",
+      "pickup_pos": [
+        55.12585991571424,
+        50.21953810060614,
+        9.493143332477384
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 5.34,
+      "volume_m3": 0.009,
+      "open_window_start": 105.4,
+      "drop_deadline": 969.5,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00025",
+      "sku_id": "SKU_5000",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_19",
+      "pickup_pos": [
+        104.82063947574396,
+        58.8157769071101,
+        9.114481859598314
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 5.24,
+      "volume_m3": 0.0109,
+      "open_window_start": 7.0,
+      "drop_deadline": 678.0,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00026",
+      "sku_id": "SKU_1417",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_09",
+      "pickup_pos": [
+        49.49603745429341,
+        63.502325108435755,
+        4.157534346758572
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 12.92,
+      "volume_m3": 0.0037,
+      "open_window_start": 76.2,
+      "drop_deadline": 717.3,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00027",
+      "sku_id": "SKU_6104",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_24",
+      "pickup_pos": [
+        132.3671166072097,
+        54.33066845006415,
+        3.005267027798572
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 5.63,
+      "volume_m3": 0.0338,
+      "open_window_start": 89.4,
+      "drop_deadline": 623.2,
+      "is_atomic": false,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00028",
+      "sku_id": "SKU_8400",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_12",
+      "pickup_pos": [
+        65.85490519046272,
+        81.97606195885194,
+        7.606083996455185
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 3.46,
+      "volume_m3": 0.0232,
+      "open_window_start": 99.7,
+      "drop_deadline": 527.3,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00029",
+      "sku_id": "SKU_8860",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_07",
+      "pickup_pos": [
+        38.99593124203033,
+        18.9109808274145,
+        8.238873346305592
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 4.05,
+      "volume_m3": 0.0324,
+      "open_window_start": 156.0,
+      "drop_deadline": 959.1,
+      "is_atomic": true,
+      "hazard_class": "HAZ_A"
+    },
+    {
+      "order_id": "ORD_00030",
+      "sku_id": "SKU_7938",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_02",
+      "pickup_pos": [
+        10.5813487806419,
+        20.938639985963434,
+        10.859715574262342
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 2.61,
+      "volume_m3": 0.0179,
+      "open_window_start": 135.6,
+      "drop_deadline": 661.4,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00031",
+      "sku_id": "SKU_5186",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_19",
+      "pickup_pos": [
+        104.11119748230615,
+        49.48375730036014,
+        0.6192132700579003
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 3.35,
+      "volume_m3": 0.0044,
+      "open_window_start": 134.3,
+      "drop_deadline": 784.3,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00032",
+      "sku_id": "SKU_1823",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_06",
+      "pickup_pos": [
+        32.936335831606556,
+        71.14764743187138,
+        10.767957021919845
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 4.15,
+      "volume_m3": 0.0159,
+      "open_window_start": 45.5,
+      "drop_deadline": 762.7,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00033",
+      "sku_id": "SKU_4486",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_21",
+      "pickup_pos": [
+        115.69692505586382,
+        41.894128196545395,
+        8.2395574113517
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 11.61,
+      "volume_m3": 0.0432,
+      "open_window_start": 60.4,
+      "drop_deadline": 462.2,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00034",
+      "sku_id": "SKU_1539",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_05",
+      "pickup_pos": [
+        27.974394807666165,
+        84.0347521135722,
+        7.830697997207324
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 3.96,
+      "volume_m3": 0.0153,
+      "open_window_start": 164.0,
+      "drop_deadline": 957.5,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00035",
+      "sku_id": "SKU_1009",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_18",
+      "pickup_pos": [
+        99.05158787254408,
+        26.538398279590066,
+        4.818178724146375
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 7.26,
+      "volume_m3": 0.0227,
+      "open_window_start": 70.7,
+      "drop_deadline": 868.2,
+      "is_atomic": false,
+      "hazard_class": "HAZ_A"
+    },
+    {
+      "order_id": "ORD_00036",
+      "sku_id": "SKU_9702",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_21",
+      "pickup_pos": [
+        115.05637549665093,
+        75.53056633785373,
+        9.035460595865814
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 37.28,
+      "volume_m3": 0.0449,
+      "open_window_start": 152.9,
+      "drop_deadline": 601.3,
+      "is_atomic": false,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00037",
+      "sku_id": "SKU_1716",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_01",
+      "pickup_pos": [
+        5.671700684405857,
+        58.26897683205271,
+        4.260708539344826
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 1.04,
+      "volume_m3": 0.0309,
+      "open_window_start": 153.4,
+      "drop_deadline": 784.5,
+      "is_atomic": true,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00038",
+      "sku_id": "SKU_5719",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_15",
+      "pickup_pos": [
+        82.42053577866507,
+        69.92677847610167,
+        7.213294248229545
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 7.86,
+      "volume_m3": 0.0408,
+      "open_window_start": 114.6,
+      "drop_deadline": 747.5,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00039",
+      "sku_id": "SKU_8648",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_15",
+      "pickup_pos": [
+        82.39654278232128,
+        58.54606901595115,
+        9.554818941840825
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 13.94,
+      "volume_m3": 0.0083,
+      "open_window_start": 82.6,
+      "drop_deadline": 970.6,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00040",
+      "sku_id": "SKU_2906",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_23",
+      "pickup_pos": [
+        126.12804583895777,
+        25.633188545860605,
+        1.9576853128188065
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 5.11,
+      "volume_m3": 0.0098,
+      "open_window_start": 120.2,
+      "drop_deadline": 523.6,
+      "is_atomic": false,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00041",
+      "sku_id": "SKU_5777",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_22",
+      "pickup_pos": [
+        120.58870253375706,
+        23.444510977042057,
+        5.33817706434362
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 1.54,
+      "volume_m3": 0.0177,
+      "open_window_start": 143.9,
+      "drop_deadline": 820.6,
+      "is_atomic": true,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00042",
+      "sku_id": "SKU_5432",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_04",
+      "pickup_pos": [
+        22.30620127979306,
+        67.37817832685609,
+        2.437470703241962
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 1.56,
+      "volume_m3": 0.0179,
+      "open_window_start": 83.3,
+      "drop_deadline": 831.8,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00043",
+      "sku_id": "SKU_2646",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_14",
+      "pickup_pos": [
+        77.24961623200859,
+        17.133050691351592,
+        9.605757301284594
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 2.47,
+      "volume_m3": 0.0191,
+      "open_window_start": 101.5,
+      "drop_deadline": 905.9,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00044",
+      "sku_id": "SKU_4596",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_04",
+      "pickup_pos": [
+        21.855104303279305,
+        60.41759882041032,
+        5.535612068419627
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 4.45,
+      "volume_m3": 0.0337,
+      "open_window_start": 68.2,
+      "drop_deadline": 570.7,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00045",
+      "sku_id": "SKU_1876",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_05",
+      "pickup_pos": [
+        27.933691823759876,
+        15.527405419385232,
+        2.8659943759815465
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 2.55,
+      "volume_m3": 0.023,
+      "open_window_start": 10.0,
+      "drop_deadline": 815.4,
+      "is_atomic": false,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00046",
+      "sku_id": "SKU_6342",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_02",
+      "pickup_pos": [
+        11.07599841780566,
+        79.21769291598721,
+        0.5556500671748569
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 17.11,
+      "volume_m3": 0.0231,
+      "open_window_start": 96.3,
+      "drop_deadline": 682.3,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00047",
+      "sku_id": "SKU_9915",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_20",
+      "pickup_pos": [
+        109.74240973241508,
+        23.038577731744248,
+        6.911510445637142
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 2.03,
+      "volume_m3": 0.027,
+      "open_window_start": 9.3,
+      "drop_deadline": 511.3,
+      "is_atomic": false,
+      "hazard_class": "HAZ_A"
+    },
+    {
+      "order_id": "ORD_00048",
+      "sku_id": "SKU_3060",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_02",
+      "pickup_pos": [
+        10.587868111242656,
+        24.717734140941424,
+        0.5284644438504615
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 1.06,
+      "volume_m3": 0.0223,
+      "open_window_start": 153.1,
+      "drop_deadline": 900.7,
+      "is_atomic": true,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00049",
+      "sku_id": "SKU_3635",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_03",
+      "pickup_pos": [
+        16.926449423589712,
+        65.5117585525894,
+        1.0049937616229208
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 7.34,
+      "volume_m3": 0.0376,
+      "open_window_start": 33.6,
+      "drop_deadline": 475.0,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00050",
+      "sku_id": "SKU_2065",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_18",
+      "pickup_pos": [
+        99.31659943947157,
+        45.73944359991529,
+        4.45791650896153
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 3.3,
+      "volume_m3": 0.015,
+      "open_window_start": 161.9,
+      "drop_deadline": 692.2,
+      "is_atomic": true,
+      "hazard_class": "HAZ_A"
+    },
+    {
+      "order_id": "ORD_00051",
+      "sku_id": "SKU_2970",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_06",
+      "pickup_pos": [
+        32.83281578591249,
+        66.13843957665111,
+        7.784034877735054
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 1.32,
+      "volume_m3": 0.0398,
+      "open_window_start": 179.6,
+      "drop_deadline": 931.0,
+      "is_atomic": true,
+      "hazard_class": "HAZ_A"
+    },
+    {
+      "order_id": "ORD_00052",
+      "sku_id": "SKU_3243",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_02",
+      "pickup_pos": [
+        11.26245868574069,
+        76.37359457332246,
+        4.091858361517028
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 8.25,
+      "volume_m3": 0.0068,
+      "open_window_start": 143.5,
+      "drop_deadline": 533.5,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00053",
+      "sku_id": "SKU_1094",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_19",
+      "pickup_pos": [
+        104.56550834732298,
+        65.13253523130666,
+        6.789808330161928
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 8.39,
+      "volume_m3": 0.0432,
+      "open_window_start": 51.8,
+      "drop_deadline": 720.8,
+      "is_atomic": false,
+      "hazard_class": "HAZ_A"
+    },
+    {
+      "order_id": "ORD_00054",
+      "sku_id": "SKU_8790",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_11",
+      "pickup_pos": [
+        60.932118282483614,
+        54.55932285124462,
+        7.814833650707369
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 12.01,
+      "volume_m3": 0.0324,
+      "open_window_start": 76.3,
+      "drop_deadline": 818.2,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00055",
+      "sku_id": "SKU_6732",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_14",
+      "pickup_pos": [
+        76.68632087949412,
+        73.62435523017444,
+        3.987537332876859
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 2.18,
+      "volume_m3": 0.0118,
+      "open_window_start": 37.0,
+      "drop_deadline": 809.7,
+      "is_atomic": false,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00056",
+      "sku_id": "SKU_2625",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_06",
+      "pickup_pos": [
+        32.84634599436596,
+        39.28672413273594,
+        8.243763105152357
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 3.21,
+      "volume_m3": 0.0117,
+      "open_window_start": 89.7,
+      "drop_deadline": 641.1,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00057",
+      "sku_id": "SKU_5757",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_18",
+      "pickup_pos": [
+        99.1635373720167,
+        27.4625176808826,
+        10.59123833342928
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 1.22,
+      "volume_m3": 0.0198,
+      "open_window_start": 107.2,
+      "drop_deadline": 447.4,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00058",
+      "sku_id": "SKU_3079",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_17",
+      "pickup_pos": [
+        93.03654966784809,
+        48.04468615769995,
+        6.4308318992574725
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 0.81,
+      "volume_m3": 0.0353,
+      "open_window_start": 72.1,
+      "drop_deadline": 707.9,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00059",
+      "sku_id": "SKU_9038",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_10",
+      "pickup_pos": [
+        54.770744673143554,
+        60.0799680267311,
+        4.7917087965300125
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 0.62,
+      "volume_m3": 0.0087,
+      "open_window_start": 40.0,
+      "drop_deadline": 478.6,
+      "is_atomic": false,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00060",
+      "sku_id": "SKU_4310",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_03",
+      "pickup_pos": [
+        16.887460482513504,
+        53.97051093483562,
+        8.06853751126032
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 7.86,
+      "volume_m3": 0.0445,
+      "open_window_start": 170.0,
+      "drop_deadline": 554.6,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00061",
+      "sku_id": "SKU_5425",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_01",
+      "pickup_pos": [
+        5.207886255146027,
+        16.85725427116738,
+        2.405072068442872
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 4.44,
+      "volume_m3": 0.0201,
+      "open_window_start": 46.7,
+      "drop_deadline": 574.5,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00062",
+      "sku_id": "SKU_2279",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_09",
+      "pickup_pos": [
+        49.436126529135315,
+        35.61260316793424,
+        10.458759723102645
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 6.99,
+      "volume_m3": 0.008,
+      "open_window_start": 144.0,
+      "drop_deadline": 699.1,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00063",
+      "sku_id": "SKU_9428",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_07",
+      "pickup_pos": [
+        38.21802310749408,
+        60.15379174385306,
+        4.927891312809459
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 1.14,
+      "volume_m3": 0.0407,
+      "open_window_start": 95.3,
+      "drop_deadline": 884.3,
+      "is_atomic": false,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00064",
+      "sku_id": "SKU_8141",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_12",
+      "pickup_pos": [
+        65.7064212717606,
+        15.769708006093634,
+        1.9372991157224764
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 10.86,
+      "volume_m3": 0.0396,
+      "open_window_start": 31.6,
+      "drop_deadline": 880.2,
+      "is_atomic": true,
+      "hazard_class": "HAZ_A"
+    },
+    {
+      "order_id": "ORD_00065",
+      "sku_id": "SKU_5225",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_22",
+      "pickup_pos": [
+        121.23803361642636,
+        20.795906754758853,
+        6.8330971493970765
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 1.77,
+      "volume_m3": 0.0187,
+      "open_window_start": 53.5,
+      "drop_deadline": 693.3,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00066",
+      "sku_id": "SKU_7212",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_01",
+      "pickup_pos": [
+        5.269911222392195,
+        52.78899452357354,
+        2.2011457178616385
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 8.79,
+      "volume_m3": 0.0384,
+      "open_window_start": 85.4,
+      "drop_deadline": 592.0,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00067",
+      "sku_id": "SKU_2639",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_07",
+      "pickup_pos": [
+        38.07593341036962,
+        20.443574085526997,
+        0.5245636015706717
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 15.95,
+      "volume_m3": 0.0022,
+      "open_window_start": 173.2,
+      "drop_deadline": 947.2,
+      "is_atomic": true,
+      "hazard_class": "FLAMMABLE"
+    },
+    {
+      "order_id": "ORD_00068",
+      "sku_id": "SKU_9407",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_08",
+      "pickup_pos": [
+        44.138949385334264,
+        68.13250918771949,
+        8.103084957367955
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 5.06,
+      "volume_m3": 0.0442,
+      "open_window_start": 9.3,
+      "drop_deadline": 711.3,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00069",
+      "sku_id": "SKU_6913",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_22",
+      "pickup_pos": [
+        121.41548829758804,
+        17.37621850100592,
+        7.82291280609182
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 2.09,
+      "volume_m3": 0.0417,
+      "open_window_start": 155.2,
+      "drop_deadline": 961.9,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00070",
+      "sku_id": "SKU_4223",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_12",
+      "pickup_pos": [
+        65.62056688577728,
+        20.38672411404464,
+        7.811032146720468
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 2.37,
+      "volume_m3": 0.0332,
+      "open_window_start": 142.3,
+      "drop_deadline": 633.6,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00071",
+      "sku_id": "SKU_9502",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_10",
+      "pickup_pos": [
+        55.49034131334178,
+        15.01662665031192,
+        2.447465550555586
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 2.68,
+      "volume_m3": 0.0421,
+      "open_window_start": 15.9,
+      "drop_deadline": 338.5,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00072",
+      "sku_id": "SKU_5361",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_07",
+      "pickup_pos": [
+        38.52251919163452,
+        66.25902650292517,
+        0.5351368014512818
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 3.33,
+      "volume_m3": 0.0148,
+      "open_window_start": 49.9,
+      "drop_deadline": 896.1,
+      "is_atomic": false,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00073",
+      "sku_id": "SKU_2828",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_05",
+      "pickup_pos": [
+        27.08941100231226,
+        44.230654304944984,
+        9.730742229402729
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 13.53,
+      "volume_m3": 0.0221,
+      "open_window_start": 41.7,
+      "drop_deadline": 907.3,
+      "is_atomic": true,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00074",
+      "sku_id": "SKU_8274",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_09",
+      "pickup_pos": [
+        49.18643826214426,
+        69.57091314967273,
+        4.1763152212506665
+      ],
+      "drop_chute_id": "CHUTE_2",
+      "mass_kg": 0.77,
+      "volume_m3": 0.0437,
+      "open_window_start": 31.3,
+      "drop_deadline": 569.0,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00075",
+      "sku_id": "SKU_8906",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_13",
+      "pickup_pos": [
+        71.22381761482262,
+        52.58820960253895,
+        6.725869315837883
+      ],
+      "drop_chute_id": "CHUTE_4",
+      "mass_kg": 4.4,
+      "volume_m3": 0.0059,
+      "open_window_start": 160.0,
+      "drop_deadline": 1033.4,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00076",
+      "sku_id": "SKU_1954",
+      "depot_id": "DEPOT_2",
+      "aisle_id": "AISLE_24",
+      "pickup_pos": [
+        131.75264909396088,
+        15.355749787261818,
+        7.8050000749223765
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 0.73,
+      "volume_m3": 0.0249,
+      "open_window_start": 178.5,
+      "drop_deadline": 515.4,
+      "is_atomic": true,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00077",
+      "sku_id": "SKU_2591",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_02",
+      "pickup_pos": [
+        11.0437789079974,
+        75.5145016215144,
+        8.206054149013868
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 3.81,
+      "volume_m3": 0.0393,
+      "open_window_start": 60.1,
+      "drop_deadline": 503.3,
+      "is_atomic": false,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00078",
+      "sku_id": "SKU_5795",
+      "depot_id": "DEPOT_3",
+      "aisle_id": "AISLE_05",
+      "pickup_pos": [
+        27.880870759198928,
+        76.02904694216625,
+        0.807096471862871
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 8.36,
+      "volume_m3": 0.0075,
+      "open_window_start": 147.2,
+      "drop_deadline": 946.5,
+      "is_atomic": false,
+      "hazard_class": "NONE"
+    },
+    {
+      "order_id": "ORD_00079",
+      "sku_id": "SKU_2136",
+      "depot_id": "DEPOT_1",
+      "aisle_id": "AISLE_17",
+      "pickup_pos": [
+        93.11584385678026,
+        41.368675339075914,
+        0.5952602488536121
+      ],
+      "drop_chute_id": "CHUTE_3",
+      "mass_kg": 8.18,
+      "volume_m3": 0.0075,
+      "open_window_start": 151.2,
+      "drop_deadline": 686.5,
+      "is_atomic": true,
+      "hazard_class": "HAZ_B"
+    },
+    {
+      "order_id": "ORD_00080",
+      "sku_id": "SKU_8059",
+      "depot_id": "DEPOT_4",
+      "aisle_id": "AISLE_04",
+      "pickup_pos": [
+        21.567837059105173,
+        36.067449686277136,
+        7.935806930775456
+      ],
+      "drop_chute_id": "CHUTE_1",
+      "mass_kg": 0.81,
+      "volume_m3": 0.027,
+      "open_window_start": 156.9,
+      "drop_deadline": 1041.0,
+      "is_atomic": true,
+      "hazard_class": "NONE"
+    }
+  ]
+}

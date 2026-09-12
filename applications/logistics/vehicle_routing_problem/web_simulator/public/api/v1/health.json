@@ -1,0 +1,10 @@
+{
+  "status": "healthy",
+  "engine_name": "DispatchEngine",
+  "version": "1.0.0",
+  "active_operational_mode": "QUANTUM",
+  "database_connected": true,
+  "classiq_sdk_available": true,
+  "uptime_seconds": 120.0,
+  "deployed_from_db": "dispatchengine.db"
+}

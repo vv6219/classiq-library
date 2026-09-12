@@ -12,6 +12,7 @@ import {
   OrderDTO,
 } from '../services/api';
 import { ParameterCard } from './ParameterCard';
+import { CodeLmnBadge } from './CodeLmnBadge';
 import {
   Database,
   Plus,
@@ -1666,7 +1667,7 @@ export const DatasetStudio: React.FC<DatasetStudioProps> = ({
                             color: '#64748b',
                           }}
                         >
-                          <span>Invariant Certified (Token: lmn)</span>
+                          <CodeLmnBadge variant="token" label="Invariant Certified: Verified" />
                           <span style={{ color: '#00e676', fontWeight: 600 }}>Φ &lt; 1.0 Verified</span>
                         </div>
                       </>

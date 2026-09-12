@@ -1,0 +1,61 @@
+{
+  "operational_mode": "QUANTUM",
+  "co_processor_active": true,
+  "total_qubits_allocated": 32,
+  "total_shots_executed": 2048,
+  "tiers": [
+    {
+      "tier": 1,
+      "tier_name": "Tier 1: Master Batching & Quantum FCM",
+      "algorithm": "RANK_1Q_QUANTUM_FCM",
+      "algorithm_title": "Classiq Swap-Test Cosine Distance Metric",
+      "classiq_function": "swap_test_distance",
+      "classiq_signature": "@qfunc swap_test_distance(state_a: QArray[QBit], state_b: QArray[QBit], out: QBit)",
+      "qubits_used": 16,
+      "shots": 1024,
+      "circuit_depth": 34,
+      "fidelity": 0.962,
+      "description": "Evaluates Hilbert space state-vector overlap |<a|b>|^2 for high-dimensional order features."
+    },
+    {
+      "tier": 3,
+      "tier_name": "Tier 3: Route Sequencing & QAOA Subtour",
+      "algorithm": "RANK_1Q_QAOA_VRP",
+      "algorithm_title": "Classiq QAOA Multi-Angle Hamiltonian Solver",
+      "classiq_function": "qaoa_ansatz",
+      "classiq_signature": "@qfunc qaoa_ansatz(cost_edges: EdgeList, p: int, gamma: AngleList, beta: AngleList)",
+      "qubits_used": 24,
+      "shots": 1024,
+      "circuit_depth": 48,
+      "fidelity": 0.938,
+      "description": "Evaluates Ising cost Hamiltonian HC across p variational layers."
+    }
+  ],
+  "sample_histogram": [
+    {
+      "bitstring": "001101",
+      "probability": 0.312,
+      "shots": 320
+    },
+    {
+      "bitstring": "010010",
+      "probability": 0.245,
+      "shots": 251
+    },
+    {
+      "bitstring": "100100",
+      "probability": 0.188,
+      "shots": 192
+    },
+    {
+      "bitstring": "000111",
+      "probability": 0.125,
+      "shots": 128
+    },
+    {
+      "bitstring": "110000",
+      "probability": 0.082,
+      "shots": 84
+    }
+  ]
+}

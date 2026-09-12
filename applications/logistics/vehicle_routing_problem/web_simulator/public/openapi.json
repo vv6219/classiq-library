@@ -1,0 +1,1791 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Industrial Multi-Tier Warehouse Optimization Engine (DispatchEngine) API",
+    "version": "1.0.0",
+    "description": "### Enterprise REST & Streaming API for Extended Rich Multi-Depot VRPTW with Classiq Quantum Co-Processor Acceleration ($\\mathcal{P}_{\\text{ER-MD-VRPTW-3D-HRI-Q}}$).\n\n#### Core Capabilities:\n- **Multi-Archetype Synthetic Mocking**: 7 industrial warehouse scenario archetypes (Pareto Hot Zone, Cross-Dock, Surge, HAZMAT Segregation, HRI Congestion, Enterprise Scale up to 35,000 orders).\n- **4-Tier Optimization Hierarchy**: Batching (Tier 1), 3D Containerization (Tier 2), Routing (Tier 3), Kinematics (Tier 4).\n- **Classiq Quantum Acceleration**: Swap-Test fidelity kernels, ZZ feature maps, parameterized QAOA subtour synthesis, Shannon entropy & circuit profiling.\n- **Invariant Validation & Recourse**: Mathematical Gates 1-4 with automated Benders cuts.\n- **Presentation & Streaming**: 10Hz/20Hz simulation frames, 6-panel Executive HUD, and Server-Sent Events (SSE).\n- **4-Way Benchmark Comparator**: FIFO vs Hard K-Means vs Classical SC-QFCM vs Classiq Quantum.\n- **Falsification Protocol**: Empirical verification tracking enforced code `lmn`.",
+    "contact": {
+      "name": "Classiq Logistics Team",
+      "url": "https://classiq.io"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8080",
+      "description": "Local Standalone DispatchEngine Server"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "FastAPI ASGI Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Scenarios & Mock Data Engine",
+      "description": "Synthetic warehouse generation, canonical presets, live sample previews, and WMS order ingestion."
+    },
+    {
+      "name": "Wave Orchestration",
+      "description": "Master wave dispatch pipeline coordinating Tiers 1-4 and Invariant Validation Gates."
+    },
+    {
+      "name": "Isolated Tier Solvers",
+      "description": "Direct step-through execution and unit testing for Tiers 1, 2, 3, and 4."
+    },
+    {
+      "name": "Invariant Validation Gates & Recourse",
+      "description": "Verification of physical, temporal, and spatial constraints with Benders cut generation."
+    },
+    {
+      "name": "Quantum Co-Processor (Classiq)",
+      "description": "Swap-Test state fidelity, ZZ feature maps, QAOA subtour optimization, and quantum circuit telemetry."
+    },
+    {
+      "name": "Comparative Benchmarks",
+      "description": "4-Way algorithmic benchmarking and automated regression detection."
+    },
+    {
+      "name": "Presentation HUD & Simulation Streaming",
+      "description": "6-panel executive dashboard HUD, simulation frames time-series, and SSE streaming."
+    },
+    {
+      "name": "Telemetry & Falsification Audit",
+      "description": "Distributed OpenTelemetry spans and formal audit trail recording verification code 'lmn'."
+    },
+    {
+      "name": "System Health & Diagnostics",
+      "description": "Engine health, Classiq SDK readiness, and OpenAPI schema definitions."
+    }
+  ],
+  "paths": {
+    "/api/v1/scenarios/archetypes": {
+      "get": {
+        "tags": [
+          "Scenarios & Mock Data Engine"
+        ],
+        "summary": "List Warehouse Scenario Archetypes",
+        "description": "Retrieves the 7 available warehouse scenario archetypes with physical characteristics and stress targets.",
+        "operationId": "listScenarioArchetypes",
+        "responses": {
+          "200": {
+            "description": "List of available archetypes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArchetypeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/presets": {
+      "get": {
+        "tags": [
+          "Scenarios & Mock Data Engine"
+        ],
+        "summary": "List Canonical Benchmark Presets",
+        "description": "Returns pre-configured benchmark scenario configurations ('small-smoke-40', 'pareto-cluster-200', 'hazmat-heavy-500', 'surge-deadline-1000', 'enterprise-35k').",
+        "operationId": "listCanonicalPresets",
+        "responses": {
+          "200": {
+            "description": "Canonical presets dictionary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/MockScenarioCreateRequest"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/presets/{preset_name}": {
+      "post": {
+        "tags": [
+          "Scenarios & Mock Data Engine"
+        ],
+        "summary": "Generate Scenario from Preset",
+        "description": "Instantly generates and persists a canonical benchmark scenario by preset key.",
+        "operationId": "generateFromPreset",
+        "parameters": [
+          {
+            "name": "preset_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "pareto-cluster-200"
+            },
+            "description": "Preset key identifier"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Scenario generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Preset not found"
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/mock-sample": {
+      "get": {
+        "tags": [
+          "Scenarios & Mock Data Engine"
+        ],
+        "summary": "Live Sample Order Preview",
+        "description": "Generates a transient live sample of 1 to 20 customer orders without writing to database, for immediate UI inspection.",
+        "operationId": "previewMockSample",
+        "parameters": [
+          {
+            "name": "archetype",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "PARETO_HOT_ZONE"
+            },
+            "description": "Target archetype for spatial distribution"
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 5,
+              "minimum": 1,
+              "maximum": 50
+            },
+            "description": "Number of sample orders to preview"
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 42
+            },
+            "description": "Random seed"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sample orders preview array",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderLineSchema"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/generate": {
+      "post": {
+        "tags": [
+          "Scenarios & Mock Data Engine"
+        ],
+        "summary": "Generate Custom Synthetic Scenario",
+        "description": "Synthesizes customer orders, aisle coordinates, depot states, and saves to database.",
+        "operationId": "generateCustomScenario",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MockScenarioCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Custom scenario created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios": {
+      "get": {
+        "tags": [
+          "Scenarios & Mock Data Engine"
+        ],
+        "summary": "List Persisted Scenarios",
+        "description": "Queries all scenarios stored in the SQLite/SQLAlchemy database with pagination.",
+        "operationId": "listScenarios",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of scenario records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScenarioDetailResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/{scenario_id}": {
+      "get": {
+        "tags": [
+          "Scenarios & Mock Data Engine"
+        ],
+        "summary": "Get Scenario Metadata",
+        "description": "Retrieves metadata, depot counts, and bounds for a specific scenario.",
+        "operationId": "getScenarioById",
+        "parameters": [
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scenario metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Scenario not found"
+          }
+        }
+      }
+    },
+    "/api/v1/scenarios/{scenario_id}/orders": {
+      "get": {
+        "tags": [
+          "Scenarios & Mock Data Engine"
+        ],
+        "summary": "Get Scenario Orders Pool",
+        "description": "Queries order lines belonging to a scenario with pagination.",
+        "operationId": "getScenarioOrders",
+        "parameters": [
+          {
+            "name": "scenario_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order lines array",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderLineSchema"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dispatch/waves": {
+      "post": {
+        "tags": [
+          "Wave Orchestration"
+        ],
+        "summary": "Execute Synchronous Wave Dispatch",
+        "description": "Executes full multi-tier dispatch across Tiers 1-4 with validation gates, Benders recourse, and database snapshot commit.",
+        "operationId": "executeWaveDispatch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WaveDispatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Wave dispatch result with full metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaveDispatchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dispatch/runs": {
+      "get": {
+        "tags": [
+          "Wave Orchestration"
+        ],
+        "summary": "Query Execution Runs",
+        "description": "Queries historical execution runs from the database.",
+        "operationId": "listExecutionRuns",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of execution runs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WaveDispatchResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tiers/tier1-batching/solve": {
+      "post": {
+        "tags": [
+          "Isolated Tier Solvers"
+        ],
+        "summary": "Solve Tier 1 (Batching & Chute Balancing)",
+        "description": "Executes isolated Tier 1 solver using FCM-DR-SAA or Quantum-FCM.",
+        "operationId": "solveTier1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Tier1BatchingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tier1BatchingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tiers/tier2-containerization/solve": {
+      "post": {
+        "tags": [
+          "Isolated Tier Solvers"
+        ],
+        "summary": "Solve Tier 2 (3D Bin Packing & LIFO DAG)",
+        "description": "Solves 3D item placement and constructs LIFO extraction DAG.",
+        "operationId": "solveTier2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Tier2PackingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tier2PackingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tiers/tier3-routing/solve": {
+      "post": {
+        "tags": [
+          "Isolated Tier Solvers"
+        ],
+        "summary": "Solve Tier 3 (Route Sequencing & Scheduling)",
+        "description": "Executes HGS-ADC or QAOA subtour optimization.",
+        "operationId": "solveTier3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Tier3RoutingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tier3RoutingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tiers/tier4-kinematics/solve": {
+      "post": {
+        "tags": [
+          "Isolated Tier Solvers"
+        ],
+        "summary": "Solve Tier 4 (Kinematics & Swept Corridors)",
+        "description": "Generates continuous spline trajectories and swept corridor spatial reservations.",
+        "operationId": "solveTier4",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Tier4KinematicsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tier4KinematicsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gates/validate": {
+      "post": {
+        "tags": [
+          "Invariant Validation Gates & Recourse"
+        ],
+        "summary": "Validate Invariant Gate (1, 2, 3, or 4)",
+        "description": "Invokes formal invariant checks and returns violation codes and recommended Benders cuts.",
+        "operationId": "validateGate",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GateValidationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateValidationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quantum/swap-test": {
+      "post": {
+        "tags": [
+          "Quantum Co-Processor (Classiq)"
+        ],
+        "summary": "Calculate Swap-Test Quantum State Fidelity",
+        "description": "Prepares quantum states for feature vectors and computes overlap fidelity |<psi_A|psi_B>|^2.",
+        "operationId": "calculateSwapTestFidelity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwapTestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwapTestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quantum/distance-matrix": {
+      "post": {
+        "tags": [
+          "Quantum Co-Processor (Classiq)"
+        ],
+        "summary": "Generate Quantum Kernel Distance Matrix",
+        "description": "Constructs pairwise quantum kernel distance matrix for clustering.",
+        "operationId": "generateQuantumDistanceMatrix",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuantumDistanceMatrixRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuantumDistanceMatrixResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quantum/qaoa-subtour": {
+      "post": {
+        "tags": [
+          "Quantum Co-Processor (Classiq)"
+        ],
+        "summary": "Solve QAOA VRP Subtour Circuit",
+        "description": "Synthesizes parameterized QAOA Hamiltonian and finds optimal node sequence.",
+        "operationId": "solveQAOASubtour",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QAOASubtourRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QAOASubtourResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/benchmarks/compare": {
+      "post": {
+        "tags": [
+          "Comparative Benchmarks"
+        ],
+        "summary": "Run 4-Way Algorithmic Benchmark",
+        "description": "Executes comparative benchmark across FIFO, Hard K-Means, Classical SC-QFCM, and Classiq Quantum.",
+        "operationId": "runComparativeBenchmark",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchmarkRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkComparisonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/benchmarks/regression-test": {
+      "post": {
+        "tags": [
+          "Comparative Benchmarks"
+        ],
+        "summary": "Detect Performance Regression",
+        "description": "Compares candidate execution run against baseline and detects degradation.",
+        "operationId": "detectRegression",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegressionTestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegressionTestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/presentation/hud/{wave_id}": {
+      "get": {
+        "tags": [
+          "Presentation HUD & Simulation Streaming"
+        ],
+        "summary": "Get 6-Panel Executive Dashboard HUD",
+        "description": "Retrieves consolidated executive KPI metrics for an execution wave.",
+        "operationId": "getDashboardHUD",
+        "parameters": [
+          {
+            "name": "wave_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardHUDResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/presentation/frames/{run_id}": {
+      "get": {
+        "tags": [
+          "Presentation HUD & Simulation Streaming"
+        ],
+        "summary": "Get Simulation Animation Frames",
+        "description": "Retrieves 10Hz/20Hz time-series vehicle poses and chute queue depths.",
+        "operationId": "getSimulationFrames",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationFramesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/presentation/stream/{run_id}": {
+      "get": {
+        "tags": [
+          "Presentation HUD & Simulation Streaming"
+        ],
+        "summary": "Server-Sent Events (SSE) Animation Frame Stream",
+        "description": "Streams real-time simulation frames as an event-stream for frontend digital twin rendering.",
+        "operationId": "streamSimulationFrames",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Server-Sent Events text/event-stream",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry/audit": {
+      "get": {
+        "tags": [
+          "Telemetry & Falsification Audit"
+        ],
+        "summary": "Get Falsification Protocol Audit Trail",
+        "description": "Retrieves chronological falsification events tracking verification code 'lmn', Phi ratio, and chute boundedness.",
+        "operationId": "getFalsificationAuditTrail",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditTrailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "System Health & Diagnostics"
+        ],
+        "summary": "System Health & Diagnostics",
+        "description": "Reports engine health, uptime, operational mode, database connectivity, and Classiq SDK readiness.",
+        "operationId": "getHealthStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "tags": [
+          "System Health & Diagnostics"
+        ],
+        "summary": "Get OpenAPI Specification (JSON)",
+        "description": "Returns the complete OpenAPI 3.1.0 document in JSON format.",
+        "responses": {
+          "200": {
+            "description": "OpenAPI JSON Specification"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MockScenarioCreateRequest": {
+        "type": "object",
+        "properties": {
+          "scenario_name": {
+            "type": "string",
+            "example": "Wave-2026-Pareto-ZoneA"
+          },
+          "archetype": {
+            "type": "string",
+            "enum": [
+              "UNIFORM_RANDOM",
+              "PARETO_HOT_ZONE",
+              "DUAL_DEPOT_CROSS_DOCK",
+              "PEAK_SURGE_HEAVY_TAIL",
+              "HAZMAT_SEGREGATION",
+              "HRI_STOCHASTIC_BOTTLENECK",
+              "ENTERPRISE_SCALE_STRESS"
+            ],
+            "default": "PARETO_HOT_ZONE"
+          },
+          "num_orders": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 35000,
+            "default": 80
+          },
+          "num_vehicles": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 4
+          },
+          "num_depots": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 2
+          },
+          "num_chutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 2
+          },
+          "hazard_ratio": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 0.1
+          },
+          "seed": {
+            "type": "integer",
+            "default": 42
+          }
+        },
+        "required": [
+          "scenario_name"
+        ]
+      },
+      "ScenarioDetailResponse": {
+        "type": "object",
+        "properties": {
+          "scenario_id": {
+            "type": "string",
+            "example": "SCEN-D148745B"
+          },
+          "name": {
+            "type": "string",
+            "example": "Wave-2026-Pareto-ZoneA"
+          },
+          "archetype": {
+            "type": "string",
+            "example": "PARETO_HOT_ZONE"
+          },
+          "created_at": {
+            "type": "string",
+            "example": "2026-09-12T00:00:00Z"
+          },
+          "random_seed": {
+            "type": "integer",
+            "example": 42
+          },
+          "order_count": {
+            "type": "integer",
+            "example": 80
+          },
+          "fleet_size": {
+            "type": "integer",
+            "example": 4
+          },
+          "depot_count": {
+            "type": "integer",
+            "example": 2
+          },
+          "chute_count": {
+            "type": "integer",
+            "example": 2
+          },
+          "is_mock": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "scenario_id",
+          "name",
+          "order_count",
+          "fleet_size"
+        ]
+      },
+      "OrderLineSchema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "example": "ORD_00001"
+          },
+          "sku_id": {
+            "type": "string",
+            "example": "SKU_4912"
+          },
+          "depot_id": {
+            "type": "string",
+            "example": "DEPOT_1"
+          },
+          "aisle_id": {
+            "type": "string",
+            "example": "AISLE_03"
+          },
+          "pickup_pos": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "example": 25.5
+              },
+              "y": {
+                "type": "number",
+                "example": 40.0
+              },
+              "z": {
+                "type": "number",
+                "example": 1.8
+              }
+            }
+          },
+          "drop_chute_id": {
+            "type": "string",
+            "example": "CHUTE_1"
+          },
+          "mass_kg": {
+            "type": "number",
+            "example": 4.5
+          },
+          "volume_m3": {
+            "type": "number",
+            "example": 0.0131
+          },
+          "dimensions_m": {
+            "type": "object",
+            "properties": {
+              "length": {
+                "type": "number",
+                "example": 0.35
+              },
+              "width": {
+                "type": "number",
+                "example": 0.25
+              },
+              "height": {
+                "type": "number",
+                "example": 0.15
+              }
+            }
+          },
+          "open_window_start": {
+            "type": "number",
+            "example": 12.0
+          },
+          "drop_deadline": {
+            "type": "number",
+            "example": 420.0
+          },
+          "hazard_class": {
+            "type": "string",
+            "example": "NONE"
+          },
+          "sla_priority": {
+            "type": "number",
+            "example": 0.85
+          }
+        }
+      },
+      "ArchetypeListResponse": {
+        "type": "object",
+        "properties": {
+          "archetypes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "archetype_key": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "stress_target": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "WaveDispatchRequest": {
+        "type": "object",
+        "properties": {
+          "scenario_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "SCEN-D148745B"
+          },
+          "num_orders": {
+            "type": "integer",
+            "default": 80
+          },
+          "num_vehicles": {
+            "type": "integer",
+            "default": 4
+          },
+          "operational_mode": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "AGILITY",
+              "DEGRADED_RECOVERY",
+              "EMERGENCY_RECEDE",
+              "HIGH_THROUGHPUT",
+              "QUANTUM"
+            ],
+            "default": "QUANTUM"
+          },
+          "seed": {
+            "type": "integer",
+            "default": 42
+          },
+          "enable_benders_recourse": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "WaveDispatchResponse": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "example": "RUN-933D5052"
+          },
+          "scenario_id": {
+            "type": "string",
+            "example": "SCEN-D148745B"
+          },
+          "wave_id": {
+            "type": "string",
+            "example": "WAVE-2DA292A7"
+          },
+          "operational_mode": {
+            "type": "string",
+            "example": "QUANTUM"
+          },
+          "algorithm_ranks_used": {
+            "type": "object"
+          },
+          "total_fleet_makespan_sec": {
+            "type": "number",
+            "example": 949.3
+          },
+          "total_distance_km": {
+            "type": "number",
+            "example": 3.706
+          },
+          "chute_balance_variance": {
+            "type": "number",
+            "example": 0.45
+          },
+          "total_solve_latency_sec": {
+            "type": "number",
+            "example": 0.14
+          },
+          "falsification_ratio_phi": {
+            "type": "number",
+            "example": 0.88
+          },
+          "is_falsified": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "SwapTestRequest": {
+        "type": "object",
+        "properties": {
+          "vector_a": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "example": [
+              0.3,
+              0.4,
+              0.5,
+              0.6
+            ]
+          },
+          "vector_b": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "example": [
+              0.32,
+              0.38,
+              0.49,
+              0.61
+            ]
+          },
+          "shots": {
+            "type": "integer",
+            "default": 2048
+          }
+        },
+        "required": [
+          "vector_a",
+          "vector_b"
+        ]
+      },
+      "SwapTestResponse": {
+        "type": "object",
+        "properties": {
+          "state_fidelity": {
+            "type": "number",
+            "example": 0.9982
+          },
+          "quantum_distance": {
+            "type": "number",
+            "example": 0.06
+          },
+          "shots_evaluated": {
+            "type": "integer",
+            "example": 2048
+          },
+          "circuit_depth": {
+            "type": "integer",
+            "example": 14
+          },
+          "qubits_used": {
+            "type": "integer",
+            "example": 5
+          },
+          "execution_time_ms": {
+            "type": "number",
+            "example": 3.2
+          }
+        }
+      },
+      "QuantumDistanceMatrixRequest": {
+        "type": "object",
+        "properties": {
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "shots": {
+            "type": "integer",
+            "default": 1024
+          }
+        }
+      },
+      "QuantumDistanceMatrixResponse": {
+        "type": "object",
+        "properties": {
+          "dimension": {
+            "type": "integer",
+            "example": 3
+          },
+          "distance_matrix": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "total_circuits_simulated": {
+            "type": "integer",
+            "example": 6
+          }
+        }
+      },
+      "QAOASubtourRequest": {
+        "type": "object",
+        "properties": {
+          "cost_matrix": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "p_steps": {
+            "type": "integer",
+            "default": 2
+          },
+          "shots": {
+            "type": "integer",
+            "default": 2048
+          }
+        }
+      },
+      "QAOASubtourResponse": {
+        "type": "object",
+        "properties": {
+          "optimal_sequence": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              0,
+              3,
+              1,
+              2,
+              0
+            ]
+          },
+          "subtour_cost": {
+            "type": "number",
+            "example": 50.1
+          },
+          "best_bitstring": {
+            "type": "string",
+            "example": "100110"
+          },
+          "variational_energy": {
+            "type": "number",
+            "example": -42.85
+          },
+          "shannon_entropy": {
+            "type": "number",
+            "example": 2.14
+          },
+          "circuit_width_qubits": {
+            "type": "integer",
+            "example": 16
+          },
+          "circuit_depth": {
+            "type": "integer",
+            "example": 48
+          },
+          "cx_gate_count": {
+            "type": "integer",
+            "example": 64
+          }
+        }
+      },
+      "GateValidationRequest": {
+        "type": "object",
+        "properties": {
+          "gate_number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 1
+          },
+          "scenario_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "validation_payload": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "gate_number"
+        ]
+      },
+      "GateValidationResponse": {
+        "type": "object",
+        "properties": {
+          "gate_number": {
+            "type": "integer",
+            "example": 1
+          },
+          "gate_name": {
+            "type": "string",
+            "example": "Gate 1: Capacity & Chute Balance"
+          },
+          "is_valid": {
+            "type": "boolean",
+            "example": true
+          },
+          "violation_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metrics": {
+            "type": "object"
+          }
+        }
+      },
+      "Tier1BatchingRequest": {
+        "type": "object",
+        "properties": {
+          "scenario_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "num_vehicles": {
+            "type": "integer",
+            "default": 4
+          },
+          "use_quantum": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "Tier1BatchingResponse": {
+        "type": "object",
+        "properties": {
+          "wave_id": {
+            "type": "string"
+          },
+          "batches": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "chute_balance_variance": {
+            "type": "number",
+            "example": 0.45
+          },
+          "algorithm_used": {
+            "type": "string",
+            "example": "RANK_1Q_QUANTUM_FCM"
+          }
+        }
+      },
+      "Tier2PackingRequest": {
+        "type": "object",
+        "properties": {
+          "batch_index": {
+            "type": "integer",
+            "default": 0
+          },
+          "bay_dimensions_m": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "default": [
+              1.2,
+              0.8,
+              1.0
+            ]
+          }
+        }
+      },
+      "Tier2PackingResponse": {
+        "type": "object",
+        "properties": {
+          "vehicle_id": {
+            "type": "string",
+            "example": "AMR_01"
+          },
+          "total_packed_items": {
+            "type": "integer",
+            "example": 20
+          },
+          "volume_utilization_ratio": {
+            "type": "number",
+            "example": 0.785
+          },
+          "center_of_mass": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "lifo_dag_edges_count": {
+            "type": "integer",
+            "example": 18
+          },
+          "is_acyclic": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "Tier3RoutingRequest": {
+        "type": "object",
+        "properties": {
+          "use_qaoa_subtour": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "Tier3RoutingResponse": {
+        "type": "object",
+        "properties": {
+          "total_fleet_makespan_sec": {
+            "type": "number",
+            "example": 949.3
+          },
+          "total_distance_km": {
+            "type": "number",
+            "example": 3.706
+          },
+          "routes_count": {
+            "type": "integer",
+            "example": 4
+          }
+        }
+      },
+      "Tier4KinematicsRequest": {
+        "type": "object",
+        "properties": {
+          "discretization_step_s": {
+            "type": "number",
+            "default": 0.1
+          }
+        }
+      },
+      "Tier4KinematicsResponse": {
+        "type": "object",
+        "properties": {
+          "total_trajectories_count": {
+            "type": "integer",
+            "example": 4
+          },
+          "time_horizon_sec": {
+            "type": "number",
+            "example": 949.3
+          },
+          "corridor_reservations_count": {
+            "type": "integer",
+            "example": 48
+          },
+          "hri_speed_throttle_events": {
+            "type": "integer",
+            "example": 2
+          }
+        }
+      },
+      "BenchmarkRunRequest": {
+        "type": "object",
+        "properties": {
+          "scenario_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "num_orders": {
+            "type": "integer",
+            "default": 40
+          },
+          "num_vehicles": {
+            "type": "integer",
+            "default": 4
+          },
+          "seed": {
+            "type": "integer",
+            "default": 42
+          }
+        }
+      },
+      "BenchmarkComparisonResponse": {
+        "type": "object",
+        "properties": {
+          "scenario_id": {
+            "type": "string"
+          },
+          "algorithms_evaluated": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "makespan_by_algo": {
+            "type": "object"
+          },
+          "distance_by_algo": {
+            "type": "object"
+          },
+          "chute_variance_by_algo": {
+            "type": "object"
+          },
+          "latency_by_algo": {
+            "type": "object"
+          },
+          "improvement_makespan_percent": {
+            "type": "number",
+            "example": 21.4
+          },
+          "improvement_distance_percent": {
+            "type": "number",
+            "example": 21.8
+          }
+        }
+      },
+      "RegressionTestRequest": {
+        "type": "object",
+        "properties": {
+          "baseline_run_id": {
+            "type": "string",
+            "example": "RUN-933D5052"
+          },
+          "candidate_run_id": {
+            "type": "string",
+            "example": "RUN-C094BAD5"
+          },
+          "threshold_percent": {
+            "type": "number",
+            "default": 5.0
+          }
+        },
+        "required": [
+          "baseline_run_id",
+          "candidate_run_id"
+        ]
+      },
+      "RegressionTestResponse": {
+        "type": "object",
+        "properties": {
+          "baseline_run_id": {
+            "type": "string"
+          },
+          "candidate_run_id": {
+            "type": "string"
+          },
+          "has_regressed": {
+            "type": "boolean",
+            "example": false
+          },
+          "makespan_delta_percent": {
+            "type": "number",
+            "example": -1.2
+          },
+          "latency_delta_percent": {
+            "type": "number",
+            "example": 0.5
+          }
+        }
+      },
+      "DashboardHUDResponse": {
+        "type": "object",
+        "properties": {
+          "wave_id": {
+            "type": "string",
+            "example": "WAVE-2DA292A7"
+          },
+          "operational_mode": {
+            "type": "string",
+            "example": "QUANTUM"
+          },
+          "total_fleet_makespan_sec": {
+            "type": "number",
+            "example": 949.3
+          },
+          "total_distance_km": {
+            "type": "number",
+            "example": 3.706
+          },
+          "chute_balance_variance": {
+            "type": "number",
+            "example": 0.45
+          },
+          "pack_volume_density_percent": {
+            "type": "number",
+            "example": 78.5
+          },
+          "hri_throttle_events": {
+            "type": "integer",
+            "example": 2
+          },
+          "falsification_ratio_phi": {
+            "type": "number",
+            "example": 0.88
+          },
+          "simulation_frames_count": {
+            "type": "integer",
+            "example": 200
+          }
+        }
+      },
+      "SimulationFramesResponse": {
+        "type": "object",
+        "properties": {
+          "wave_id": {
+            "type": "string",
+            "example": "WAVE-2DA292A7"
+          },
+          "total_frames": {
+            "type": "integer",
+            "example": 200
+          },
+          "sampling_rate_hz": {
+            "type": "number",
+            "example": 10.0
+          },
+          "duration_sec": {
+            "type": "number",
+            "example": 20.0
+          },
+          "frames": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "AuditTrailResponse": {
+        "type": "object",
+        "properties": {
+          "total_events": {
+            "type": "integer",
+            "example": 5
+          },
+          "verification_code_enforced": {
+            "type": "string",
+            "example": "lmn"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "HealthStatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "healthy"
+          },
+          "engine_name": {
+            "type": "string",
+            "example": "DispatchEngine"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "active_operational_mode": {
+            "type": "string",
+            "example": "QUANTUM"
+          },
+          "database_connected": {
+            "type": "boolean",
+            "example": true
+          },
+          "classiq_sdk_available": {
+            "type": "boolean",
+            "example": true
+          },
+          "uptime_seconds": {
+            "type": "number",
+            "example": 128.4
+          }
+        }
+      }
+    }
+  }
+}

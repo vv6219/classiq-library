@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { getReportPdfUrl } from '../services/api';
 import { FileText, Download, X, Award, Atom, Layers, CheckCircle2 } from 'lucide-react';
+import { CodeLmnBadge } from './CodeLmnBadge';
 
 interface PDFModalProps {
   runId: string;
@@ -260,7 +261,10 @@ export const PDFModal: React.FC<PDFModalProps> = ({ runId, isOpen, onClose }) =>
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <CheckCircle2 size={13} color="#00e676" />
-            <span>Cryptographically sealed & verified against Falsification Invariant (Code: <span style={{ color: '#00f0ff', fontFamily: 'monospace' }}>lmn</span>)</span>
+            <span>
+              Cryptographically sealed & verified against Falsification Invariant (
+              <CodeLmnBadge variant="compact" label="Verified" />)
+            </span>
           </div>
           <div>Multi-page Vector PDF rendered via Matplotlib Backend PDF Engine</div>
         </div>

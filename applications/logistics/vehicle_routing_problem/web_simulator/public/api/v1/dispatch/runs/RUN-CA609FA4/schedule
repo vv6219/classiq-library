@@ -1,0 +1,429 @@
+{
+  "run_id": "RUN-CA609FA4",
+  "routes": [
+    {
+      "route_id": "ROUTE-RUN-CA609FA4-AMR_001",
+      "vehicle_id": "AMR_001",
+      "origin_depot_id": "DEPOT_1",
+      "destination_depot_id": "DEPOT_1",
+      "tour_length_m": 286.14,
+      "route_makespan_sec": 185.4,
+      "total_carried_mass_kg": 0.0,
+      "total_carried_volume_m3": 0.0,
+      "volume_utilization_pct": 78.5,
+      "battery_consumed_pct": 4.800000000000004,
+      "stops": [
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_001-0",
+          "stop_sequence": 0,
+          "location_type": "DEPOT_START",
+          "location_id": "START_DEPOT_1",
+          "pos_x": 10.0,
+          "pos_y": 10.0,
+          "pos_z": 0.0,
+          "arrival_time_sec": 0.0,
+          "departure_time_sec": 0.0,
+          "service_duration_sec": 0.0,
+          "action": "DEPOT_START",
+          "order_ids": [
+            "START_DEPOT_1"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_001-1",
+          "stop_sequence": 1,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00001",
+          "pos_x": 82.73199394181141,
+          "pos_y": 56.90609389379256,
+          "pos_z": 2.138195724645583,
+          "arrival_time_sec": 43.3,
+          "departure_time_sec": 58.3,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00001"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_001-2",
+          "stop_sequence": 2,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00003",
+          "pos_x": 137.96563203307457,
+          "pos_y": 71.58781436815228,
+          "pos_z": 3.698444576320392,
+          "arrival_time_sec": 86.9,
+          "departure_time_sec": 101.9,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00003"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_001-3",
+          "stop_sequence": 3,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00011",
+          "pos_x": 32.867783132719254,
+          "pos_y": 59.26140814155056,
+          "pos_z": 7.152061962989395,
+          "arrival_time_sec": 154.8,
+          "departure_time_sec": 169.8,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00011"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_001-4",
+          "stop_sequence": 4,
+          "location_type": "DEPOT_END",
+          "location_id": "END_DEPOT_1",
+          "pos_x": 10.0,
+          "pos_y": 10.0,
+          "pos_z": 0.0,
+          "arrival_time_sec": 197.2,
+          "departure_time_sec": 197.2,
+          "service_duration_sec": 0.0,
+          "action": "DEPOT_END",
+          "order_ids": [
+            "END_DEPOT_1"
+          ]
+        }
+      ]
+    },
+    {
+      "route_id": "ROUTE-RUN-CA609FA4-AMR_002",
+      "vehicle_id": "AMR_002",
+      "origin_depot_id": "DEPOT_2",
+      "destination_depot_id": "DEPOT_2",
+      "tour_length_m": 353.13,
+      "route_makespan_sec": 277.6,
+      "total_carried_mass_kg": 0.0,
+      "total_carried_volume_m3": 0.0,
+      "volume_utilization_pct": 78.5,
+      "battery_consumed_pct": 14.600000000000001,
+      "stops": [
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_002-0",
+          "stop_sequence": 0,
+          "location_type": "DEPOT_START",
+          "location_id": "START_DEPOT_2",
+          "pos_x": 140.0,
+          "pos_y": 10.0,
+          "pos_z": 0.0,
+          "arrival_time_sec": 0.0,
+          "departure_time_sec": 0.0,
+          "service_duration_sec": 0.0,
+          "action": "DEPOT_START",
+          "order_ids": [
+            "START_DEPOT_2"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_002-1",
+          "stop_sequence": 1,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00004",
+          "pos_x": 99.27513282336112,
+          "pos_y": 80.76492590949324,
+          "pos_z": 9.895687179490313,
+          "arrival_time_sec": 58.6,
+          "departure_time_sec": 73.6,
+          "service_duration_sec": 14.999999999999993,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00004"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_002-2",
+          "stop_sequence": 2,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00013",
+          "pos_x": 88.46541935128879,
+          "pos_y": 54.08054175249683,
+          "pos_z": 9.767681603488066,
+          "arrival_time_sec": 88.0,
+          "departure_time_sec": 103.0,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00013"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_002-3",
+          "stop_sequence": 3,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00009",
+          "pos_x": 38.16465585314294,
+          "pos_y": 52.38625935628094,
+          "pos_z": 5.5907146992693235,
+          "arrival_time_sec": 128.2,
+          "departure_time_sec": 143.2,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00009"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_002-4",
+          "stop_sequence": 4,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00012",
+          "pos_x": 110.4405232644896,
+          "pos_y": 42.83004147612657,
+          "pos_z": 5.936389180538542,
+          "arrival_time_sec": 179.7,
+          "departure_time_sec": 194.7,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00012"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_002-5",
+          "stop_sequence": 5,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00005",
+          "pos_x": 71.14092422497477,
+          "pos_y": 71.15378865278278,
+          "pos_z": 1.2827817586375936,
+          "arrival_time_sec": 219.0,
+          "departure_time_sec": 234.0,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00005"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_002-6",
+          "stop_sequence": 6,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00014",
+          "pos_x": 87.60147154286604,
+          "pos_y": 61.445123837563905,
+          "pos_z": 0.5531466303852962,
+          "arrival_time_sec": 243.6,
+          "departure_time_sec": 258.6,
+          "service_duration_sec": 15.000000000000028,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00014"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_002-7",
+          "stop_sequence": 7,
+          "location_type": "DEPOT_END",
+          "location_id": "END_DEPOT_2",
+          "pos_x": 140.0,
+          "pos_y": 10.0,
+          "pos_z": 0.0,
+          "arrival_time_sec": 295.3,
+          "departure_time_sec": 295.3,
+          "service_duration_sec": 0.0,
+          "action": "DEPOT_END",
+          "order_ids": [
+            "END_DEPOT_2"
+          ]
+        }
+      ]
+    },
+    {
+      "route_id": "ROUTE-RUN-CA609FA4-AMR_003",
+      "vehicle_id": "AMR_003",
+      "origin_depot_id": "DEPOT_1",
+      "destination_depot_id": "DEPOT_1",
+      "tour_length_m": 211.21,
+      "route_makespan_sec": 170.8,
+      "total_carried_mass_kg": 0.0,
+      "total_carried_volume_m3": 0.0,
+      "volume_utilization_pct": 78.5,
+      "battery_consumed_pct": 3.400000000000003,
+      "stops": [
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_003-0",
+          "stop_sequence": 0,
+          "location_type": "DEPOT_START",
+          "location_id": "START_DEPOT_1",
+          "pos_x": 10.0,
+          "pos_y": 10.0,
+          "pos_z": 0.0,
+          "arrival_time_sec": 0.0,
+          "departure_time_sec": 0.0,
+          "service_duration_sec": 0.0,
+          "action": "DEPOT_START",
+          "order_ids": [
+            "START_DEPOT_1"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_003-1",
+          "stop_sequence": 1,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00010",
+          "pos_x": 27.284840494377466,
+          "pos_y": 17.582086314817296,
+          "pos_z": 6.900425506788917,
+          "arrival_time_sec": 26.1,
+          "departure_time_sec": 41.1,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00010"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_003-2",
+          "stop_sequence": 2,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00007",
+          "pos_x": 82.42754101835855,
+          "pos_y": 16.77933887208666,
+          "pos_z": 1.6328599834296966,
+          "arrival_time_sec": 68.8,
+          "departure_time_sec": 83.8,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00007"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_003-3",
+          "stop_sequence": 3,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00002",
+          "pos_x": 120.50706630521972,
+          "pos_y": 16.6143697528991,
+          "pos_z": 6.010133932713086,
+          "arrival_time_sec": 111.3,
+          "departure_time_sec": 126.3,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00002"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_003-4",
+          "stop_sequence": 4,
+          "location_type": "DEPOT_END",
+          "location_id": "END_DEPOT_1",
+          "pos_x": 10.0,
+          "pos_y": 10.0,
+          "pos_z": 0.0,
+          "arrival_time_sec": 181.7,
+          "departure_time_sec": 181.7,
+          "service_duration_sec": 0.0,
+          "action": "DEPOT_END",
+          "order_ids": [
+            "END_DEPOT_1"
+          ]
+        }
+      ]
+    },
+    {
+      "route_id": "ROUTE-RUN-CA609FA4-AMR_004",
+      "vehicle_id": "AMR_004",
+      "origin_depot_id": "DEPOT_2",
+      "destination_depot_id": "DEPOT_2",
+      "tour_length_m": 271.82,
+      "route_makespan_sec": 178.2,
+      "total_carried_mass_kg": 0.0,
+      "total_carried_volume_m3": 0.0,
+      "volume_utilization_pct": 78.5,
+      "battery_consumed_pct": 4.600000000000004,
+      "stops": [
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_004-0",
+          "stop_sequence": 0,
+          "location_type": "DEPOT_START",
+          "location_id": "START_DEPOT_2",
+          "pos_x": 140.0,
+          "pos_y": 10.0,
+          "pos_z": 0.0,
+          "arrival_time_sec": 0.0,
+          "departure_time_sec": 0.0,
+          "service_duration_sec": 0.0,
+          "action": "DEPOT_START",
+          "order_ids": [
+            "START_DEPOT_2"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_004-1",
+          "stop_sequence": 1,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00008",
+          "pos_x": 11.124354048133792,
+          "pos_y": 35.69435800863998,
+          "pos_z": 1.6076897282178413,
+          "arrival_time_sec": 65.7,
+          "departure_time_sec": 80.7,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00008"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_004-2",
+          "stop_sequence": 2,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00015",
+          "pos_x": 5.542540230554899,
+          "pos_y": 50.6169853787132,
+          "pos_z": 7.181492490951902,
+          "arrival_time_sec": 89.2,
+          "departure_time_sec": 104.2,
+          "service_duration_sec": 15.0,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00015"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_004-3",
+          "stop_sequence": 3,
+          "location_type": "PICKUP",
+          "location_id": "NODE_ORD_00006",
+          "pos_x": 49.62329812682756,
+          "pos_y": 38.16286173968544,
+          "pos_z": 1.1673626780032482,
+          "arrival_time_sec": 127.3,
+          "departure_time_sec": 142.3,
+          "service_duration_sec": 15.000000000000014,
+          "action": "PICKUP",
+          "order_ids": [
+            "NODE_ORD_00006"
+          ]
+        },
+        {
+          "stop_id": "STOP-ROUTE-RUN-CA609FA4-AMR_004-4",
+          "stop_sequence": 4,
+          "location_type": "DEPOT_END",
+          "location_id": "END_DEPOT_2",
+          "pos_x": 140.0,
+          "pos_y": 10.0,
+          "pos_z": 0.0,
+          "arrival_time_sec": 189.6,
+          "departure_time_sec": 189.6,
+          "service_duration_sec": 0.0,
+          "action": "DEPOT_END",
+          "order_ids": [
+            "END_DEPOT_2"
+          ]
+        }
+      ]
+    }
+  ]
+}

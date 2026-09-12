@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchRuns, compareRuns, RunSummaryDTO, RunComparisonDTO } from '../services/api';
 import { GitCompare, TrendingDown, TrendingUp, CheckCircle2, Cpu, Zap, RefreshCw, BarChart2 } from 'lucide-react';
+import { CodeLmnBadge } from './CodeLmnBadge';
 
 interface RunComparisonStudioProps {
   onSelectRun: (runId: string) => void;
@@ -187,7 +188,7 @@ export const RunComparisonStudio: React.FC<RunComparisonStudioProps> = ({ onSele
               Φ_B = {comparison.run_b.phi.toFixed(3)}
             </div>
             <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-              Verification Code: <span style={{ color: '#00f0ff', fontFamily: 'monospace' }}>lmn</span> (PASS)
+              Verification Code: <CodeLmnBadge variant="compact" label="Verified" phi={comparison.run_b.phi} /> (PASS)
             </div>
           </div>
         </div>

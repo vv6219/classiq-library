@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
 import { ParameterCard } from './ParameterCard';
+import katex from 'katex';
+import {
+  TIER_PARAMS_DOSSIER,
+  TIER_PROBLEM_SOLVING_DOSSIER,
+  TIER_ACRONYMS_DOSSIER,
+  TIER_CALCULATIONS_DOSSIER,
+} from '../data/tiersDossier';
+import { CodeLmnBadge } from './CodeLmnBadge';
+
 import { CONFIG_LIMITS } from '../services/api';
 import {
   Layers,
@@ -85,15 +94,17 @@ export const TiersAndAlgorithmsStudio: React.FC<TiersAndAlgorithmsStudioProps> =
 }) => {
   // Selection State: can inspect either a Tier or an Algorithm
   const [selectedItem, setSelectedItem] = useState<{
-    type: 'tier' | 'algo';
-    id: string; // tierId (e.g. 'tier1') or algoRank (e.g. 'RANK_1Q_QUANTUM_FCM')
+    type: 'tier' | 'algo' | 'param';
+    id: string;
     tierId?: string;
   }>({
     type: 'tier',
     id: 'tier1',
   });
 
-  const [subPanelTab, setSubPanelTab] = useState<'meaning' | 'math' | 'contracts' | 'solver'>('meaning');
+  const [subPanelTab, setSubPanelTab] = useState<'meaning' | 'param_deepdive' | 'problem_solving' | 'math' | 'acronyms' | 'contracts' | 'solver'>('meaning');
+  const [selectedParamKey, setSelectedParamKey] = useState<string>('fcm_fuzziness_m');
+  const [selectedTierDossierTab, setSelectedTierDossierTab] = useState<'all' | 'params' | 'problems' | 'acronyms' | 'calc'>('all');
   const [isSubPanelOpen, setIsSubPanelOpen] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -218,7 +229,7 @@ export const TiersAndAlgorithmsStudio: React.FC<TiersAndAlgorithmsStudioProps> =
       outputContract:
         'KinematicTrajectoryDTO: Continuous micro-waypoint trajectory profiles (x, y, θ, v, ω) sampled at Δt = 0.05s intervals, with dynamic safety deceleration envelopes and collision certificates.',
       invariants: [
-        'Safety Invariant Φ < 1.0 (Token: lmn): Mathematical proof of zero robot-robot and robot-human collision hazard along the entire temporal trajectory envelope.',
+        'Safety Invariant Φ < 1.0 (Token: Verified): Mathematical proof of zero robot-robot and robot-human collision hazard along the entire temporal trajectory envelope.',
         'ISO 3691-4 Compliance: Dynamic speed throttling in shared collaborative human-robot zones.',
       ],
       quantumSynergy:
@@ -415,6 +426,19 @@ while generation < max_generations:
   const selectedTier = tiers.find((t) => t.id === (selectedItem.type === 'tier' ? selectedItem.id : selectedItem.tierId || 'tier1')) || tiers[0];
   const selectedAlgo = selectedItem.type === 'algo' ? algorithms[selectedItem.id] : null;
 
+
+  // KaTeX rendering helper
+  const renderLatex = (latex: string) => {
+    try {
+      return katex.renderToString(latex, {
+        displayMode: true,
+        throwOnError: false,
+      });
+    } catch {
+      return `<div style="color: #00f0ff; font-family: monospace;">${latex}</div>`;
+    }
+  };
+
   // TTS Speech Reader
   const handleToggleSpeech = () => {
     if (!('speechSynthesis' in window)) return;
@@ -595,6 +619,147 @@ while generation < max_generations:
                 </React.Fragment>
               );
             })}
+          </div>
+
+          {/* Interactive Tier & Parameter Intelligence Banner */}
+          <div
+            style={{
+              padding: '16px 20px',
+              borderRadius: '10px',
+              backgroundColor: '#0c101c',
+              border: '1px solid rgba(0, 240, 255, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              flexWrap: 'wrap',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(0, 240, 255, 0.12)',
+                  border: '1px solid rgba(0, 240, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#00f0ff',
+                }}
+              >
+                <Sparkles size={22} />
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#f0f4f8' }}>
+                  Calculation Tiers & Parameter Optimization Intelligence
+                </div>
+                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                  Inspect parameter influence curves, mathematical formulations, operational problem-solving stages, and domain acronyms.
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Filter Dossier Triggers */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={() => {
+                  setSelectedItem({ type: 'tier', id: 'tier1' });
+                  setSubPanelTab('param_deepdive');
+                  if (!isSubPanelOpen) setIsSubPanelOpen(true);
+                }}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                  color: '#f59e0b',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Info size={13} />
+                <span>Param Deep-Dive</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedItem({ type: 'tier', id: 'tier1' });
+                  setSubPanelTab('problem_solving');
+                  if (!isSubPanelOpen) setIsSubPanelOpen(true);
+                }}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(0, 240, 255, 0.4)',
+                  backgroundColor: 'rgba(0, 240, 255, 0.1)',
+                  color: '#00f0ff',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <ShieldCheck size={13} />
+                <span>Problem Solving</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedItem({ type: 'tier', id: 'tier1' });
+                  setSubPanelTab('math');
+                  if (!isSubPanelOpen) setIsSubPanelOpen(true);
+                }}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                  color: '#38bdf8',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Cpu size={13} />
+                <span>Math & Formulations</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedItem({ type: 'tier', id: 'tier1' });
+                  setSubPanelTab('acronyms');
+                  if (!isSubPanelOpen) setIsSubPanelOpen(true);
+                }}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(168, 85, 247, 0.4)',
+                  backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                  color: '#c084fc',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <BookOpen size={13} />
+                <span>Glossary</span>
+              </button>
+            </div>
           </div>
 
           {/* Tier Cards Grid */}
@@ -793,6 +958,7 @@ while generation < max_generations:
                         const spec = CONFIG_LIMITS[p.key];
                         if (!spec) return null;
                         const currentVal = tierParams[p.key] !== undefined ? tierParams[p.key] : spec.default;
+                        const isParamSelected = selectedItem.type === 'param' && selectedItem.id === p.key;
                         return (
                           <ParameterCard
                             key={p.key}
@@ -802,6 +968,13 @@ while generation < max_generations:
                             value={currentVal}
                             onChange={(val) => onChangeTierParam(p.key, val)}
                             nominalRange={p.nominal}
+                            isSelected={isParamSelected}
+                            onInspect={() => {
+                              setSelectedParamKey(p.key);
+                              setSelectedItem({ type: 'param', id: p.key, tierId: tier.id });
+                              setSubPanelTab('param_deepdive');
+                              if (!isSubPanelOpen) setIsSubPanelOpen(true);
+                            }}
                           />
                         );
                       })}
@@ -852,7 +1025,13 @@ while generation < max_generations:
                     justifyContent: 'center',
                   }}
                 >
-                  {selectedItem.type === 'tier' ? selectedTier.icon : <Sparkles size={18} color="#00f0ff" />}
+                  {selectedItem.type === 'param' ? (
+                    <Cpu size={18} color="#f59e0b" />
+                  ) : selectedItem.type === 'tier' ? (
+                    selectedTier.icon
+                  ) : (
+                    <Sparkles size={18} color="#00f0ff" />
+                  )}
                 </div>
                 <div style={{ overflow: 'hidden' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -863,20 +1042,26 @@ while generation < max_generations:
                         padding: '1px 6px',
                         borderRadius: '4px',
                         backgroundColor:
-                          selectedItem.type === 'tier'
+                          selectedItem.type === 'param'
+                            ? 'rgba(245, 158, 11, 0.2)'
+                            : selectedItem.type === 'tier'
                             ? 'rgba(0, 240, 255, 0.2)'
                             : selectedAlgo?.type === 'QUANTUM'
                             ? 'rgba(0, 240, 255, 0.2)'
                             : 'rgba(168, 85, 247, 0.2)',
                         color:
-                          selectedItem.type === 'tier'
+                          selectedItem.type === 'param'
+                            ? '#f59e0b'
+                            : selectedItem.type === 'tier'
                             ? '#00f0ff'
                             : selectedAlgo?.type === 'QUANTUM'
                             ? '#00f0ff'
                             : '#a855f7',
                       }}
                     >
-                      {selectedItem.type === 'tier'
+                      {selectedItem.type === 'param'
+                        ? 'PARAMETER DOSSIER'
+                        : selectedItem.type === 'tier'
                         ? `TIER ${selectedTier.stageNumber} EXPLANATION`
                         : `${selectedAlgo?.type} ALGORITHM`}
                     </span>
@@ -892,7 +1077,11 @@ while generation < max_generations:
                       marginTop: '2px',
                     }}
                   >
-                    {selectedItem.type === 'tier' ? selectedTier.title : selectedAlgo?.name}
+                    {selectedItem.type === 'param'
+                      ? TIER_PARAMS_DOSSIER[selectedItem.id]?.name || selectedItem.id
+                      : selectedItem.type === 'tier'
+                      ? selectedTier.title
+                      : selectedAlgo?.name}
                   </div>
                 </div>
               </div>
@@ -959,7 +1148,7 @@ while generation < max_generations:
               }}
             >
               <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, marginRight: '4px' }}>
-                Quick Jump:
+                Tiers:
               </span>
               {tiers.map((t) => (
                 <button
@@ -1020,6 +1209,42 @@ while generation < max_generations:
                   {a.name.split(' ')[0]}
                 </button>
               ))}
+              <div style={{ width: '1px', height: '14px', backgroundColor: 'rgba(255, 255, 255, 0.1)', margin: '0 2px' }} />
+              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, margin: '0 2px' }}>Params:</span>
+              {Object.values(TIER_PARAMS_DOSSIER).map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => {
+                    setSelectedParamKey(p.key);
+                    setSelectedItem({ type: 'param', id: p.key, tierId: p.tierId });
+                    setSubPanelTab('param_deepdive');
+                    if (!isSubPanelOpen) setIsSubPanelOpen(true);
+                  }}
+                  style={{
+                    padding: '3px 7px',
+                    borderRadius: '4px',
+                    border:
+                      selectedItem.type === 'param' && selectedItem.id === p.key
+                        ? '1px solid #f59e0b'
+                        : '1px solid rgba(255, 255, 255, 0.06)',
+                    backgroundColor:
+                      selectedItem.type === 'param' && selectedItem.id === p.key
+                        ? 'rgba(245, 158, 11, 0.15)'
+                        : 'rgba(255, 255, 255, 0.02)',
+                    color:
+                      selectedItem.type === 'param' && selectedItem.id === p.key
+                        ? '#f59e0b'
+                        : '#94a3b8',
+                    fontSize: '10px',
+                    fontFamily: 'monospace',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {p.symbol}
+                </button>
+              ))}
             </div>
 
             {/* Sub-Panel Tabs Navigation */}
@@ -1028,13 +1253,17 @@ while generation < max_generations:
                 display: 'flex',
                 borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                 backgroundColor: '#0c101c',
+                overflowX: 'auto',
               }}
             >
               {[
                 { id: 'meaning', label: 'Meaning & Role' },
-                { id: 'math', label: 'Math Formulation' },
-                { id: 'contracts', label: selectedItem.type === 'tier' ? 'Contracts & Invariants' : 'Complexity & Use' },
-                { id: 'solver', label: selectedItem.type === 'tier' ? 'Quantum Synergy' : 'Engine Code / Graph' },
+                { id: 'param_deepdive', label: 'Param Deep-Dive' },
+                { id: 'problem_solving', label: 'Problem Solving' },
+                { id: 'math', label: 'Calculations & Math' },
+                { id: 'acronyms', label: 'Acronyms' },
+                { id: 'contracts', label: selectedItem.type === 'algo' ? 'Complexity' : 'Contracts' },
+                { id: 'solver', label: selectedItem.type === 'algo' ? 'Code Snippet' : 'Quantum Synergy' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1074,7 +1303,7 @@ while generation < max_generations:
               }}
             >
               {/* ===================== TIER EXPLANATION VIEW ===================== */}
-              {selectedItem.type === 'tier' && (
+              {(selectedItem.type === 'tier' || selectedItem.type === 'param') && (
                 <>
                   {subPanelTab === 'meaning' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -1154,32 +1383,334 @@ while generation < max_generations:
                     </div>
                   )}
 
-                  {subPanelTab === 'math' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#f0f4f8' }}>
-                        Rigorous Optimization Cost Function
-                      </div>
-                      <div
-                        style={{
-                          padding: '14px',
-                          borderRadius: '8px',
-                          backgroundColor: '#03050c',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          fontFamily: 'Consolas, Monaco, monospace',
-                          fontSize: '11px',
-                          color: '#38bdf8',
-                          whiteSpace: 'pre-wrap',
-                          lineHeight: '1.7',
-                        }}
-                      >
-                        {selectedTier.mathObjective}
-                      </div>
+                  {/* Parameter Deep Dive Tab */}
+                  {subPanelTab === 'param_deepdive' && (() => {
+                    const currentParamKey = selectedItem.type === 'param' ? selectedItem.id : (selectedTier.params[0]?.key || 'fcm_fuzziness_m');
+                    const pDossier = TIER_PARAMS_DOSSIER[currentParamKey] || TIER_PARAMS_DOSSIER['fcm_fuzziness_m'];
+                    const currentVal = tierParams[pDossier.key] !== undefined ? tierParams[pDossier.key] : pDossier.defaultValue;
 
-                      <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-                        All decisions variables within this tier are optimized subject to strict downstream feasibility boundaries, preserving cross-tier consistency across spatial, physical, and temporal dimensions.
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        {/* Parameter Quick Switcher */}
+                        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+                          {Object.values(TIER_PARAMS_DOSSIER)
+                            .filter(p => selectedItem.type !== 'tier' || p.tierId === selectedTier.id)
+                            .map((p) => {
+                              const isCur = p.key === pDossier.key;
+                              return (
+                                <button
+                                  key={p.key}
+                                  onClick={() => {
+                                    setSelectedParamKey(p.key);
+                                    setSelectedItem({ type: 'param', id: p.key, tierId: p.tierId });
+                                  }}
+                                  style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    border: isCur ? '1px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.08)',
+                                    backgroundColor: isCur ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                                    color: isCur ? '#f59e0b' : '#94a3b8',
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {p.symbol} ({p.name.split(' ')[0]})
+                                </button>
+                              );
+                            })}
+                        </div>
+
+                        {/* Parameter Title Card */}
+                        <div
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: '8px',
+                            backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                            border: '1px solid rgba(245, 158, 11, 0.25)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                            <div>
+                              <div style={{ fontSize: '10px', fontWeight: 700, color: '#f59e0b', letterSpacing: '0.5px' }}>
+                                {pDossier.tierName.toUpperCase()}
+                              </div>
+                              <div style={{ fontSize: '13px', fontWeight: 700, color: '#f0f4f8', marginTop: '2px' }}>
+                                {pDossier.name}
+                              </div>
+                            </div>
+                            <span style={{ fontSize: '12px', fontFamily: 'monospace', fontWeight: 700, color: '#f59e0b', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                              Current: {currentVal} {pDossier.unit}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                            {pDossier.description}
+                          </div>
+                        </div>
+
+                        {/* Mathematical Role Formula */}
+                        <div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#00f0ff', marginBottom: '4px' }}>
+                            Mathematical Role & Loss Function Embedding
+                          </div>
+                          <div
+                            style={{
+                              padding: '12px',
+                              borderRadius: '8px',
+                              backgroundColor: '#03050c',
+                              border: '1px solid rgba(0, 240, 255, 0.2)',
+                              overflowX: 'auto',
+                            }}
+                            dangerouslySetInnerHTML={{ __html: renderLatex(pDossier.mathematicalRole) }}
+                          />
+                        </div>
+
+                        {/* Values Changing Influence Card (Low, Optimal, High) */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#f0f4f8' }}>
+                            Values Changing Influence Matrix:
+                          </div>
+
+                          {/* Low Value */}
+                          <div style={{ padding: '10px 12px', borderRadius: '6px', backgroundColor: 'rgba(59, 130, 246, 0.06)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#60a5fa', marginBottom: '2px' }}>
+                              📉 Low Value Regime (Under &lt; {pDossier.nominalRange[0]} {pDossier.unit})
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                              {pDossier.lowValueInfluence}
+                            </div>
+                          </div>
+
+                          {/* Optimal Value */}
+                          <div style={{ padding: '10px 12px', borderRadius: '6px', backgroundColor: 'rgba(0, 230, 118, 0.06)', border: '1px solid rgba(0, 230, 118, 0.2)' }}>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#00e676', marginBottom: '2px' }}>
+                              🎯 Nominal Optimal Regime ({pDossier.nominalRange[0]} – {pDossier.nominalRange[1]} {pDossier.unit})
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                              {pDossier.optimalValueInfluence}
+                            </div>
+                          </div>
+
+                          {/* High Value */}
+                          <div style={{ padding: '10px 12px', borderRadius: '6px', backgroundColor: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#ef4444', marginBottom: '2px' }}>
+                              📈 High Value Stress Regime (Over &gt; {pDossier.nominalRange[1]} {pDossier.unit})
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                              {pDossier.highValueInfluence}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Operational Impact & Failure Mode */}
+                        <div style={{ padding: '10px 12px', borderRadius: '6px', backgroundColor: '#0c101c', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#f0f4f8', marginBottom: '4px' }}>
+                            Operational Dispatch Impact:
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.5', marginBottom: '8px' }}>
+                            {pDossier.operationalImpact}
+                          </div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#f87171', marginBottom: '2px' }}>
+                            ⚠️ Failure Mode If Misconfigured:
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#fca5a5', lineHeight: '1.5' }}>
+                            {pDossier.failureModeIfMisconfigured}
+                          </div>
+                        </div>
                       </div>
+                    );
+                  })()}
+
+                  {/* Problem Solving Tab */}
+                  {subPanelTab === 'problem_solving' && (() => {
+                    const currentTierId = selectedItem.type === 'tier' ? selectedItem.id : (selectedItem.tierId || 'tier1');
+                    const pSolve = TIER_PROBLEM_SOLVING_DOSSIER[currentTierId] || TIER_PROBLEM_SOLVING_DOSSIER['tier1'];
+
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        {/* Target Restrictions Badges */}
+                        <div style={{ padding: '12px 14px', borderRadius: '8px', backgroundColor: 'rgba(0, 240, 255, 0.06)', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
+                          <div style={{ fontSize: '10px', fontWeight: 700, color: '#00f0ff', marginBottom: '6px', letterSpacing: '0.5px' }}>
+                            TARGET OPERATIONAL RESTRICTIONS SOLVED
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {pSolve.targetRestrictions.map((r, i) => (
+                              <span key={i} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(0, 240, 255, 0.15)', color: '#00f0ff', fontWeight: 600, border: '1px solid rgba(0, 240, 255, 0.3)' }}>
+                                {r}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Core Problem Statement */}
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: 700, color: '#f0f4f8', marginBottom: '4px' }}>
+                            Operational Problem Statement
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.6', padding: '10px 12px', borderRadius: '6px', backgroundColor: '#0c101c', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                            {pSolve.problemStatement}
+                          </div>
+                        </div>
+
+                        {/* Classical Bottlenecks & Failure Modes */}
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: 700, color: '#ef4444', marginBottom: '4px' }}>
+                            Classical Heuristic / Exact Failure Modes
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#fca5a5', lineHeight: '1.6', padding: '10px 12px', borderRadius: '6px', backgroundColor: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                            {pSolve.classicalBottlenecks}
+                          </div>
+                        </div>
+
+                        {/* Tier Solving Mechanism */}
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: 700, color: '#00e676', marginBottom: '4px' }}>
+                            Algorithmic Resolution Engine
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#a7f3d0', lineHeight: '1.6', padding: '10px 12px', borderRadius: '6px', backgroundColor: 'rgba(0, 230, 118, 0.06)', border: '1px solid rgba(0, 230, 118, 0.25)' }}>
+                            {pSolve.tierSolvingMechanism}
+                          </div>
+                        </div>
+
+                        {/* Invariant & Downstream */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ padding: '8px 12px', borderRadius: '6px', backgroundColor: '#0c101c', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 700, color: '#38bdf8' }}>VERIFICATION INVARIANT:</span>
+                              <CodeLmnBadge variant="pill" label="Verified" />
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#cbd5e1' }}>{pSolve.verificationInvariant}</div>
+                          </div>
+                          <div style={{ padding: '8px 12px', borderRadius: '6px', backgroundColor: '#0c101c', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                            <div style={{ fontSize: '10px', fontWeight: 700, color: '#a855f7', marginBottom: '2px' }}>DOWNSTREAM HANDOFF:</div>
+                            <div style={{ fontSize: '11px', color: '#cbd5e1' }}>{pSolve.downstreamHandoff}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Acronyms Tab */}
+                  {subPanelTab === 'acronyms' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#f0f4f8', marginBottom: '2px' }}>
+                        Domain Abbreviations & Acronyms Glossary
+                      </div>
+                      {TIER_ACRONYMS_DOSSIER.map((acr) => (
+                        <div
+                          key={acr.term}
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '6px',
+                            backgroundColor: '#0c101c',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: '#00f0ff' }}>
+                              {acr.term}
+                            </span>
+                            <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>
+                              {acr.tier}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '11px', fontWeight: 600, color: '#f0f4f8', marginBottom: '4px' }}>
+                            {acr.expansion}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.5', marginBottom: '4px' }}>
+                            {acr.definition}
+                          </div>
+                          <div style={{ fontSize: '10px', color: '#38bdf8', fontStyle: 'italic' }}>
+                            Context: {acr.contextUsage}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
+
+
+                  {subPanelTab === 'math' && (() => {
+                    const currentTierId = selectedItem.type === 'tier' ? selectedItem.id : (selectedItem.tierId || 'tier1');
+                    const tierCalcs = TIER_CALCULATIONS_DOSSIER.filter(c => c.tierId === currentTierId);
+
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#f0f4f8' }}>
+                          Rigorous Optimization Objectives & Calculations
+                        </div>
+
+                        {/* Calculations Dossier Cards with KaTeX */}
+                        {tierCalcs.map((calc, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              padding: '14px',
+                              borderRadius: '8px',
+                              backgroundColor: '#0c101c',
+                              border: '1px solid rgba(0, 240, 255, 0.2)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#00f0ff' }}>
+                                {calc.metricName}
+                              </span>
+                              <span style={{ fontSize: '10px', fontFamily: 'monospace', color: '#38bdf8' }}>
+                                {calc.symbol}
+                              </span>
+                            </div>
+
+                            {/* KaTeX Formula Display */}
+                            <div
+                              style={{
+                                padding: '10px',
+                                borderRadius: '6px',
+                                backgroundColor: '#03050c',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                overflowX: 'auto',
+                              }}
+                              dangerouslySetInnerHTML={{ __html: renderLatex(calc.latexFormula) }}
+                            />
+
+                            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                              <strong style={{ color: '#f0f4f8' }}>Operational Meaning:</strong> {calc.operationalMeaning}
+                            </div>
+                            <div style={{ fontSize: '10px', color: '#94a3b8', lineHeight: '1.4' }}>
+                              <strong style={{ color: '#60a5fa' }}>Interpretation:</strong> {calc.numericalInterpretation}
+                            </div>
+                            <div style={{ fontSize: '10px', color: '#34d399', lineHeight: '1.4' }}>
+                              <strong style={{ color: '#00e676' }}>Decision Rule:</strong> {calc.decisionRule}
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Raw Objective Reference */}
+                        <div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
+                            Full Math Formulation & Boundary Constraints
+                          </div>
+                          <div
+                            style={{
+                              padding: '12px',
+                              borderRadius: '8px',
+                              backgroundColor: '#03050c',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              fontFamily: 'Consolas, Monaco, monospace',
+                              fontSize: '11px',
+                              color: '#38bdf8',
+                              whiteSpace: 'pre-wrap',
+                              lineHeight: '1.7',
+                            }}
+                          >
+                            {selectedTier.mathObjective}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {subPanelTab === 'contracts' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -1243,7 +1774,16 @@ while generation < max_generations:
                               }}
                             >
                               <ShieldCheck size={14} color="#00e676" style={{ marginTop: '2px', flexShrink: 0 }} />
-                              <span>{inv}</span>
+                              <div style={{ flex: 1 }}>
+                                {inv.includes('(Token: Verified)') || inv.includes('(Token: lmn)') ? (
+                                  <span>
+                                    {inv.replace('(Token: Verified)', '').replace('(Token: lmn)', '')}{' '}
+                                    <CodeLmnBadge variant="token" label="Verified" />
+                                  </span>
+                                ) : (
+                                  <span>{inv}</span>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -1552,7 +2092,7 @@ while generation < max_generations:
                 color: '#64748b',
               }}
             >
-              <span>Invariant Certified (Token: lmn)</span>
+              <CodeLmnBadge variant="token" label="Invariant Certified: Verified" />
               <span style={{ color: '#00e676', fontWeight: 600 }}>Φ &lt; 1.0 Verified</span>
             </div>
           </div>

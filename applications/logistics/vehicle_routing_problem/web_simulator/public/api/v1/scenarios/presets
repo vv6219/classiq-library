@@ -1,0 +1,57 @@
+{
+  "small-smoke-40": {
+    "scenario_name": "Preset-Small-Smoke-40",
+    "archetype": "UNIFORM_RANDOM",
+    "num_orders": 40,
+    "num_technicians": 4,
+    "num_depots": 2,
+    "num_chutes": 2,
+    "hazard_ratio": 0.05,
+    "seed": 42,
+    "scale_label": "SMALL"
+  },
+  "pareto-cluster-200": {
+    "scenario_name": "Preset-Pareto-Cluster-200",
+    "archetype": "PARETO_HOT_ZONE",
+    "num_orders": 200,
+    "num_technicians": 8,
+    "num_depots": 2,
+    "num_chutes": 4,
+    "hazard_ratio": 0.1,
+    "seed": 101,
+    "scale_label": "MEDIUM"
+  },
+  "hazmat-heavy-500": {
+    "scenario_name": "Preset-Hazmat-Heavy-500",
+    "archetype": "HAZMAT_SEGREGATION",
+    "num_orders": 500,
+    "num_technicians": 12,
+    "num_depots": 3,
+    "num_chutes": 4,
+    "hazard_ratio": 0.45,
+    "seed": 202,
+    "scale_label": "LARGE"
+  },
+  "surge-deadline-1000": {
+    "scenario_name": "Preset-Surge-Deadline-1000",
+    "archetype": "PEAK_SURGE_HEAVY_TAIL",
+    "num_orders": 1000,
+    "num_technicians": 16,
+    "num_depots": 4,
+    "num_chutes": 6,
+    "hazard_ratio": 0.15,
+    "seed": 303,
+    "scale_label": "VERY_LARGE"
+  },
+  "enterprise-35k": {
+    "scenario_name": "Preset-Enterprise-Scale-35k",
+    "archetype": "ENTERPRISE_SCALE_STRESS",
+    "num_orders": 35000,
+    "num_technicians": 64,
+    "num_depots": 8,
+    "num_chutes": 10,
+    "hazard_ratio": 0.12,
+    "seed": 999,
+    "scale_label": "ENTERPRISE"
+  }
+}

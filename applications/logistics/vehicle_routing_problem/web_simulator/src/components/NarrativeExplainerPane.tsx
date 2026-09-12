@@ -20,6 +20,7 @@ import {
   Maximize2,
   Minimize2,
 } from 'lucide-react';
+import { CodeLmnBadge } from './CodeLmnBadge';
 
 interface NarrativeExplainerPaneProps {
   runId: string;
@@ -94,7 +95,7 @@ export const NarrativeExplainerPane: React.FC<NarrativeExplainerPaneProps> = ({
         1
       )}s over ${distance.toFixed(
         2
-      )}km of transit. Safety compliance is certified under Invariant 'lmn' with an evaluated falsification ratio of Φ = ${phi.toFixed(
+      )}km of transit. Safety compliance is certified under Invariant 'Verified' with an evaluated falsification ratio of Φ = ${phi.toFixed(
         3
       )} (< 1.0).`,
 
@@ -163,7 +164,7 @@ export const NarrativeExplainerPane: React.FC<NarrativeExplainerPaneProps> = ({
   const handleCopyMarkdown = () => {
     const fullMarkdown = `
 # Executive Mission Brief & Co-Processor Narrative
-**Run ID:** ${runId || 'CURRENT'} | **Mode:** ${mode} | **Verification Code:** lmn (Φ = ${phi.toFixed(3)})
+**Run ID:** ${runId || 'CURRENT'} | **Mode:** ${mode} | **Verification Code:** Verified (Φ = ${phi.toFixed(3)})
 
 ## Executive Summary
 ${narrative.executive_summary}
@@ -274,7 +275,7 @@ ${narrative.classical_vs_quantum}
               ? '⏳ Solving active dispatch wave... Calculating multi-tier trajectories...'
               : `${mode} MODE | ${numOrders} Orders, ${numVehicles} AMRs | Makespan: ${makespan.toFixed(
                   1
-                )}s | Code 'lmn' (Φ=${phi.toFixed(3)})`}
+                )}s | Verified (Φ=${phi.toFixed(3)})`}
           </span>
         </div>
 
@@ -299,24 +300,27 @@ ${narrative.classical_vs_quantum}
             {mode}
           </span>
 
-          {/* Invariant Badge */}
-          <span
-            style={{
-              fontSize: '10px',
-              padding: '2px 8px',
-              borderRadius: '4px',
-              backgroundColor: phi < 1.0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-              border: phi < 1.0 ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(239, 68, 68, 0.5)',
-              color: phi < 1.0 ? '#6ee7b7' : '#fca5a5',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            <ShieldCheck size={11} />
-            'lmn' (Φ={phi.toFixed(3)})
-          </span>
+          {/* Invariant Badge with Rich Hover Hint */}
+          <CodeLmnBadge phi={phi}>
+            <span
+              style={{
+                fontSize: '10px',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                backgroundColor: phi < 1.0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                border: phi < 1.0 ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(239, 68, 68, 0.5)',
+                color: phi < 1.0 ? '#6ee7b7' : '#fca5a5',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                cursor: 'help',
+              }}
+            >
+              <ShieldCheck size={11} />
+              Verified (Φ={phi.toFixed(3)})
+            </span>
+          </CodeLmnBadge>
 
           {/* Read Aloud Button */}
           <button
@@ -624,7 +628,12 @@ ${narrative.classical_vs_quantum}
                     fontFamily: 'var(--font-mono)',
                   }}
                 >
-                  Audit Invariant: Code 'lmn' certified (Φ = {phi.toFixed(3)} &lt; 1.0)
+                  Audit Invariant:{' '}
+                  <CodeLmnBadge
+                    variant="token"
+                    phi={phi}
+                    label={`Verified (Φ = ${phi.toFixed(3)} < 1.0)`}
+                  />
                 </div>
               </div>
             )}

@@ -100,6 +100,24 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
+        elif path in ("/sqlite", "/database", "/db"):
+            sqlite_file = Path(__file__).resolve().parent.parent.parent / "web_simulator" / "public" / "sqlite.html"
+            if sqlite_file.exists():
+                with open(sqlite_file, "r", encoding="utf-8") as f:
+                    self._send_html(200, f.read())
+            else:
+                self._send_html(404, "<h1>SQLite Studio not found</h1>")
+            return
+
+        elif path in ("/dispatchengine.db", "/api/v1/database/download"):
+            db_file = Path(__file__).resolve().parent.parent / "dispatchengine.db"
+            if db_file.exists():
+                with open(db_file, "rb") as f:
+                    self._send_binary(200, "application/vnd.sqlite3", f.read(), filename="dispatchengine.db")
+            else:
+                self._send_json(404, {"error": "dispatchengine.db not found"})
+            return
+
         # API ROUTES
         if path == "/api/v1/health":
             uptime = time.time() - self.server_start_time
@@ -375,8 +393,10 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
             if len(parts) < 8:
                 self._send_json(400, {"error": "Invalid graph URL structure"})
                 return
-            run_id = parts[5]
+            run_id = parts[5] if parts[5] else "RUN-ACTIVE-001"
             graph_type = parts[7]  # spatial, lifo, chutes, velocity, qaoa, benders
+            if graph_type.endswith(".png"):
+                graph_type = graph_type[:-4]
 
             fig = None
             if graph_type == "spatial":
@@ -562,6 +582,20 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                 if custom_scen_id:
                     orders = repo.get_scenario_orders(custom_scen_id)
                     depots = repo.get_scenario_depots(custom_scen_id)
+                    if not orders:
+                        cfg = MockConfigDTO(
+                            scenario_name=f"Scenario-{custom_scen_id}",
+                            num_orders=max(num_orders, 20),
+                            num_technicians=num_vehicles,
+                            num_depots=2,
+                            num_chutes=2,
+                            random_seed=seed,
+                        )
+                        gen = WarehouseMockGenerator(cfg)
+                        generated_pool = gen.generate_order_pool()
+                        repo.save_scenario_data(custom_scen_id, generated_pool)
+                        orders = repo.get_scenario_orders(custom_scen_id)
+                        depots = repo.get_scenario_depots(custom_scen_id)
                     scen_id = custom_scen_id
                     pool = OrderPoolDTO(
                         wave_id=f"WAVE-{scen_id.split('-')[-1]}",

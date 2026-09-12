@@ -1,0 +1,26 @@
+{
+  "hosting": {
+    "site": "acoustic-architect-3cgfo",
+    "public": "dist",
+    "cleanUrls": false,
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/v1/presentation/runs/**/graphs/:graph",
+        "destination": "/api/v1/presentation/runs/RUN-ACTIVE-001/graphs/:graph.png"
+      },
+      {
+        "source": "/api/v1/presentation/runs/**/graphs/:graph.png",
+        "destination": "/api/v1/presentation/runs/RUN-ACTIVE-001/graphs/:graph.png"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

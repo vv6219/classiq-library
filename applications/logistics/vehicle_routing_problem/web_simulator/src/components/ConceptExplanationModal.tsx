@@ -28,10 +28,16 @@ interface ConceptExplanationModalProps {
 // Robust LaTeX equation renderer with KaTeX
 const sanitizeFormula = (s: string): string => {
   let res = s.trim();
+  res = res.replace(/^\\\[([\s\S]*)\\\]$/, '$1').trim();
+  res = res.replace(/^\\\(([\s\S]*)\\\)$/, '$1').trim();
   res = res.replace(/\\\(/g, '(').replace(/\\\)/g, ')');
   res = res.replace(/\\\[/g, '[').replace(/\\\]/g, ']');
   res = res.replace(/\\vert\{\}/g, '|').replace(/\\vert/g, '|');
-  res = res.replace(/\\text\{([^{}]*)\}/g, (_, c) => `\\text{${c.replace(/_/g, '\\_')}}`);
+  // Normalize underscores in text-like commands so that they always become exactly \_
+  res = res.replace(/\\(text|mathrm|mathit|mathbf)\{([^{}]*)\}/g, (_, tag, c) => {
+    const normalized = c.replace(/\\+_/g, '_').replace(/_/g, '\\_');
+    return `\\${tag}{${normalized}}`;
+  });
   return res;
 };
 
@@ -46,9 +52,9 @@ const renderLatexToHtml = (text: string): string => {
         displayMode: true,
         throwOnError: false,
       });
-      return `<div class="katex-display-wrapper" style="overflow-x: auto; margin: 12px 0; padding: 10px 14px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 8px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">${html}</div>`;
+      return `\n\n__DISPLAY_MATH_START__\n<div class="katex-display-wrapper" style="overflow-x: auto; margin: 16px 0; padding: 12px 16px; background: rgba(10, 18, 36, 0.85); border: 1px solid rgba(0, 240, 255, 0.25); border-radius: 8px; text-align: center; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);">${html}</div>\n__DISPLAY_MATH_END__\n\n`;
     } catch {
-      return `<pre class="katex-error" style="color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 4px 8px; border-radius: 4px;">$$ ${equation} $$</pre>`;
+      return `\n\n<pre class="katex-error" style="color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 6px 10px; border-radius: 6px; font-size: 12px; overflow-x: auto;">$$ ${equation} $$</pre>\n\n`;
     }
   });
 
@@ -65,42 +71,133 @@ const renderLatexToHtml = (text: string): string => {
     }
   });
 
-  // 3. Process markdown formatting (bold, headers, bullet points)
+  // 3. Process Block Elements (Headers, Lists, Tables, Preformatted ASCII Diagrams, Paragraphs)
   const lines = rendered.split('\n');
-  const htmlLines = lines.map((line) => {
-    let l = line.trim();
-    if (!l) return '<div style="height: 8px;"></div>';
+  const out: string[] = [];
+  let inTable = false;
+  let tableRows: string[][] = [];
+  let inAscii = false;
+  let asciiLines: string[] = [];
+
+  const flushTable = () => {
+    if (tableRows.length === 0) return;
+    const headerRow = tableRows[0];
+    const dataRows = tableRows.slice(1).filter((r) => !r.every((cell) => /^:?-+:?$/.test(cell.trim())));
+
+    let html = '<div class="table-wrapper" style="overflow-x: auto; margin: 18px 0; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(15, 23, 42, 0.6);"><table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">';
+    if (headerRow) {
+      html += '<thead><tr style="background: rgba(0, 240, 255, 0.12); border-bottom: 1px solid rgba(0, 240, 255, 0.25);">';
+      headerRow.forEach((h) => {
+        html += `<th style="padding: 10px 14px; font-weight: 700; color: #00f0ff; border-right: 1px solid rgba(255, 255, 255, 0.06);">${h.trim()}</th>`;
+      });
+      html += '</tr></thead>';
+    }
+    html += '<tbody>';
+    dataRows.forEach((row, rIdx) => {
+      const bg = rIdx % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.18)';
+      html += `<tr style="background: ${bg}; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.15s ease;">`;
+      row.forEach((cell) => {
+        const c = cell.trim().replace(/\*\*(.*?)\*\*/g, '<strong style="color: #f3f4f6; font-weight: 600;">$1</strong>');
+        html += `<td style="padding: 8px 14px; color: #cbd5e1; border-right: 1px solid rgba(255, 255, 255, 0.05); vertical-align: top; line-height: 1.5;">${c}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    out.push(html);
+    tableRows = [];
+    inTable = false;
+  };
+
+  const flushAscii = () => {
+    if (asciiLines.length === 0) return;
+    const content = asciiLines.join('\n');
+    out.push(`<pre class="ascii-diagram" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; line-height: 1.45; background: rgba(0, 240, 255, 0.03); border: 1px solid rgba(0, 240, 255, 0.15); border-radius: 8px; padding: 14px; overflow-x: auto; color: #38bdf8; margin: 14px 0; box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);">${content}</pre>`);
+    asciiLines = [];
+    inAscii = false;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const l = rawLine.trim();
+
+    // Preserve whitespace separator
+    if (!l) {
+      if (inTable) flushTable();
+      if (inAscii) flushAscii();
+      continue;
+    }
+
+    // Display math tokens
+    if (l === '__DISPLAY_MATH_START__') {
+      if (inTable) flushTable();
+      if (inAscii) flushAscii();
+      i++;
+      out.push(lines[i]);
+      if (i + 1 < lines.length && lines[i + 1].trim() === '__DISPLAY_MATH_END__') i++;
+      continue;
+    }
+    if (l.startsWith('<div class="katex-display-wrapper"') || l.startsWith('<pre class="katex-error"')) {
+      if (inTable) flushTable();
+      if (inAscii) flushAscii();
+      out.push(l);
+      continue;
+    }
+
+    // Table rows: lines with pipes
+    if (l.startsWith('|') && l.endsWith('|')) {
+      if (inAscii) flushAscii();
+      inTable = true;
+      const cells = l.slice(1, -1).split('|');
+      tableRows.push(cells);
+      continue;
+    } else if (inTable) {
+      flushTable();
+    }
+
+    // ASCII Trees & Box-drawing diagrams
+    if (/[│├──└──▼┌───]/.test(l) || (inAscii && (l.startsWith('Tier') || l.startsWith('TIER') || l.includes('Rank')))) {
+      inAscii = true;
+      asciiLines.push(rawLine);
+      continue;
+    } else if (inAscii) {
+      flushAscii();
+    }
 
     // Headers
     if (l.startsWith('#### ')) {
-      return `<h4 style="font-size: 14px; font-weight: 700; color: #38bdf8; margin: 14px 0 6px 0; display: flex; align-items: center; gap: 6px;">
+      out.push(`<h4 style="font-size: 14px; font-weight: 700; color: #38bdf8; margin: 18px 0 6px 0; display: flex; align-items: center; gap: 6px;">
         <span style="display: inline-block; width: 4px; height: 14px; background: #00f0ff; border-radius: 2px;"></span>
-        ${l.slice(5)}
-      </h4>`;
+        ${l.slice(5).replace(/\*\*(.*?)\*\*/g, '$1')}
+      </h4>`);
+      continue;
     }
     if (l.startsWith('### ')) {
-      return `<h3 style="font-size: 16px; font-weight: 700; color: #f0f4f8; margin: 20px 0 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 4px;">
-        ${l.slice(4)}
-      </h3>`;
+      out.push(`<h3 style="font-size: 16px; font-weight: 700; color: #f0f4f8; margin: 24px 0 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 4px;">
+        ${l.slice(4).replace(/\*\*(.*?)\*\*/g, '$1')}
+      </h3>`);
+      continue;
     }
 
     // Bullet points
     if (l.startsWith('* ') || l.startsWith('- ')) {
       let content = l.slice(2);
-      // Bold handling
       content = content.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #f3f4f6; font-weight: 600;">$1</strong>');
-      return `<div style="display: flex; gap: 8px; margin: 4px 0; padding-left: 8px; line-height: 1.6;">
+      out.push(`<div style="display: flex; gap: 8px; margin: 4px 0; padding-left: 8px; line-height: 1.6;">
         <span style="color: #00f0ff; font-weight: bold;">•</span>
         <span style="color: #cbd5e1; font-size: 13px;">${content}</span>
-      </div>`;
+      </div>`);
+      continue;
     }
 
-    // Standard paragraph with bold formatting
-    l = l.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #f3f4f6; font-weight: 600;">$1</strong>');
-    return `<p style="color: #94a3b8; font-size: 13px; margin: 6px 0; line-height: 1.65;">${l}</p>`;
-  });
+    // Paragraph
+    const formatted = l.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #f3f4f6; font-weight: 600;">$1</strong>');
+    out.push(`<p style="color: #94a3b8; font-size: 13px; margin: 6px 0; line-height: 1.65;">${formatted}</p>`);
+  }
 
-  return htmlLines.join('\n');
+  if (inTable) flushTable();
+  if (inAscii) flushAscii();
+
+  return out.join('\n');
 };
 
 export const ConceptExplanationModal: React.FC<ConceptExplanationModalProps> = ({ isOpen, onClose }) => {

@@ -1,3 +1,23 @@
-﻿<Solution>
-  <Project Path="classiq-library.pyproj" Type="888888a0-9f3d-457c-b088-3a5042f75d52" />
+<Solution>
+  <Project Path="../../../../../../source/repos/classiq-library/applications/logistics/vehicle_routing_problem/web/" Type="Website" DisplayName="web">
+    <BuildType Project="Debug" />
+    <Properties Name="WebsiteProperties">
+      <Property Name="Debug.AspNetCompiler.Debug" Value="&quot;True&quot;" />
+      <Property Name="Debug.AspNetCompiler.FixedNames" Value="&quot;false&quot;" />
+      <Property Name="Debug.AspNetCompiler.ForceOverwrite" Value="&quot;true&quot;" />
+      <Property Name="Debug.AspNetCompiler.PhysicalPath" Value="&quot;applications\logistics\vehicle_routing_problem\web\&quot;" />
+      <Property Name="Debug.AspNetCompiler.TargetPath" Value="&quot;PrecompiledWeb\localhost_60980\&quot;" />
+      <Property Name="Debug.AspNetCompiler.Updateable" Value="&quot;true&quot;" />
+      <Property Name="Debug.AspNetCompiler.VirtualPath" Value="&quot;/localhost_60980&quot;" />
+      <Property Name="Release.AspNetCompiler.Debug" Value="&quot;False&quot;" />
+      <Property Name="Release.AspNetCompiler.FixedNames" Value="&quot;false&quot;" />
+      <Property Name="Release.AspNetCompiler.ForceOverwrite" Value="&quot;true&quot;" />
+      <Property Name="Release.AspNetCompiler.PhysicalPath" Value="&quot;applications\logistics\vehicle_routing_problem\web\&quot;" />
+      <Property Name="Release.AspNetCompiler.TargetPath" Value="&quot;PrecompiledWeb\localhost_60980\&quot;" />
+      <Property Name="Release.AspNetCompiler.Updateable" Value="&quot;true&quot;" />
+      <Property Name="Release.AspNetCompiler.VirtualPath" Value="&quot;/localhost_60980&quot;" />
+      <Property Name="VWDPort" Value="&quot;60980&quot;" />
+    </Properties>
+  </Project>
+  <Project Path="../../../../../../source/repos/classiq-library/classiq-library.pyproj" Type="888888a0-9f3d-457c-b088-3a5042f75d52" Id="8f124016-d922-4d3e-a00a-9ec29c8b56c7" />
 </Solution>
