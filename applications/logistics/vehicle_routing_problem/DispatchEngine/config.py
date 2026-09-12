@@ -78,3 +78,50 @@ class EngineConfig:
 
 
 DEFAULT_CONFIG = EngineConfig()
+
+# Parameter domain limits, step sizes, units, and industrial default values
+CONFIG_LIMITS_SPEC = {
+    # Facility
+    "facility_length_m": {"min": 50.0, "max": 500.0, "step": 10.0, "default": 150.0, "unit": "m", "category": "Facility"},
+    "facility_width_m": {"min": 30.0, "max": 300.0, "step": 5.0, "default": 100.0, "unit": "m", "category": "Facility"},
+    "facility_height_m": {"min": 6.0, "max": 24.0, "step": 1.0, "default": 12.0, "unit": "m", "category": "Facility"},
+    "aisle_count": {"min": 2, "max": 30, "step": 1, "default": 10, "unit": "count", "category": "Facility"},
+    "aisle_width_m": {"min": 1.5, "max": 4.5, "step": 0.1, "default": 3.0, "unit": "m", "category": "Facility"},
+    "chute_buffer_capacity_m3": {"min": 1.0, "max": 20.0, "step": 0.5, "default": 5.0, "unit": "m³", "category": "Facility"},
+    # Kinematics & ISO 3691-4
+    "fleet_size": {"min": 1, "max": 16, "step": 1, "default": 4, "unit": "AMRs", "category": "Kinematics"},
+    "v_max_amr_mps": {"min": 0.5, "max": 4.0, "step": 0.1, "default": 2.0, "unit": "m/s", "category": "Kinematics"},
+    "v_safe_hri_mps": {"min": 0.2, "max": 1.2, "step": 0.05, "default": 0.4, "unit": "m/s", "category": "Kinematics"},
+    "a_max_amr_mps2": {"min": 0.2, "max": 3.0, "step": 0.1, "default": 1.0, "unit": "m/s²", "category": "Kinematics"},
+    "emergency_decel_mps2": {"min": 1.5, "max": 5.0, "step": 0.25, "default": 2.5, "unit": "m/s²", "category": "Kinematics"},
+    "min_headway_sec": {"min": 0.5, "max": 4.0, "step": 0.1, "default": 1.5, "unit": "s", "category": "Kinematics"},
+    "battery_capacity_kwh": {"min": 0.5, "max": 5.0, "step": 0.25, "default": 1.8, "unit": "kWh", "category": "Kinematics"},
+    "battery_initial_soc": {"min": 20.0, "max": 100.0, "step": 5.0, "default": 95.0, "unit": "%", "category": "Kinematics"},
+    "battery_min_soc": {"min": 5.0, "max": 30.0, "step": 1.0, "default": 15.0, "unit": "%", "category": "Kinematics"},
+    "max_payload_mass_kg": {"min": 20.0, "max": 500.0, "step": 10.0, "default": 200.0, "unit": "kg", "category": "Kinematics"},
+    "max_payload_volume_m3": {"min": 0.1, "max": 2.5, "step": 0.05, "default": 0.8, "unit": "m³", "category": "Kinematics"},
+    # Orders
+    "num_orders": {"min": 4, "max": 150, "step": 1, "default": 20, "unit": "orders", "category": "Orders"},
+    "hazard_fraction": {"min": 0.0, "max": 60.0, "step": 5.0, "default": 15.0, "unit": "%", "category": "Orders"},
+    "tight_deadline_fraction": {"min": 0.0, "max": 70.0, "step": 5.0, "default": 20.0, "unit": "%", "category": "Orders"},
+    "time_window_span_sec": {"min": 60.0, "max": 1200.0, "step": 30.0, "default": 360.0, "unit": "s", "category": "Orders"},
+    # Tiers 1-4 Solvers
+    "fcm_fuzziness_m": {"min": 1.05, "max": 3.50, "step": 0.05, "default": 1.85, "unit": "value", "category": "Tier1"},
+    "fcm_max_iter": {"min": 5, "max": 300, "step": 5, "default": 50, "unit": "iter", "category": "Tier1"},
+    "bpp_support_ratio_min": {"min": 0.60, "max": 0.98, "step": 0.02, "default": 0.85, "unit": "ratio", "category": "Tier2"},
+    "friction_coeff_mu": {"min": 0.20, "max": 0.90, "step": 0.05, "default": 0.45, "unit": "value", "category": "Tier2"},
+    "bpp_time_limit_sec": {"min": 0.5, "max": 15.0, "step": 0.5, "default": 3.0, "unit": "s", "category": "Tier2"},
+    "vrp_penalty_delay_beta": {"min": 0.2, "max": 15.0, "step": 0.2, "default": 2.0, "unit": "factor", "category": "Tier3"},
+    "vrp_penalty_subtour_p": {"min": 10.0, "max": 500.0, "step": 10.0, "default": 100.0, "unit": "factor", "category": "Tier3"},
+    "kinematics_step_dt": {"min": 0.02, "max": 0.50, "step": 0.02, "default": 0.10, "unit": "s", "category": "Tier4"},
+    # Classiq Quantum
+    "qaoa_p_layers": {"min": 1, "max": 5, "step": 1, "default": 2, "unit": "layers", "category": "Quantum"},
+    "qaoa_shots": {"min": 256, "max": 16384, "step": 256, "default": 1024, "unit": "shots", "category": "Quantum"},
+    "max_circuit_width": {"min": 8, "max": 64, "step": 2, "default": 32, "unit": "qubits", "category": "Quantum"},
+    # Lagrangian
+    "lagrangian_alpha": {"min": 0.1, "max": 10.0, "step": 0.1, "default": 1.0, "unit": "weight", "category": "Lagrangian"},
+    "lagrangian_beta": {"min": 0.5, "max": 20.0, "step": 0.5, "default": 2.0, "unit": "weight", "category": "Lagrangian"},
+    "lagrangian_gamma": {"min": 1.0, "max": 30.0, "step": 1.0, "default": 5.0, "unit": "weight", "category": "Lagrangian"},
+    "lagrangian_lambda": {"min": 0.5, "max": 15.0, "step": 0.5, "default": 1.5, "unit": "weight", "category": "Lagrangian"},
+}
+
