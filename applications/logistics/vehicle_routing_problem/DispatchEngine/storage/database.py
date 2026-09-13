@@ -66,6 +66,7 @@ class DatabaseManager:
             CREATE TABLE IF NOT EXISTS scenarios (
                 scenario_id TEXT PRIMARY KEY,
                 created_at TEXT NOT NULL,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 name TEXT NOT NULL,
                 archetype TEXT NOT NULL DEFAULT 'PARETO_HOT_ZONE',
                 random_seed INTEGER NOT NULL,
@@ -100,6 +101,7 @@ class DatabaseManager:
                 is_atomic INTEGER NOT NULL DEFAULT 1,
                 hazard_class TEXT DEFAULT 'NONE',
                 sla_priority INTEGER DEFAULT 1,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (scenario_id) REFERENCES scenarios(scenario_id) ON DELETE CASCADE
             );
         """)
@@ -120,6 +122,7 @@ class DatabaseManager:
                 falsification_ratio_phi REAL NOT NULL,
                 is_falsified INTEGER DEFAULT 0,
                 verification_code TEXT NOT NULL DEFAULT 'lmn',
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (scenario_id) REFERENCES scenarios(scenario_id) ON DELETE CASCADE
             );
         """)
@@ -138,6 +141,7 @@ class DatabaseManager:
                 volume_utilization_pct REAL NOT NULL,
                 battery_consumed_pct REAL NOT NULL,
                 stops_count INTEGER NOT NULL,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (run_id) REFERENCES execution_runs(run_id) ON DELETE CASCADE
             );
         """)
@@ -157,6 +161,7 @@ class DatabaseManager:
                 service_duration_sec REAL NOT NULL,
                 action TEXT NOT NULL,
                 order_ids_json TEXT NOT NULL,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (route_id) REFERENCES vehicle_routes(route_id) ON DELETE CASCADE
             );
         """)
@@ -177,6 +182,7 @@ class DatabaseManager:
                 mass_kg REAL NOT NULL,
                 extraction_sequence INTEGER NOT NULL,
                 support_surface_ratio REAL NOT NULL,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (run_id) REFERENCES execution_runs(run_id) ON DELETE CASCADE
             );
         """)
@@ -189,6 +195,7 @@ class DatabaseManager:
                 blocking_order_id TEXT NOT NULL,
                 blocked_order_id TEXT NOT NULL,
                 contact_area_m2 REAL NOT NULL,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (run_id) REFERENCES execution_runs(run_id) ON DELETE CASCADE
             );
         """)
@@ -205,6 +212,7 @@ class DatabaseManager:
                 violations_count INTEGER DEFAULT 0,
                 details_json TEXT NOT NULL,
                 timestamp TEXT NOT NULL,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (run_id) REFERENCES execution_runs(run_id) ON DELETE CASCADE
             );
         """)
@@ -221,7 +229,8 @@ class DatabaseManager:
                 vehicle_id TEXT,
                 message TEXT NOT NULL,
                 attributes_json TEXT,
-                error_stack TEXT
+                error_stack TEXT,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
         """)
 
@@ -234,6 +243,7 @@ class DatabaseManager:
                 accumulated_volume_m3 REAL NOT NULL,
                 inflow_rate_m3_s REAL NOT NULL,
                 clearance_status TEXT NOT NULL DEFAULT 'NORMAL',
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (run_id) REFERENCES execution_runs(run_id) ON DELETE CASCADE
             );
         """)
@@ -251,6 +261,7 @@ class DatabaseManager:
                 distance_improvement_pct REAL NOT NULL,
                 falsification_ratio_phi REAL NOT NULL,
                 verification_code TEXT NOT NULL DEFAULT 'lmn',
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (scenario_id) REFERENCES scenarios(scenario_id) ON DELETE CASCADE
             );
         """)
@@ -266,6 +277,7 @@ class DatabaseManager:
                 status TEXT NOT NULL,
                 benders_cuts_generated TEXT,
                 output_summary TEXT NOT NULL,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (run_id) REFERENCES execution_runs(run_id) ON DELETE CASCADE
             );
         """)
@@ -283,9 +295,27 @@ class DatabaseManager:
                 variational_energy REAL NOT NULL,
                 quantum_speedup_ratio REAL,
                 execution_time_ms REAL NOT NULL,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (run_id) REFERENCES execution_runs(run_id) ON DELETE CASCADE
             );
         """)
+
+        # Auto-generation triggers for created_datetime
+        for tbl in [
+            "scenarios", "orders", "execution_runs", "vehicle_routes", "route_stops",
+            "container_placements", "lifo_dependencies", "gate_validations",
+            "telemetry_events", "chute_flow_dynamics", "algorithm_benchmarks",
+            "tier_executions", "quantum_telemetry"
+        ]:
+            cursor.execute(f"""
+                CREATE TRIGGER IF NOT EXISTS trg_{tbl}_auto_created_datetime
+                AFTER INSERT ON {tbl}
+                FOR EACH ROW
+                WHEN NEW.created_datetime IS NULL
+                BEGIN
+                    UPDATE {tbl} SET created_datetime = datetime('now') WHERE rowid = NEW.rowid;
+                END;
+            """)
 
         # Indexes
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_scenario ON orders(scenario_id);")

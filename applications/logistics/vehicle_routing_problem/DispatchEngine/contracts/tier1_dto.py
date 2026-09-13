@@ -23,6 +23,7 @@ class OrderLineDTO(StrictImmutableDTO):
     is_atomic: bool = True
     hazard_class: str = "NONE"
     sla_priority: float = Field(default=1.0, ge=0.0, le=1.0)
+    created_datetime: Optional[str] = None
 
 
 class DepotStateDTO(StrictImmutableDTO):

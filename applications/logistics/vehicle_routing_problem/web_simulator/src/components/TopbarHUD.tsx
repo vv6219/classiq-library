@@ -1,7 +1,8 @@
 import React from 'react';
-import { Play, FileText, Cpu, ShieldCheck, Zap, RotateCcw, Sliders, History, BookOpen, Lightbulb, Database, Code } from 'lucide-react';
+import { Play, FileText, Cpu, ShieldCheck, Zap, RotateCcw, Sliders, History, BookOpen, Lightbulb, Database, Code, ListOrdered, Activity, Sparkles } from 'lucide-react';
 import { WaveExecutionResponse, RunSummaryDTO } from '../services/api';
 import { CodeLmnBadge } from './CodeLmnBadge';
+import { DispatchProgressState } from './DispatchProgressModal';
 import {
   trackButtonClick,
   trackLinkClick,
@@ -25,6 +26,8 @@ interface TopbarHUDProps {
   onToggleExplainer?: () => void;
   onToggleQuantumPanel?: () => void;
   onOpenConceptModal?: () => void;
+  dispatchProgress?: DispatchProgressState | null;
+  onOpenProgressModal?: () => void;
 }
 
 export const TopbarHUD: React.FC<TopbarHUDProps> = ({
@@ -42,11 +45,17 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
   onToggleExplainer,
   onToggleQuantumPanel,
   onOpenConceptModal,
+  dispatchProgress,
+  onOpenProgressModal,
 }) => {
   const makespan = lastWave?.total_fleet_makespan_sec ?? 949.3;
   const distance = lastWave?.total_distance_km ?? 3.71;
   const variance = lastWave?.chute_balance_variance ?? 0.45;
   const phi = lastWave?.falsification_ratio_phi ?? 0.880;
+
+  const isReRunSolving = isSolving && dispatchProgress?.actionType === 'RE_RUN';
+  const isDispatchSolving = isSolving && dispatchProgress?.actionType !== 'RE_RUN';
+  const progressPercent = Math.round(dispatchProgress?.overallPercent ?? 0);
 
   return (
     <header
@@ -359,28 +368,68 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
             <span>Quantum Util (32Q)</span>
           </button>
         )}
+        {/* Pipeline Steps / Process Status Modal Trigger */}
+        {onOpenProgressModal && (
+          <button
+            onClick={() => {
+              trackButtonClick('Open_Pipeline_Steps_Modal', 'TopLevel_HUD');
+              onOpenProgressModal();
+            }}
+            className="btn-secondary"
+            style={{
+              fontSize: '12px',
+              padding: '7px 11px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              color: isSolving ? '#00f0ff' : '#cbd5e1',
+              borderColor: isSolving ? 'rgba(0, 240, 255, 0.6)' : 'rgba(255, 255, 255, 0.15)',
+              background: isSolving ? 'rgba(0, 240, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+              boxShadow: isSolving ? '0 0 10px rgba(0, 240, 255, 0.3)' : 'none',
+            }}
+            title="View detailed 7-step running process status & solver latency"
+          >
+            <ListOrdered size={13} />
+            <span>Steps</span>
+            {isSolving && (
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  color: '#00f0ff',
+                  fontFamily: 'monospace',
+                }}
+              >
+                {progressPercent}%
+              </span>
+            )}
+          </button>
+        )}
 
-        {/* Mode Toggle */}
+        {/* Pre-Request Config Drawer */}
         <button
           onClick={() => {
-            const nextMode = operationalMode === 'QUANTUM' ? 'CLASSICAL' : 'QUANTUM';
-            trackModeToggle(operationalMode, nextMode);
-            setOperationalMode(nextMode);
+            trackButtonClick('Open_PreRequest_Config_Drawer', 'TopLevel_HUD');
+            onOpenConfig();
           }}
           className="btn-secondary"
-          style={{ fontSize: '12px', padding: '7px 12px' }}
-          title="Toggle Quantum vs Classical Solver Mode"
+          style={{
+            fontSize: '12px',
+            padding: '7px 11px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+          }}
+          title="Open advanced optimization & physics parameters configuration"
         >
-          <Zap size={14} color={operationalMode === 'QUANTUM' ? '#a78bfa' : '#9ca3af'} />
-          <span style={{ fontWeight: 700, color: operationalMode === 'QUANTUM' ? '#a78bfa' : '#60a5fa' }}>
-            {operationalMode}
-          </span>
+          <Sliders size={13} />
+          <span>Config</span>
         </button>
 
-        {/* Re-Run Wave Button */}
+        {/* Re-Run Button */}
         <button
           onClick={() => {
-            trackButtonClick('ReRun_Last_Wave', 'TopLevel_HUD', { mode: operationalMode, run_id: currentRunId });
+            trackButtonClick('ReRun_Wave_Solve', 'TopLevel_HUD', { mode: operationalMode, run_id: currentRunId });
             onReRunClick();
           }}
           disabled={isSolving}
@@ -392,12 +441,16 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
             alignItems: 'center',
             gap: '6px',
             color: '#fbbf24',
-            borderColor: 'rgba(251, 191, 36, 0.3)',
+            borderColor: 'rgba(251, 191, 36, 0.4)',
+            background: isReRunSolving ? 'rgba(251, 191, 36, 0.15)' : 'rgba(251, 191, 36, 0.05)',
+            boxShadow: isReRunSolving ? '0 0 12px rgba(251, 191, 36, 0.4)' : 'none',
           }}
-          title="Re-execute current wave calculation with active configuration"
+          title="Re-execute current wave calculation with active configuration (produces new unique run_id)"
         >
           <RotateCcw size={14} className={isSolving ? 'spin' : ''} />
-          <span>Re-Run</span>
+          <span>
+            {isReRunSolving ? `Re-Running (${progressPercent}%)...` : 'Re-Run'}
+          </span>
         </button>
 
         {/* Dispatch Solve Button */}
@@ -410,8 +463,10 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
           className="btn-quantum"
           style={{ fontSize: '12px', padding: '8px 16px' }}
         >
-          <Play size={14} />
-          <span>{isSolving ? 'Solving...' : 'Dispatch Wave'}</span>
+          <Play size={14} className={isDispatchSolving ? 'spin' : ''} />
+          <span>
+            {isDispatchSolving ? `Solving (${progressPercent}%)...` : 'Dispatch Wave'}
+          </span>
         </button>
 
         {/* PDF Export Button */}
@@ -477,6 +532,105 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
           <span>SQLite DB</span>
         </a>
       </div>
+
+      {/* Progress Bar & Current Running Process Status Banner */}
+      {(isSolving || (dispatchProgress && dispatchProgress.isActive)) && (
+        <div
+          onClick={onOpenProgressModal}
+          style={{
+            width: '100%',
+            marginTop: '8px',
+            padding: '7px 14px',
+            backgroundColor: 'rgba(7, 15, 30, 0.95)',
+            border: `1px solid ${
+              dispatchProgress?.actionType === 'RE_RUN'
+                ? 'rgba(251, 191, 36, 0.4)'
+                : 'rgba(0, 240, 255, 0.4)'
+            }`,
+            borderRadius: '8px',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '5px',
+            boxShadow:
+              dispatchProgress?.actionType === 'RE_RUN'
+                ? '0 2px 14px rgba(251, 191, 36, 0.2)'
+                : '0 2px 14px rgba(0, 240, 255, 0.2)',
+            transition: 'all 0.2s ease',
+          }}
+          title="Click to expand detailed 7-step running process status list"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <RotateCcw
+                size={13}
+                className="spin"
+                style={{
+                  color: dispatchProgress?.actionType === 'RE_RUN' ? '#fbbf24' : '#00f0ff',
+                }}
+              />
+              <span
+                style={{
+                  fontWeight: 800,
+                  color: dispatchProgress?.actionType === 'RE_RUN' ? '#fbbf24' : '#00f0ff',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {dispatchProgress?.actionType === 'RE_RUN'
+                  ? 'RE-RUN OPTIMIZING'
+                  : 'DISPATCH WAVE SOLVING'}
+              </span>
+              <span style={{ color: 'rgba(255, 255, 255, 0.3)' }}>•</span>
+              <span style={{ color: '#f3f4f6', fontWeight: 600 }}>
+                {dispatchProgress?.statusMessage || 'Executing Multi-Tier Quantum-Classical Solvers...'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ color: '#94a3b8', fontSize: '10px' }}>
+                Step {(dispatchProgress?.currentStepIndex ?? 0) + 1} of 7
+              </span>
+              <span
+                style={{
+                  color: dispatchProgress?.actionType === 'RE_RUN' ? '#fbbf24' : '#00f0ff',
+                  fontWeight: 900,
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                }}
+              >
+                {progressPercent}%
+              </span>
+            </div>
+          </div>
+
+          {/* Progress Bar Track */}
+          <div
+            style={{
+              height: '4px',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '2px',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                width: `${dispatchProgress?.overallPercent ?? 35}%`,
+                height: '100%',
+                background:
+                  dispatchProgress?.actionType === 'RE_RUN'
+                    ? 'linear-gradient(90deg, #fbbf24, #f59e0b, #00f0ff)'
+                    : 'linear-gradient(90deg, #00f0ff, #3b82f6, #fbbf24)',
+                boxShadow:
+                  dispatchProgress?.actionType === 'RE_RUN'
+                    ? '0 0 8px rgba(251, 191, 36, 0.8)'
+                    : '0 0 8px rgba(0, 240, 255, 0.8)',
+                transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            />
+          </div>
+        </div>
+      )}
     </header>
   );
 };

@@ -501,20 +501,23 @@
         <button class="preset-btn" onclick="runPreset('SELECT * FROM scenarios LIMIT 20;')">
           📁 All Scenarios Summary
         </button>
-        <button class="preset-btn" onclick="runPreset('SELECT run_id, scenario_id, operational_mode, total_fleet_makespan_sec, total_distance_km, falsification_ratio_phi FROM execution_runs ORDER BY start_time DESC LIMIT 10;')">
+        <button class="preset-btn" onclick="runPreset('SELECT order_id, sku_id, depot_id, mass_kg, hazard_class, created_datetime FROM orders ORDER BY created_datetime DESC LIMIT 25;')">
+          🕒 Orders & Created Datetime
+        </button>
+        <button class="preset-btn" onclick="runPreset('SELECT run_id, scenario_id, operational_mode, total_makespan_sec, total_distance_km, falsification_ratio_phi, created_datetime FROM execution_runs ORDER BY created_datetime DESC LIMIT 10;')">
           ⚡ Execution Runs & Metrics
         </button>
-        <button class="preset-btn" onclick="runPreset('SELECT * FROM quantum_telemetry WHERE qubits_used > 0 LIMIT 20;')">
+        <button class="preset-btn" onclick="runPreset('SELECT * FROM quantum_telemetry LIMIT 20;')">
           ⚛️ Quantum Telemetry & Circuits
         </button>
-        <button class="preset-btn" onclick="runPreset('SELECT algorithm_name, runtime_ms, total_cost_sek, battery_deficit_kwh, packing_volume_ratio FROM algorithm_benchmarks;')">
+        <button class="preset-btn" onclick="runPreset('SELECT * FROM algorithm_benchmarks;')">
           📊 Algorithm Benchmark Matrix
         </button>
-        <button class="preset-btn" onclick="runPreset('SELECT * FROM gate_validations WHERE passed = 0 OR is_falsified = 1;')">
-          🛡️ Invariant Gate Violations
+        <button class="preset-btn" onclick="runPreset('SELECT * FROM gate_validations;')">
+          🛡️ Invariant Gate Validations
         </button>
-        <button class="preset-btn" onclick="runPreset('SELECT placement_id, vehicle_id, box_x_m, box_y_m, box_z_m, is_hazard FROM container_placements WHERE is_hazard = 1 LIMIT 30;')">
-          📦 3D Hazard Box Placements
+        <button class="preset-btn" onclick="runPreset('SELECT placement_id, vehicle_id, pos_x, pos_y, pos_z, created_datetime FROM container_placements LIMIT 30;')">
+          📦 3D Box Placements
         </button>
       </div>
     </aside>

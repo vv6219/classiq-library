@@ -20,7 +20,8 @@
       "open_window_start": 3.7,
       "drop_deadline": 238.9,
       "is_atomic": false,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00002",
@@ -38,7 +39,8 @@
       "open_window_start": 111.3,
       "drop_deadline": 252.5,
       "is_atomic": false,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00003",
@@ -56,7 +58,8 @@
       "open_window_start": 6.2,
       "drop_deadline": 231.7,
       "is_atomic": true,
-      "hazard_class": "CORROSIVE"
+      "hazard_class": "CORROSIVE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00004",
@@ -74,7 +77,8 @@
       "open_window_start": 58.6,
       "drop_deadline": 200.8,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00005",
@@ -92,7 +96,8 @@
       "open_window_start": 127.2,
       "drop_deadline": 323.8,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00006",
@@ -110,7 +115,8 @@
       "open_window_start": 85.0,
       "drop_deadline": 184.1,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00007",
@@ -128,7 +134,8 @@
       "open_window_start": 44.9,
       "drop_deadline": 190.6,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00008",
@@ -146,7 +153,8 @@
       "open_window_start": 22.0,
       "drop_deadline": 159.0,
       "is_atomic": true,
-      "hazard_class": "HAZ_A"
+      "hazard_class": "HAZ_A",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00009",
@@ -164,7 +172,8 @@
       "open_window_start": 100.5,
       "drop_deadline": 245.1,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00010",
@@ -182,7 +191,8 @@
       "open_window_start": 26.1,
       "drop_deadline": 184.4,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00011",
@@ -200,7 +210,8 @@
       "open_window_start": 7.3,
       "drop_deadline": 181.8,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00012",
@@ -218,7 +229,8 @@
       "open_window_start": 125.2,
       "drop_deadline": 241.8,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00013",
@@ -236,7 +248,8 @@
       "open_window_start": 159.8,
       "drop_deadline": 375.9,
       "is_atomic": true,
-      "hazard_class": "HAZ_B"
+      "hazard_class": "HAZ_B",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00014",
@@ -254,7 +267,8 @@
       "open_window_start": 88.9,
       "drop_deadline": 197.5,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00015",
@@ -272,7 +286,8 @@
       "open_window_start": 120.4,
       "drop_deadline": 338.7,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00016",
@@ -290,7 +305,8 @@
       "open_window_start": 173.5,
       "drop_deadline": 390.0,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00017",
@@ -308,7 +324,8 @@
       "open_window_start": 53.2,
       "drop_deadline": 184.8,
       "is_atomic": true,
-      "hazard_class": "HAZ_B"
+      "hazard_class": "HAZ_B",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00018",
@@ -326,7 +343,8 @@
       "open_window_start": 9.1,
       "drop_deadline": 231.0,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00019",
@@ -344,7 +362,8 @@
       "open_window_start": 38.8,
       "drop_deadline": 218.5,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00020",
@@ -362,7 +381,8 @@
       "open_window_start": 33.2,
       "drop_deadline": 126.1,
       "is_atomic": false,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00021",
@@ -380,7 +400,8 @@
       "open_window_start": 101.9,
       "drop_deadline": 207.3,
       "is_atomic": false,
-      "hazard_class": "HAZ_B"
+      "hazard_class": "HAZ_B",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00022",
@@ -398,7 +419,8 @@
       "open_window_start": 170.8,
       "drop_deadline": 392.7,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00023",
@@ -416,7 +438,8 @@
       "open_window_start": 146.0,
       "drop_deadline": 357.3,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00024",
@@ -434,7 +457,8 @@
       "open_window_start": 61.3,
       "drop_deadline": 183.0,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00025",
@@ -452,7 +476,8 @@
       "open_window_start": 139.8,
       "drop_deadline": 274.3,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00026",
@@ -470,7 +495,8 @@
       "open_window_start": 63.9,
       "drop_deadline": 297.0,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00027",
@@ -488,7 +514,8 @@
       "open_window_start": 10.1,
       "drop_deadline": 208.0,
       "is_atomic": false,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00028",
@@ -506,7 +533,8 @@
       "open_window_start": 42.0,
       "drop_deadline": 215.0,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00029",
@@ -524,7 +552,8 @@
       "open_window_start": 45.7,
       "drop_deadline": 190.5,
       "is_atomic": true,
-      "hazard_class": "CORROSIVE"
+      "hazard_class": "CORROSIVE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00030",
@@ -542,7 +571,8 @@
       "open_window_start": 100.1,
       "drop_deadline": 231.7,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00031",
@@ -560,7 +590,8 @@
       "open_window_start": 160.2,
       "drop_deadline": 313.1,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00032",
@@ -578,7 +609,8 @@
       "open_window_start": 48.8,
       "drop_deadline": 150.1,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00033",
@@ -596,7 +628,8 @@
       "open_window_start": 67.8,
       "drop_deadline": 267.7,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00034",
@@ -614,7 +647,8 @@
       "open_window_start": 130.7,
       "drop_deadline": 331.8,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00035",
@@ -632,7 +666,8 @@
       "open_window_start": 93.6,
       "drop_deadline": 309.9,
       "is_atomic": false,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00036",
@@ -650,7 +685,8 @@
       "open_window_start": 114.6,
       "drop_deadline": 283.4,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00037",
@@ -668,7 +704,8 @@
       "open_window_start": 111.7,
       "drop_deadline": 247.3,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00038",
@@ -686,7 +723,8 @@
       "open_window_start": 175.2,
       "drop_deadline": 351.5,
       "is_atomic": true,
-      "hazard_class": "HAZ_A"
+      "hazard_class": "HAZ_A",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00039",
@@ -704,7 +742,8 @@
       "open_window_start": 113.0,
       "drop_deadline": 206.1,
       "is_atomic": false,
-      "hazard_class": "CORROSIVE"
+      "hazard_class": "CORROSIVE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00040",
@@ -722,7 +761,8 @@
       "open_window_start": 24.0,
       "drop_deadline": 213.9,
       "is_atomic": false,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00041",
@@ -740,7 +780,8 @@
       "open_window_start": 160.3,
       "drop_deadline": 335.3,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00042",
@@ -758,7 +799,8 @@
       "open_window_start": 64.1,
       "drop_deadline": 301.9,
       "is_atomic": false,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00043",
@@ -776,7 +818,8 @@
       "open_window_start": 176.8,
       "drop_deadline": 274.7,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00044",
@@ -794,7 +837,8 @@
       "open_window_start": 128.0,
       "drop_deadline": 239.9,
       "is_atomic": false,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00045",
@@ -812,7 +856,8 @@
       "open_window_start": 123.2,
       "drop_deadline": 217.3,
       "is_atomic": true,
-      "hazard_class": "HAZ_A"
+      "hazard_class": "HAZ_A",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00046",
@@ -830,7 +875,8 @@
       "open_window_start": 129.9,
       "drop_deadline": 217.6,
       "is_atomic": true,
-      "hazard_class": "HAZ_A"
+      "hazard_class": "HAZ_A",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00047",
@@ -848,7 +894,8 @@
       "open_window_start": 161.9,
       "drop_deadline": 341.8,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00048",
@@ -866,7 +913,8 @@
       "open_window_start": 30.0,
       "drop_deadline": 250.6,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00049",
@@ -884,7 +932,8 @@
       "open_window_start": 68.2,
       "drop_deadline": 221.3,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00050",
@@ -902,7 +951,8 @@
       "open_window_start": 105.0,
       "drop_deadline": 249.1,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00051",
@@ -920,7 +970,8 @@
       "open_window_start": 67.4,
       "drop_deadline": 158.4,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00052",
@@ -938,7 +989,8 @@
       "open_window_start": 9.9,
       "drop_deadline": 143.5,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00053",
@@ -956,7 +1008,8 @@
       "open_window_start": 104.0,
       "drop_deadline": 210.5,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00054",
@@ -974,7 +1027,8 @@
       "open_window_start": 107.2,
       "drop_deadline": 197.9,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00055",
@@ -992,7 +1046,8 @@
       "open_window_start": 27.9,
       "drop_deadline": 137.0,
       "is_atomic": true,
-      "hazard_class": "FLAMMABLE"
+      "hazard_class": "FLAMMABLE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00056",
@@ -1010,7 +1065,8 @@
       "open_window_start": 3.5,
       "drop_deadline": 100.2,
       "is_atomic": true,
-      "hazard_class": "HAZ_A"
+      "hazard_class": "HAZ_A",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00057",
@@ -1028,7 +1084,8 @@
       "open_window_start": 2.3,
       "drop_deadline": 96.0,
       "is_atomic": true,
-      "hazard_class": "HAZ_A"
+      "hazard_class": "HAZ_A",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00058",
@@ -1046,7 +1103,8 @@
       "open_window_start": 99.4,
       "drop_deadline": 249.2,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00059",
@@ -1064,7 +1122,8 @@
       "open_window_start": 116.1,
       "drop_deadline": 263.6,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     },
     {
       "order_id": "ORD_00060",
@@ -1082,7 +1141,9 @@
       "open_window_start": 25.2,
       "drop_deadline": 147.4,
       "is_atomic": true,
-      "hazard_class": "NONE"
+      "hazard_class": "NONE",
+      "created_datetime": "2026-09-12 23:34:56"
     }
-  ]
+  ],
+  "created_datetime": "2026-09-12 23:34:56"
 }

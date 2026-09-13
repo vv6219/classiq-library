@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import time
 import urllib.parse
+import uuid
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 from pathlib import Path
@@ -226,6 +227,7 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                         "drop_deadline": o.drop_deadline,
                         "hazard_class": o.hazard_class,
                         "sla_priority": o.sla_priority,
+                        "created_datetime": o.created_datetime or datetime.now(timezone.utc).isoformat(),
                     })
                 self._send_json(200, out)
             finally:
@@ -589,16 +591,16 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                             num_technicians=num_vehicles,
                             num_depots=2,
                             num_chutes=2,
-                            random_seed=seed,
+                            seed=seed,
                         )
-                        gen = WarehouseMockGenerator(cfg)
-                        generated_pool = gen.generate_order_pool()
-                        repo.save_scenario_data(custom_scen_id, generated_pool)
+                        generated_pool = WarehouseMockGenerator.generate_scenario(cfg)
+                        repo.save_scenario(cfg, generated_pool, scenario_id=custom_scen_id)
                         orders = repo.get_scenario_orders(custom_scen_id)
                         depots = repo.get_scenario_depots(custom_scen_id)
                     scen_id = custom_scen_id
+                    wave_suffix = uuid.uuid4().hex[:8].upper()
                     pool = OrderPoolDTO(
-                        wave_id=f"WAVE-{scen_id.split('-')[-1]}",
+                        wave_id=f"WAVE-{wave_suffix}",
                         orders=tuple(orders),
                         depots=tuple(depots),
                     )

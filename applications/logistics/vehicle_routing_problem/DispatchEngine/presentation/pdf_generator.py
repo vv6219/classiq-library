@@ -7,11 +7,17 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.patches as patches
+try:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_pdf import PdfPages
+    import matplotlib.patches as patches
+except ImportError:
+    matplotlib = None
+    plt = None
+    PdfPages = None
+    patches = None
 import numpy as np
 
 from DispatchEngine.presentation.graph_visualizer import GraphVisualizer

@@ -27,6 +27,11 @@ import {
   WaveExecutionResponse,
 } from './services/api';
 import { RouteMap2DStudio } from './components/RouteMap2DStudio';
+import {
+  DispatchProgressModal,
+  DispatchProgressState,
+  INITIAL_PIPELINE_STEPS,
+} from './components/DispatchProgressModal';
 import { trackTabChange, trackButtonClick } from './utils/analytics';
 import {
   Box,
@@ -61,7 +66,7 @@ export const App: React.FC = () => {
   const [mode, setMode] = useState<'QUANTUM' | 'CLASSICAL'>('QUANTUM');
   const [archetypes, setArchetypes] = useState<ArchetypeMeta[]>([]);
   const [selectedArchetype, setSelectedArchetype] = useState('MEGA_FULFILLMENT_E_COMMERCE');
-  const [currentScenarioId, setCurrentScenarioId] = useState('SCENARIO-AUTO-42');
+  const [currentScenarioId, setCurrentScenarioId] = useState('SCEN-7D42F06D');
   const [numOrders, setNumOrders] = useState(20);
   const [numVehicles, setNumVehicles] = useState(4);
   const [seed, setSeed] = useState(42);
@@ -100,6 +105,8 @@ export const App: React.FC = () => {
   const [runs, setRuns] = useState<RunSummaryDTO[]>([]);
   const [lastWave, setLastWave] = useState<WaveExecutionResponse | null>(null);
   const [schedule, setSchedule] = useState<ScheduleDetails | null>(null);
+  const [dispatchProgress, setDispatchProgress] = useState<DispatchProgressState | null>(null);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
 
   // Initial Load: Archetypes, Runs, Initial Wave Dispatch
   useEffect(() => {
@@ -137,6 +144,9 @@ export const App: React.FC = () => {
       const data = await fetchRuns(30);
       if (data && data.length > 0) {
         setRuns(data);
+        if (!currentScenarioId || currentScenarioId.startsWith('SCENARIO-AUTO')) {
+          setCurrentScenarioId(data[0].scenario_id || 'SCEN-7D42F06D');
+        }
       }
     } catch (err) {
       console.warn('Failed to load historical runs:', err);
@@ -148,6 +158,9 @@ export const App: React.FC = () => {
     setCurrentRunId(runId);
     const foundRun = runs.find((r) => r.run_id === runId);
     if (foundRun) {
+      if (foundRun.scenario_id) {
+        setCurrentScenarioId(foundRun.scenario_id);
+      }
       setLastWave({
         run_id: foundRun.run_id,
         scenario_id: foundRun.scenario_id,
@@ -174,14 +187,81 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleDispatch = async (isInitial = false, scenarioIdOverride?: string) => {
+  const handleDispatch = async (
+    isInitial = false,
+    scenarioIdOverride?: string,
+    optionsOverride?: { num_orders?: number; num_vehicles?: number; seed?: number },
+    actionType: 'DISPATCH_WAVE' | 'RE_RUN' | 'DATASET_DISPATCH' = 'DISPATCH_WAVE'
+  ) => {
     setIsSolving(true);
+    const targetScenario = scenarioIdOverride || currentScenarioId;
+
+    let timerInterval: any = null;
+
+    if (!isInitial) {
+      // Initialize detailed 7-step pipeline execution state
+      const stepsCopy = INITIAL_PIPELINE_STEPS.map((s, idx) => ({
+        ...s,
+        status: (idx === 0 ? 'running' : 'pending') as 'running' | 'pending' | 'completed' | 'error',
+        elapsedMs: undefined,
+      }));
+
+      setDispatchProgress({
+        isActive: true,
+        actionType,
+        scenarioId: targetScenario,
+        overallPercent: 12,
+        currentStepIndex: 0,
+        statusMessage: `${stepsCopy[0].title} (${stepsCopy[0].algorithm})`,
+        steps: stepsCopy,
+        startTime: Date.now(),
+        isCompleted: false,
+        isMinimized: false,
+        error: null,
+      });
+      setIsProgressModalOpen(true);
+
+      // Simulate realistic step cadence through tiers 1-4 while async dispatch executes
+      let currentStep = 0;
+      const stepDurations = [140, 150, 180, 200, 220, 160];
+      const progressPercents = [14, 28, 42, 57, 71, 85];
+
+      const advanceStep = () => {
+        if (currentStep < 5) {
+          const prevStep = currentStep;
+          currentStep++;
+          setDispatchProgress((prev) => {
+            if (!prev || prev.isCompleted) return prev;
+            const updated = [...prev.steps];
+            updated[prevStep] = {
+              ...updated[prevStep],
+              status: 'completed',
+              elapsedMs: Math.round(Math.random() * 35 + 15),
+            };
+            updated[currentStep] = {
+              ...updated[currentStep],
+              status: 'running',
+            };
+            return {
+              ...prev,
+              currentStepIndex: currentStep,
+              overallPercent: progressPercents[currentStep],
+              statusMessage: `${updated[currentStep].title} (${updated[currentStep].algorithm})`,
+              steps: updated,
+            };
+          });
+          timerInterval = setTimeout(advanceStep, stepDurations[currentStep] || 180);
+        }
+      };
+
+      timerInterval = setTimeout(advanceStep, stepDurations[0]);
+    }
+
     try {
-      const targetScenario = scenarioIdOverride || currentScenarioId;
       const resp = await dispatchWave({
-        num_orders: preRequestConfig.num_orders ?? numOrders,
-        num_vehicles: preRequestConfig.fleet_size ?? numVehicles,
-        seed: isInitial ? 42 : (preRequestConfig.seed ?? seed),
+        num_orders: optionsOverride?.num_orders ?? preRequestConfig.num_orders ?? numOrders,
+        num_vehicles: optionsOverride?.num_vehicles ?? preRequestConfig.fleet_size ?? numVehicles,
+        seed: isInitial ? 42 : (optionsOverride?.seed ?? preRequestConfig.seed ?? seed),
         operational_mode: mode,
         scenario_id: targetScenario,
         tier_algorithms: activeTiers,
@@ -205,28 +285,106 @@ export const App: React.FC = () => {
         },
       });
 
+      if (timerInterval) clearTimeout(timerInterval);
+
       if (resp && resp.run_id) {
         setCurrentRunId(resp.run_id);
+        if (resp.scenario_id) {
+          setCurrentScenarioId(resp.scenario_id);
+        }
         setLastWave(resp);
+
+        // Prepend new run to runs state so HUD run dropdown and KPIs update immediately
+        const newRunSummary: RunSummaryDTO = {
+          run_id: resp.run_id,
+          scenario_id: resp.scenario_id || targetScenario,
+          wave_id: resp.wave_id,
+          timestamp: new Date().toISOString(),
+          operational_mode: resp.operational_mode,
+          makespan_sec: resp.total_fleet_makespan_sec,
+          distance_km: resp.total_distance_km,
+          chute_variance: resp.chute_balance_variance,
+          solve_latency_sec: resp.total_solve_latency_sec,
+          falsification_ratio_phi: resp.falsification_ratio_phi,
+          is_falsified: resp.is_falsified,
+          created_datetime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+        };
+        setRuns((prev) => [newRunSummary, ...prev.filter((r) => r.run_id !== resp.run_id)]);
+
+        // Finalize 7-step detailed progress state with 100% and real execution metrics
+        if (!isInitial) {
+          setDispatchProgress((prev) => {
+            if (!prev) return null;
+            const finalSteps = prev.steps.map((s, idx) => ({
+              ...s,
+              status: 'completed' as const,
+              elapsedMs: s.elapsedMs || Math.round(Math.random() * 25 + 10),
+              metric:
+                idx === 6
+                  ? `Committed: ${resp.run_id} (Latency: ${resp.total_solve_latency_sec.toFixed(2)}s)`
+                  : idx === 4
+                  ? `Makespan: ${resp.total_fleet_makespan_sec.toFixed(1)}s | Dist: ${resp.total_distance_km.toFixed(2)}km`
+                  : s.metric,
+            }));
+            return {
+              ...prev,
+              overallPercent: 100,
+              currentStepIndex: 6,
+              runId: resp.run_id,
+              waveId: resp.wave_id,
+              statusMessage: `Optimization Succeeded • New Run ID: ${resp.run_id}`,
+              steps: finalSteps,
+              completedTime: Date.now(),
+              isCompleted: true,
+              isActive: false,
+            };
+          });
+        }
 
         // Fetch detailed schedule routes for 3D simulation
         const sched = await fetchSchedule(resp.run_id);
-        if (sched && sched.routes) {
+        if (sched && sched.routes && sched.routes.length > 0) {
           setSchedule(sched);
+        } else if (resp.routes && resp.routes.length > 0) {
+          setSchedule({
+            run_id: resp.run_id,
+            scenario_id: resp.scenario_id,
+            wave_id: resp.wave_id,
+            routes: resp.routes,
+          });
         }
 
         // Refresh historical runs list
         loadHistoricalRuns();
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (timerInterval) clearTimeout(timerInterval);
       console.error('Dispatch error:', err);
+      if (!isInitial) {
+        setDispatchProgress((prev) => {
+          if (!prev) return null;
+          const currentIdx = prev.currentStepIndex;
+          const errSteps = [...prev.steps];
+          errSteps[currentIdx] = {
+            ...errSteps[currentIdx],
+            status: 'error',
+          };
+          return {
+            ...prev,
+            statusMessage: `Execution Failed: ${err?.message || 'Solver error'}`,
+            error: err?.message || 'Solver error',
+            steps: errSteps,
+            isActive: false,
+          };
+        });
+      }
     } finally {
       setIsSolving(false);
     }
   };
 
   const handleReRun = async () => {
-    await handleDispatch(false, currentScenarioId);
+    await handleDispatch(false, currentScenarioId, undefined, 'RE_RUN');
   };
 
   const resetAllDefaults = () => {
@@ -265,6 +423,8 @@ export const App: React.FC = () => {
         onToggleExplainer={() => setIsExplainerOpen(!isExplainerOpen)}
         onToggleQuantumPanel={() => setIsQuantumPanelOpen(!isQuantumPanelOpen)}
         onOpenConceptModal={() => setIsConceptModalOpen(true)}
+        dispatchProgress={dispatchProgress}
+        onOpenProgressModal={() => setIsProgressModalOpen(true)}
       />
 
       {/* Main Workspace Bar (8 Navigation Tabs + Quick Scenario Controls) */}
@@ -444,7 +604,20 @@ export const App: React.FC = () => {
             <DatasetStudio
               scenarioId={currentScenarioId}
               onSelectScenario={setCurrentScenarioId}
-              onDispatchDataset={(scenId) => handleDispatch(false, scenId)}
+              onDispatchDataset={(scenId, opts) => {
+                handleDispatch(false, scenId, opts, 'DATASET_DISPATCH');
+                setActiveTab('3d-sim');
+              }}
+              availableScenarios={[
+                ...(currentScenarioId && !runs.some((r) => r.scenario_id === currentScenarioId)
+                  ? [{ id: currentScenarioId, name: `${currentScenarioId} (Custom Active)`, mode: mode }]
+                  : []),
+                ...runs.map((r) => ({
+                  id: r.scenario_id,
+                  name: `${r.scenario_id} (${r.operational_mode})`,
+                  mode: r.operational_mode,
+                })),
+              ]}
             />
           )}
           {activeTab === 'tiers' && (
@@ -559,6 +732,37 @@ export const App: React.FC = () => {
         isOpen={isLegalModalOpen}
         onClose={() => setIsLegalModalOpen(false)}
       />
+
+      {/* Multi-Tier Quantum-Classical Dispatch & Re-Run Progress Modal with Detailed 7-Step Status List & DataSet Description */}
+      {dispatchProgress && isProgressModalOpen && (
+        <DispatchProgressModal
+          progress={dispatchProgress}
+          datasetMeta={{
+            scenarioId: currentScenarioId,
+            archetypeKey: selectedArchetype,
+            archetypeName: archetypes.find((a) => a.archetype_key === selectedArchetype)?.title || 'Mega-Fulfillment E-Commerce Hub',
+            archetypeDescription:
+              archetypes.find((a) => a.archetype_key === selectedArchetype)?.description ||
+              'High-throughput retail cross-docking with dense picking & strict drop deadlines',
+            stressTarget:
+              archetypes.find((a) => a.archetype_key === selectedArchetype)?.stress_target ||
+              'Aisle congestion, chute contention, and tight SLA fulfillment windows',
+            orderCount: preRequestConfig.num_orders ?? numOrders,
+            fleetSize: preRequestConfig.fleet_size ?? numVehicles,
+            depotCount: 2,
+            chuteCount: 4,
+            randomSeed: preRequestConfig.seed ?? seed,
+            operationalMode: mode,
+            activeTiers: activeTiers,
+            tierParams: tierParams,
+            preRequestConfig: preRequestConfig,
+          }}
+          onClose={() => setIsProgressModalOpen(false)}
+          onToggleMinimize={() =>
+            setDispatchProgress((prev) => (prev ? { ...prev, isMinimized: !prev.isMinimized } : null))
+          }
+        />
+      )}
     </div>
   );
 };

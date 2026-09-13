@@ -17,8 +17,15 @@ class WarehouseRepository:
         self.handle = session_or_conn
         self.is_sqlalchemy = hasattr(session_or_conn, "add") and hasattr(session_or_conn, "commit")
 
-    def save_scenario(self, config: MockConfigDTO, pool: OrderPoolDTO) -> str:
-        scenario_id = f"SCEN-{uuid.uuid4().hex[:8].upper()}"
+    def _get_conn(self):
+        if not self.is_sqlalchemy:
+            return self.handle
+        from DispatchEngine.storage.database import DatabaseManager
+        return DatabaseManager.get_connection()
+
+    def save_scenario(self, config: MockConfigDTO, pool: OrderPoolDTO, scenario_id: Optional[str] = None) -> str:
+        if not scenario_id:
+            scenario_id = f"SCEN-{uuid.uuid4().hex[:8].upper()}"
         now_str = datetime.now(timezone.utc).isoformat()
 
         if self.is_sqlalchemy:
@@ -105,6 +112,18 @@ class WarehouseRepository:
     ) -> str:
         if not run_id:
             run_id = f"RUN-{wave_id.split('-')[-1]}"
+
+        # Ensure run_id uniqueness across multiple dispatches
+        if self.is_sqlalchemy:
+            from DispatchEngine.storage.models import ExecutionRunRecord
+            if self.handle.query(ExecutionRunRecord).filter_by(run_id=run_id).first():
+                run_id = f"{run_id}-{uuid.uuid4().hex[:4].upper()}"
+        else:
+            cursor = self.handle.cursor()
+            cursor.execute("SELECT 1 FROM execution_runs WHERE run_id = ?", (run_id,))
+            if cursor.fetchone():
+                run_id = f"{run_id}-{uuid.uuid4().hex[:4].upper()}"
+
         now_str = datetime.now(timezone.utc).isoformat()
 
         if self.is_sqlalchemy:
@@ -188,11 +207,14 @@ class WarehouseRepository:
 
         return run_id
 
-    def get_scenario_orders(self, scenario_id: str) -> List[OrderLineDTO]:
+    def get_scenario_orders(self, scenario_id: str, limit: Optional[int] = None) -> List[OrderLineDTO]:
         orders = []
         if self.is_sqlalchemy:
             from DispatchEngine.storage.models import OrderRecord
-            records = self.handle.query(OrderRecord).filter_by(scenario_id=scenario_id).all()
+            query = self.handle.query(OrderRecord).filter_by(scenario_id=scenario_id)
+            if limit:
+                query = query.limit(limit)
+            records = query.all()
             for r in records:
                 orders.append(
                     OrderLineDTO(
@@ -210,11 +232,15 @@ class WarehouseRepository:
                         drop_deadline=r.drop_deadline,
                         is_atomic=r.is_atomic,
                         hazard_class=r.hazard_class or "NONE",
+                        created_datetime=str(getattr(r, "created_datetime", "")),
                     )
                 )
         else:
             cursor = self.handle.cursor()
-            cursor.execute("SELECT * FROM orders WHERE scenario_id = ?", (scenario_id,))
+            sql = "SELECT * FROM orders WHERE scenario_id = ?"
+            if limit:
+                sql += f" LIMIT {int(limit)}"
+            cursor.execute(sql, (scenario_id,))
             rows = cursor.fetchall()
             for r in rows:
                 orders.append(
@@ -233,30 +259,46 @@ class WarehouseRepository:
                         drop_deadline=r["drop_deadline"],
                         is_atomic=bool(r["is_atomic"]),
                         hazard_class=r["hazard_class"] or "NONE",
+                        created_datetime=str(r["created_datetime"]) if "created_datetime" in r.keys() else None,
                     )
                 )
         return orders
 
     def get_scenario_metadata(self, scenario_id: str) -> Optional[Dict[str, Any]]:
         """Fetch metadata for a scenario."""
-        conn = self.handle if not self.is_sqlalchemy else None
-        cursor = conn.cursor() if conn else None
-        if not cursor:
-            return None
-        cursor.execute("SELECT * FROM scenarios WHERE scenario_id = ?", (scenario_id,))
-        row = cursor.fetchone()
-        if not row:
-            return None
-        return {
-            "scenario_id": row["scenario_id"],
-            "name": row["name"],
-            "order_count": row["order_count"],
-            "fleet_size": row["fleet_size"],
-            "depot_count": row["depot_count"],
-            "chute_count": row["chute_count"],
-            "is_mock_data": bool(row["is_mock_data"]),
-            "created_at": row["created_at"],
-        }
+        if self.is_sqlalchemy:
+            from DispatchEngine.storage.models import ScenarioRecord
+            rec = self.handle.query(ScenarioRecord).filter_by(scenario_id=scenario_id).first()
+            if not rec:
+                return None
+            return {
+                "scenario_id": rec.scenario_id,
+                "name": rec.name,
+                "order_count": rec.order_count,
+                "fleet_size": rec.fleet_size,
+                "depot_count": rec.depot_count,
+                "chute_count": rec.chute_count,
+                "is_mock_data": bool(rec.is_mock_data),
+                "created_at": str(getattr(rec, "created_at", "")),
+                "created_datetime": str(getattr(rec, "created_datetime", "")),
+            }
+        else:
+            conn = self.handle
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM scenarios WHERE scenario_id = ?", (scenario_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return {
+                "scenario_id": row["scenario_id"],
+                "name": row["name"],
+                "order_count": row["order_count"],
+                "fleet_size": row["fleet_size"],
+                "depot_count": row["depot_count"],
+                "chute_count": row["chute_count"],
+                "is_mock_data": bool(row["is_mock_data"]),
+                "created_at": row["created_at"],
+            }
 
     def get_scenario_depots(self, scenario_id: str) -> List[Any]:
         """Fetch or synthesize depot DTOs for a scenario."""
@@ -278,7 +320,7 @@ class WarehouseRepository:
 
     def save_routes_and_stops(self, run_id: str, schedule: Any):
         """Persist vehicle routes and waypoint stops."""
-        conn = self.handle if not self.is_sqlalchemy else None
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return
@@ -323,7 +365,7 @@ class WarehouseRepository:
 
     def save_container_placements(self, run_id: str, placements: List[Dict[str, Any]]):
         """Persist 3D container placements inside AMR bays."""
-        conn = self.handle if not self.is_sqlalchemy else None
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return
@@ -345,7 +387,7 @@ class WarehouseRepository:
 
     def save_lifo_dependencies(self, run_id: str, vehicle_id: str, edges: List[Tuple[str, str, float]]):
         """Persist G_LIFO extraction dependency edges."""
-        conn = self.handle if not self.is_sqlalchemy else None
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return
@@ -360,7 +402,7 @@ class WarehouseRepository:
 
     def save_gate_validations(self, run_id: str, gate_results: List[Dict[str, Any]]):
         """Persist validation gate outcomes with verification code lmn."""
-        conn = self.handle if not self.is_sqlalchemy else None
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return
@@ -382,7 +424,7 @@ class WarehouseRepository:
 
     def save_chute_flows(self, run_id: str, flow_samples: List[Dict[str, Any]]):
         """Persist continuous chute volume accumulation time series."""
-        conn = self.handle if not self.is_sqlalchemy else None
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return
@@ -400,7 +442,7 @@ class WarehouseRepository:
 
     def get_run_schedule(self, run_id: str) -> Dict[str, Any]:
         """Fetch complete schedule with routes and stops for run_id."""
-        conn = self.handle if not self.is_sqlalchemy else None
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return {"run_id": run_id, "routes": []}
@@ -444,7 +486,7 @@ class WarehouseRepository:
 
     def get_run_lifo_dag(self, run_id: str) -> Dict[str, Any]:
         """Fetch LIFO DAG nodes and directed edges."""
-        conn = self.handle if not self.is_sqlalchemy else None
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return {"run_id": run_id, "nodes": [], "edges": [], "is_acyclic": True}
@@ -488,7 +530,7 @@ class WarehouseRepository:
 
     def get_run_gates_audit(self, run_id: str) -> Dict[str, Any]:
         """Fetch Invariant Gate 1-4 audit trail."""
-        conn = self.handle if not self.is_sqlalchemy else None
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return {"run_id": run_id, "gates": []}
@@ -537,6 +579,11 @@ class WarehouseRepository:
                 "drop_deadline": r["drop_deadline"],
                 "is_atomic": bool(r["is_atomic"]),
                 "hazard_class": r["hazard_class"] or "NONE",
+                "created_datetime": (
+                    r["created_datetime"]
+                    if "created_datetime" in r.keys() and r["created_datetime"]
+                    else datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+                ),
             }
             for r in order_rows
         ]
@@ -575,6 +622,11 @@ class WarehouseRepository:
             "fleet_size": fleet_size,
             "depot_count": depot_count,
             "chute_count": chute_count,
+            "created_datetime": (
+                scen_row["created_datetime"]
+                if scen_row and "created_datetime" in scen_row.keys() and scen_row["created_datetime"]
+                else datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            ),
             "orders": orders,
             "vehicles": vehicles,
             "depots": depots,
@@ -590,11 +642,12 @@ class WarehouseRepository:
 
         order_id = order_data.get("order_id") or f"ORD-MANUAL-{uuid.uuid4().hex[:6].upper()}"
         pos = order_data.get("pickup_pos", [10.0, 10.0, 1.2])
+        now_dt = order_data.get("created_datetime") or datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         cursor.execute("""
             INSERT OR REPLACE INTO orders
             (scenario_id, order_id, sku_id, depot_id, aisle_id, pickup_x, pickup_y, pickup_z,
-             drop_chute_id, mass_kg, volume_m3, open_window_start, drop_deadline, is_atomic, hazard_class)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             drop_chute_id, mass_kg, volume_m3, open_window_start, drop_deadline, is_atomic, hazard_class, created_datetime)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             scenario_id,
             order_id,
@@ -609,6 +662,7 @@ class WarehouseRepository:
             float(order_data.get("drop_deadline", 600.0)),
             1 if order_data.get("is_atomic", True) else 0,
             order_data.get("hazard_class", "NONE"),
+            now_dt,
         ))
         # Update scenario order count
         cursor.execute("UPDATE scenarios SET order_count = order_count + 1 WHERE scenario_id = ?", (scenario_id,))

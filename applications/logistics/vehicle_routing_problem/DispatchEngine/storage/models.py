@@ -26,6 +26,7 @@ try:
 
         scenario_id = Column(String(64), primary_key=True)
         created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
         name = Column(String(128), nullable=False)
         archetype = Column(String(64), default="PARETO_HOT_ZONE", nullable=False)
         random_seed = Column(Integer, nullable=False)
@@ -62,6 +63,7 @@ try:
         is_atomic = Column(Boolean, default=True)
         hazard_class = Column(String(32), default="NONE")
         sla_priority = Column(Integer, default=1)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         scenario = relationship("ScenarioRecord", back_populates="orders")
 
@@ -82,6 +84,7 @@ try:
         falsification_ratio_phi = Column(Float, nullable=False)
         is_falsified = Column(Boolean, default=False)
         verification_code = Column(String(32), default="lmn", nullable=False)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         scenario = relationship("ScenarioRecord", back_populates="runs")
         tier_results = relationship("TierExecutionRecord", back_populates="run", cascade="all, delete-orphan")
@@ -107,6 +110,7 @@ try:
         volume_utilization_pct = Column(Float, nullable=False)
         battery_consumed_pct = Column(Float, nullable=False)
         stops_count = Column(Integer, nullable=False)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         run = relationship("ExecutionRunRecord", back_populates="routes")
         stops = relationship("RouteStopRecord", back_populates="route", cascade="all, delete-orphan")
@@ -127,6 +131,7 @@ try:
         service_duration_sec = Column(Float, nullable=False)
         action = Column(String(32), nullable=False)  # PICKUP, DROP, REPLENISH
         order_ids_json = Column(JSON, nullable=False)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         route = relationship("VehicleRouteRecord", back_populates="stops")
 
@@ -147,6 +152,7 @@ try:
         mass_kg = Column(Float, nullable=False)
         extraction_sequence = Column(Integer, nullable=False)
         support_surface_ratio = Column(Float, nullable=False)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         run = relationship("ExecutionRunRecord", back_populates="placements")
 
@@ -159,6 +165,7 @@ try:
         blocking_order_id = Column(String(64), nullable=False)
         blocked_order_id = Column(String(64), nullable=False)
         contact_area_m2 = Column(Float, nullable=False)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         run = relationship("ExecutionRunRecord", back_populates="lifo_edges")
 
@@ -175,6 +182,7 @@ try:
         violations_count = Column(Integer, default=0)
         details_json = Column(JSON, nullable=False)
         timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         run = relationship("ExecutionRunRecord", back_populates="gate_validations")
 
@@ -192,6 +200,7 @@ try:
         message = Column(Text, nullable=False)
         attributes_json = Column(JSON, nullable=True)
         error_stack = Column(Text, nullable=True)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     class ChuteFlowRecord(Base):
         __tablename__ = "chute_flow_dynamics"
@@ -203,6 +212,7 @@ try:
         accumulated_volume_m3 = Column(Float, nullable=False)
         inflow_rate_m3_s = Column(Float, nullable=False)
         clearance_status = Column(String(32), default="NORMAL")
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         run = relationship("ExecutionRunRecord", back_populates="chute_flows")
 
@@ -220,6 +230,7 @@ try:
         distance_improvement_pct = Column(Float, nullable=False)
         falsification_ratio_phi = Column(Float, nullable=False)
         verification_code = Column(String(32), default="lmn", nullable=False)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     class TierExecutionRecord(Base):
         __tablename__ = "tier_executions"
@@ -233,6 +244,7 @@ try:
         status = Column(String(32), nullable=False)
         benders_cuts_generated = Column(JSON, nullable=True)
         output_summary = Column(JSON, nullable=False)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         run = relationship("ExecutionRunRecord", back_populates="tier_results")
 
@@ -250,6 +262,7 @@ try:
         variational_energy = Column(Float, nullable=False)
         quantum_speedup_ratio = Column(Float, nullable=True)
         execution_time_ms = Column(Float, nullable=False)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         run = relationship("ExecutionRunRecord", back_populates="quantum_telemetry")
 
@@ -269,6 +282,7 @@ except ImportError:
         topology_metadata: Dict[str, Any]
         archetype: str = "PARETO_HOT_ZONE"
         created_at: Optional[str] = None
+        created_datetime: Optional[str] = None
 
     @dataclass
     class OrderRecord:
@@ -291,6 +305,7 @@ except ImportError:
         is_atomic: bool = True
         hazard_class: str = "NONE"
         sla_priority: int = 1
+        created_datetime: Optional[str] = None
 
     @dataclass
     class ExecutionRunRecord:
@@ -308,6 +323,7 @@ except ImportError:
         sla_violations_count: int = 0
         verification_code: str = "lmn"
         timestamp: Optional[str] = None
+        created_datetime: Optional[str] = None
 
     @dataclass
     class VehicleRouteRecord:
@@ -323,6 +339,7 @@ except ImportError:
         volume_utilization_pct: float
         battery_consumed_pct: float
         stops_count: int
+        created_datetime: Optional[str] = None
 
     @dataclass
     class RouteStopRecord:
@@ -339,6 +356,7 @@ except ImportError:
         service_duration_sec: float
         action: str
         order_ids_json: List[str]
+        created_datetime: Optional[str] = None
 
     @dataclass
     class ContainerPlacementRecord:
@@ -356,6 +374,7 @@ except ImportError:
         mass_kg: float
         extraction_sequence: int
         support_surface_ratio: float
+        created_datetime: Optional[str] = None
 
     @dataclass
     class LIFODependencyRecord:
@@ -364,6 +383,7 @@ except ImportError:
         blocking_order_id: str
         blocked_order_id: str
         contact_area_m2: float
+        created_datetime: Optional[str] = None
 
     @dataclass
     class GateValidationRecord:
@@ -377,6 +397,7 @@ except ImportError:
         verification_code: str = "lmn"
         violations_count: int = 0
         timestamp: Optional[str] = None
+        created_datetime: Optional[str] = None
 
     @dataclass
     class TelemetryEventRecord:
@@ -390,6 +411,7 @@ except ImportError:
         vehicle_id: Optional[str] = None
         attributes_json: Optional[Dict[str, Any]] = None
         error_stack: Optional[str] = None
+        created_datetime: Optional[str] = None
 
     @dataclass
     class ChuteFlowRecord:
@@ -399,6 +421,7 @@ except ImportError:
         accumulated_volume_m3: float
         inflow_rate_m3_s: float
         clearance_status: str = "NORMAL"
+        created_datetime: Optional[str] = None
 
     @dataclass
     class AlgorithmBenchmarkRecord:
@@ -413,6 +436,7 @@ except ImportError:
         falsification_ratio_phi: float
         verification_code: str = "lmn"
         timestamp: Optional[str] = None
+        created_datetime: Optional[str] = None
 
     @dataclass
     class TierExecutionRecord:
@@ -424,6 +448,7 @@ except ImportError:
         output_summary: Dict[str, Any]
         iterations_count: int = 1
         benders_cuts_generated: Optional[List[Any]] = None
+        created_datetime: Optional[str] = None
 
     @dataclass
     class QuantumTelemetryRecord:
@@ -437,3 +462,4 @@ except ImportError:
         variational_energy: float
         execution_time_ms: float
         quantum_speedup_ratio: Optional[float] = None
+        created_datetime: Optional[str] = None

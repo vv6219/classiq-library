@@ -4,10 +4,15 @@ from __future__ import annotations
 import io
 import math
 from typing import Dict, Any, List, Optional, Tuple
-import matplotlib
-matplotlib.use("Agg")  # Non-interactive backend
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
+try:
+    import matplotlib
+    matplotlib.use("Agg")  # Non-interactive backend
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+except ImportError:
+    matplotlib = None
+    plt = None
+    patches = None
 import numpy as np
 
 
