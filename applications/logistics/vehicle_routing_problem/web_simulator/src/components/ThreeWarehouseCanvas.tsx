@@ -38,6 +38,9 @@ interface ThreeWarehouseCanvasProps {
   operationalMode?: string;
   quantumPanelMode?: HUDPanelDisplayMode;
   onQuantumPanelModeChange?: (mode: HUDPanelDisplayMode) => void;
+  reportsRepoMode?: HUDPanelDisplayMode;
+  onReportsRepoModeChange?: (mode: HUDPanelDisplayMode) => void;
+  reportsCount?: number;
 }
 
 export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
@@ -46,6 +49,9 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
   operationalMode = 'QUANTUM',
   quantumPanelMode = 'expanded',
   onQuantumPanelModeChange,
+  reportsRepoMode = 'minimized',
+  onReportsRepoModeChange,
+  reportsCount = 0,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
@@ -67,12 +73,14 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
     setFloorEnvelopeMode('minimized');
     setAmrTelemetryMode('minimized');
     if (onQuantumPanelModeChange) onQuantumPanelModeChange('minimized');
+    if (onReportsRepoModeChange) onReportsRepoModeChange('minimized');
   };
 
   const handleRestoreAll = () => {
     setFloorEnvelopeMode('expanded');
     setAmrTelemetryMode('expanded');
     if (onQuantumPanelModeChange) onQuantumPanelModeChange('expanded');
+    if (onReportsRepoModeChange) onReportsRepoModeChange('expanded');
   };
 
   // References for Three.js objects
@@ -669,6 +677,8 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
           floorEnvelope: floorEnvelopeMode,
           amrTelemetry: amrTelemetryMode,
           quantumCoProc: quantumPanelMode,
+          reportsRepo: reportsRepoMode,
+          reportsCount,
           isLegendOpen,
           selectedVehicleId: selectedVehicle,
           operationalMode,
@@ -679,6 +689,7 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
           setQuantumCoProcMode: (m) => {
             if (onQuantumPanelModeChange) onQuantumPanelModeChange(m);
           },
+          setReportsRepoMode: onReportsRepoModeChange,
           setIsLegendOpen,
           minimizeAll: handleMinimizeAll,
           restoreAll: handleRestoreAll,

@@ -94,6 +94,7 @@ try:
         lifo_edges = relationship("LIFODependencyRecord", back_populates="run", cascade="all, delete-orphan")
         gate_validations = relationship("GateValidationRecord", back_populates="run", cascade="all, delete-orphan")
         chute_flows = relationship("ChuteFlowRecord", back_populates="run", cascade="all, delete-orphan")
+        produced_reports = relationship("ProducedReportRecord", back_populates="run", cascade="all, delete-orphan")
 
     class VehicleRouteRecord(Base):
         __tablename__ = "vehicle_routes"
@@ -265,6 +266,26 @@ try:
         created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         run = relationship("ExecutionRunRecord", back_populates="quantum_telemetry")
+
+    class ProducedReportRecord(Base):
+        __tablename__ = "produced_reports"
+
+        report_id = Column(String(64), primary_key=True)
+        run_id = Column(String(64), ForeignKey("execution_runs.run_id"), nullable=False, index=True)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
+        title = Column(String(128), nullable=False)
+        profile = Column(String(32), nullable=False)  # EXECUTIVE, COMPREHENSIVE, QUANTUM, CERTIFICATE, etc.
+        format = Column(String(16), nullable=False)   # PDF, JSON, CSV
+        page_count = Column(Integer, default=1, nullable=False)
+        file_size_bytes = Column(Integer, default=0, nullable=False)
+        file_path = Column(String(255), nullable=False)
+        sha256_hash = Column(String(64), nullable=False)
+        operational_mode = Column(String(32), default="QUANTUM", nullable=False)
+        falsification_ratio_phi = Column(Float, default=0.880, nullable=False)
+        status = Column(String(32), default="GENERATED", nullable=False)
+        metadata_json = Column(JSON, nullable=True)
+
+        run = relationship("ExecutionRunRecord", back_populates="produced_reports")
 
 except ImportError:
     Base = None
@@ -462,4 +483,21 @@ except ImportError:
         variational_energy: float
         execution_time_ms: float
         quantum_speedup_ratio: Optional[float] = None
+        created_datetime: Optional[str] = None
+
+    @dataclass
+    class ProducedReportRecord:
+        report_id: str
+        run_id: str
+        title: str
+        profile: str
+        format: str
+        file_path: str
+        sha256_hash: str
+        page_count: int = 1
+        file_size_bytes: int = 0
+        operational_mode: str = "QUANTUM"
+        falsification_ratio_phi: float = 0.880
+        status: str = "GENERATED"
+        metadata_json: Optional[Dict[str, Any]] = None
         created_datetime: Optional[str] = None

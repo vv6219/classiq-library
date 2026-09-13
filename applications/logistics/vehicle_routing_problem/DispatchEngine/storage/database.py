@@ -300,12 +300,32 @@ class DatabaseManager:
             );
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS produced_reports (
+                report_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                title TEXT NOT NULL,
+                profile TEXT NOT NULL,
+                format TEXT NOT NULL,
+                page_count INTEGER NOT NULL DEFAULT 1,
+                file_size_bytes INTEGER NOT NULL DEFAULT 0,
+                file_path TEXT NOT NULL,
+                sha256_hash TEXT NOT NULL,
+                operational_mode TEXT NOT NULL DEFAULT 'QUANTUM',
+                falsification_ratio_phi REAL NOT NULL DEFAULT 0.880,
+                status TEXT NOT NULL DEFAULT 'GENERATED',
+                metadata_json TEXT,
+                FOREIGN KEY (run_id) REFERENCES execution_runs(run_id) ON DELETE CASCADE
+            );
+        """)
+
         # Auto-generation triggers for created_datetime
         for tbl in [
             "scenarios", "orders", "execution_runs", "vehicle_routes", "route_stops",
             "container_placements", "lifo_dependencies", "gate_validations",
             "telemetry_events", "chute_flow_dynamics", "algorithm_benchmarks",
-            "tier_executions", "quantum_telemetry"
+            "tier_executions", "quantum_telemetry", "produced_reports"
         ]:
             cursor.execute(f"""
                 CREATE TRIGGER IF NOT EXISTS trg_{tbl}_auto_created_datetime

@@ -30,6 +30,9 @@ interface TopbarHUDProps {
   onOpenConceptModal?: () => void;
   dispatchProgress?: DispatchProgressState | null;
   onOpenProgressModal?: () => void;
+  onToggleReportsPanel?: () => void;
+  reportsPanelMode?: string;
+  reportsCount?: number;
 }
 
 export const TopbarHUD: React.FC<TopbarHUDProps> = ({
@@ -49,6 +52,9 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
   onOpenConceptModal,
   dispatchProgress,
   onOpenProgressModal,
+  onToggleReportsPanel,
+  reportsPanelMode = 'minimized',
+  reportsCount = 0,
 }) => {
   const makespan = lastWave?.total_fleet_makespan_sec ?? 949.3;
   const distance = lastWave?.total_distance_km ?? 3.71;
@@ -625,13 +631,57 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
           </span>
         </button>
 
-        {/* Engineering & Compliance Reports Dropdown Menu */}
-        <ReportsDropdownMenu
-          runId={currentRunId}
-          lastWave={lastWave}
-          onOpenPDF={onOpenPDF}
+        {/* Dedicated Engineering & Compliance Reports Repository Panel Trigger Button */}
+        <button
+          id="topbar-reports-repo-btn"
+          className="btn-primary"
+          onClick={() => {
+            trackButtonClick('Toggle_Reports_Repository', 'TopbarHUD');
+            if (onToggleReportsPanel) onToggleReportsPanel();
+          }}
           disabled={!currentRunId}
-        />
+          style={{
+            fontSize: '12px',
+            padding: '7px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background:
+              reportsPanelMode === 'expanded'
+                ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.35) 0%, rgba(168, 85, 247, 0.25) 100%)'
+                : 'linear-gradient(135deg, rgba(0, 240, 255, 0.15) 0%, rgba(168, 85, 247, 0.1) 100%)',
+            border:
+              reportsPanelMode === 'expanded'
+                ? '1px solid #00f0ff'
+                : '1px solid rgba(0, 240, 255, 0.45)',
+            color: '#00f0ff',
+            boxShadow:
+              reportsPanelMode === 'expanded'
+                ? '0 0 16px rgba(0, 240, 255, 0.4), inset 0 0 8px rgba(0, 240, 255, 0.2)'
+                : 'none',
+            cursor: !currentRunId ? 'not-allowed' : 'pointer',
+            opacity: !currentRunId ? 0.5 : 1,
+            transition: 'all 0.18s ease',
+          }}
+          title="Open Reports Repository Management Panel (Catalog, Generation & Cryptographic Ledger)"
+        >
+          <FileText size={14} />
+          <span>Reports Repo</span>
+          <span
+            style={{
+              fontSize: '10px',
+              fontWeight: 800,
+              padding: '1px 6px',
+              borderRadius: '10px',
+              backgroundColor: reportsPanelMode === 'expanded' ? 'rgba(0, 240, 255, 0.3)' : 'rgba(0, 240, 255, 0.18)',
+              border: '1px solid rgba(0, 240, 255, 0.5)',
+              fontFamily: 'monospace',
+              color: '#f8fafc',
+            }}
+          >
+            {reportsCount ?? 0}
+          </span>
+        </button>
 
         {/* Swagger UI API Link */}
         <a

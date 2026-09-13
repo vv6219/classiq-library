@@ -9,7 +9,7 @@ import {
   Maximize2,
   Eye,
   EyeOff,
-  RotateCcw,
+  FileText,
 } from 'lucide-react';
 import { HUDPanelDisplayMode } from './HUDPanel';
 import { trackButtonClick } from '../../utils/analytics';
@@ -18,6 +18,8 @@ export interface PanelStackState {
   floorEnvelope: HUDPanelDisplayMode;
   amrTelemetry: HUDPanelDisplayMode;
   quantumCoProc: HUDPanelDisplayMode;
+  reportsRepo?: HUDPanelDisplayMode;
+  reportsCount?: number;
   isLegendOpen: boolean;
   selectedVehicleId: string | null;
   operationalMode: string;
@@ -27,6 +29,7 @@ export interface PanelStackActions {
   setFloorEnvelopeMode: (mode: HUDPanelDisplayMode) => void;
   setAmrTelemetryMode: (mode: HUDPanelDisplayMode) => void;
   setQuantumCoProcMode: (mode: HUDPanelDisplayMode) => void;
+  setReportsRepoMode?: (mode: HUDPanelDisplayMode) => void;
   setIsLegendOpen: (open: boolean) => void;
   minimizeAll: () => void;
   restoreAll: () => void;
@@ -41,9 +44,11 @@ export const PanelStackDock: React.FC<PanelStackDockProps> = ({ state, actions }
   const isAllMinimized =
     state.floorEnvelope === 'minimized' &&
     (state.amrTelemetry === 'minimized' || !state.selectedVehicleId) &&
-    state.quantumCoProc === 'minimized';
+    state.quantumCoProc === 'minimized' &&
+    (state.reportsRepo === 'minimized' || state.reportsRepo === 'hidden' || !state.reportsRepo);
 
   const isQuantum = state.operationalMode === 'QUANTUM';
+
 
   return (
     <div
@@ -201,6 +206,43 @@ export const PanelStackDock: React.FC<PanelStackDockProps> = ({ state, actions }
             {state.quantumCoProc === 'expanded' ? '▲' : '▼'}
           </span>
         </button>
+
+        {/* Reports Repository Pill */}
+        {actions.setReportsRepoMode && (
+          <button
+            onClick={() => {
+              const current = state.reportsRepo || 'minimized';
+              const nextMode = current === 'expanded' ? 'minimized' : 'expanded';
+              actions.setReportsRepoMode!(nextMode);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '3px 8px',
+              borderRadius: '12px',
+              fontSize: '10px',
+              fontWeight: 700,
+              backgroundColor: state.reportsRepo === 'expanded' ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+              border: state.reportsRepo === 'expanded' ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.1)',
+              color: state.reportsRepo === 'expanded' ? '#00f0ff' : '#94a3b8',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            title="Reports Repository: Click to expand/minimize"
+          >
+            <FileText size={11} color={state.reportsRepo === 'expanded' ? '#00f0ff' : '#64748b'} />
+            <span>Reports</span>
+            {state.reportsCount !== undefined && (
+              <span style={{ fontSize: '8.5px', opacity: 0.8, fontFamily: 'monospace' }}>
+                ({state.reportsCount})
+              </span>
+            )}
+            <span style={{ fontSize: '8px', opacity: 0.7 }}>
+              {state.reportsRepo === 'expanded' ? '▲' : '▼'}
+            </span>
+          </button>
+        )}
 
         {/* 3D Scene Legend & Tours Pill */}
         <button

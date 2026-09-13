@@ -1,0 +1,5 @@
+# Ignore runtime generated report files
+*.pdf
+*.json
+*.csv
+!.gitkeep

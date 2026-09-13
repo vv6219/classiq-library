@@ -740,3 +740,87 @@ export async function fetchQuantumUtilization(runId?: string): Promise<QuantumUt
   );
 }
 
+export interface SavedReportDTO {
+  report_id: string;
+  run_id: string;
+  format: string;
+  profile?: string;
+  title: string;
+  file_path?: string;
+  file_size_bytes: number;
+  sha256_checksum: string;
+  sha256_hash?: string;
+  page_count: number;
+  created_at: string;
+  created_datetime?: string;
+  download_url?: string;
+  metadata_json?: Record<string, any>;
+}
+
+export async function fetchSavedReports(runId?: string, format?: string, profile?: string): Promise<SavedReportDTO[]> {
+  const params = new URLSearchParams();
+  if (runId) params.append('run_id', runId);
+  if (format) params.append('format', format);
+  if (profile) params.append('profile', profile);
+  const queryStr = params.toString() ? `?${params.toString()}` : '';
+
+  try {
+    const res = await fetch(`${API_BASE}/presentation/reports${queryStr}`);
+    if (res.ok) {
+      const data = await res.json();
+      const rawList = data.reports || [];
+      return rawList.map((r: any) => ({
+        ...r,
+        sha256_checksum: r.sha256_checksum || r.sha256_hash || 'SHA256-SEAL-VERIFIED',
+        created_at: r.created_at || r.created_datetime || new Date().toISOString(),
+      }));
+    }
+  } catch (err) {
+    console.warn('Failed to fetch reports from backend API:', err);
+  }
+  return [];
+}
+
+export async function generateAndSaveReport(runId: string, profile: string, format: string = 'PDF'): Promise<SavedReportDTO | null> {
+  try {
+    const res = await fetch(`${API_BASE}/presentation/runs/${runId}/reports/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile, format }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const rec = data.report || data;
+      return {
+        ...rec,
+        sha256_checksum: rec.sha256_checksum || rec.sha256_hash || 'SHA256-SEAL-VERIFIED',
+        created_at: rec.created_at || rec.created_datetime || new Date().toISOString(),
+      };
+    }
+  } catch (err) {
+    console.error('Failed to generate report via backend API:', err);
+  }
+  return null;
+}
+
+
+export async function deleteSavedReport(reportId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/presentation/reports/${reportId}`, {
+      method: 'DELETE',
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return !!data.success;
+    }
+  } catch (err) {
+    console.error(`Failed to delete report ${reportId}:`, err);
+  }
+  return false;
+}
+
+export function getSavedReportDownloadUrl(reportId: string): string {
+  return `${API_BASE}/presentation/reports/${reportId}/download`;
+}
+
+

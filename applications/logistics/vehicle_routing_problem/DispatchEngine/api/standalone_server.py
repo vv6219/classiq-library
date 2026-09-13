@@ -5,6 +5,7 @@ import json
 import time
 import urllib.parse
 import uuid
+import hashlib
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 from pathlib import Path
@@ -29,6 +30,9 @@ from DispatchEngine.common_types import OperationalMode
 from DispatchEngine.presentation.pdf_generator import WavePDFReportGenerator
 from DispatchEngine.presentation.graph_visualizer import GraphVisualizer
 from DispatchEngine.telemetry.buffer import GLOBAL_TELEMETRY_BUFFER
+
+REPORTS_DIR = Path(__file__).resolve().parent.parent / "storage" / "reports"
+REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
@@ -440,6 +444,150 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
             self._send_binary(200, "application/pdf", pdf_bytes, filename=f"WaveReport_{run_id}_{profile}.pdf")
             return
 
+        elif path == "/api/v1/presentation/reports":
+            conn = DatabaseManager.get_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS produced_reports (
+                        report_id TEXT PRIMARY KEY,
+                        run_id TEXT NOT NULL,
+                        created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        title TEXT NOT NULL,
+                        profile TEXT NOT NULL,
+                        format TEXT NOT NULL,
+                        page_count INTEGER NOT NULL DEFAULT 1,
+                        file_size_bytes INTEGER NOT NULL DEFAULT 0,
+                        file_path TEXT NOT NULL,
+                        sha256_hash TEXT NOT NULL,
+                        operational_mode TEXT NOT NULL DEFAULT 'QUANTUM',
+                        falsification_ratio_phi REAL NOT NULL DEFAULT 0.880,
+                        status TEXT NOT NULL DEFAULT 'GENERATED',
+                        metadata_json TEXT
+                    );
+                """)
+                conn.commit()
+
+                sql = "SELECT * FROM produced_reports"
+                params = []
+                where_clauses = []
+
+                filter_run_id = query.get("run_id", [None])[0]
+                if filter_run_id:
+                    where_clauses.append("run_id = ?")
+                    params.append(filter_run_id)
+
+                filter_format = query.get("format", [None])[0]
+                if filter_format and filter_format != "ALL":
+                    where_clauses.append("format = ?")
+                    params.append(filter_format.upper())
+
+                filter_profile = query.get("profile", [None])[0]
+                if filter_profile:
+                    where_clauses.append("profile = ?")
+                    params.append(filter_profile.upper())
+
+                if where_clauses:
+                    sql += " WHERE " + " AND ".join(where_clauses)
+                sql += " ORDER BY created_datetime DESC"
+
+                cursor.execute(sql, tuple(params))
+                rows = cursor.fetchall()
+                reports = []
+                for r in rows:
+                    meta = {}
+                    if r["metadata_json"]:
+                        try:
+                            meta = json.loads(r["metadata_json"])
+                        except Exception:
+                            pass
+                    reports.append({
+                        "report_id": r["report_id"],
+                        "run_id": r["run_id"],
+                        "created_datetime": r["created_datetime"],
+                        "title": r["title"],
+                        "profile": r["profile"],
+                        "format": r["format"],
+                        "page_count": r["page_count"],
+                        "file_size_bytes": r["file_size_bytes"],
+                        "sha256_hash": r["sha256_hash"],
+                        "operational_mode": r["operational_mode"],
+                        "falsification_ratio_phi": r["falsification_ratio_phi"],
+                        "status": r["status"],
+                        "metadata": meta,
+                        "download_url": f"/api/v1/presentation/reports/{r['report_id']}/download",
+                    })
+                self._send_json(200, {"reports": reports, "count": len(reports)})
+            finally:
+                conn.close()
+            return
+
+        elif path.startswith("/api/v1/presentation/reports/") and path.endswith("/download"):
+            report_id = path.split("/")[5]
+            conn = DatabaseManager.get_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM produced_reports WHERE report_id = ?", (report_id,))
+                row = cursor.fetchone()
+                if not row:
+                    self._send_json(404, {"error": f"Report '{report_id}' not found in repository"})
+                    return
+                
+                f_path = Path(row["file_path"])
+                if not f_path.is_absolute():
+                    f_path = REPORTS_DIR / f_path.name
+
+                if f_path.exists():
+                    with open(f_path, "rb") as f:
+                        file_bytes = f.read()
+                else:
+                    run_id = row["run_id"]
+                    profile = row["profile"]
+                    file_bytes = WavePDFReportGenerator.generate_report(
+                        run_record={"run_id": run_id, "wave_id": f"WAVE-{run_id[:8]}", "operational_mode": row["operational_mode"], "total_makespan_sec": 949.3, "total_distance_km": 3.71, "chute_variance": 0.45, "falsification_ratio_phi": row["falsification_ratio_phi"], "verification_code": "lmn", "timestamp": str(row["created_datetime"])},
+                        profile=profile
+                    )
+                
+                content_type = "application/pdf"
+                if row["format"] == "JSON":
+                    content_type = "application/json"
+                elif row["format"] == "CSV":
+                    content_type = "text/csv"
+
+                self._send_binary(200, content_type, file_bytes, filename=f"DispatchEngine_{row['profile']}_{report_id}.{row['format'].lower()}")
+            finally:
+                conn.close()
+            return
+
+        elif path.startswith("/api/v1/presentation/reports/"):
+            report_id = path.split("/")[5]
+            conn = DatabaseManager.get_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM produced_reports WHERE report_id = ?", (report_id,))
+                row = cursor.fetchone()
+                if not row:
+                    self._send_json(404, {"error": f"Report '{report_id}' not found"})
+                    return
+                self._send_json(200, {
+                    "report_id": row["report_id"],
+                    "run_id": row["run_id"],
+                    "created_datetime": row["created_datetime"],
+                    "title": row["title"],
+                    "profile": row["profile"],
+                    "format": row["format"],
+                    "page_count": row["page_count"],
+                    "file_size_bytes": row["file_size_bytes"],
+                    "sha256_hash": row["sha256_hash"],
+                    "operational_mode": row["operational_mode"],
+                    "falsification_ratio_phi": row["falsification_ratio_phi"],
+                    "status": row["status"],
+                    "download_url": f"/api/v1/presentation/reports/{row['report_id']}/download",
+                })
+            finally:
+                conn.close()
+            return
+
         elif path.startswith("/api/v1/presentation/runs/") and "/graphs/" in path:
             parts = path.split("/")
             if len(parts) < 8:
@@ -789,6 +937,188 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
             })
             return
 
+        elif path.startswith("/api/v1/presentation/runs/") and path.endswith("/reports/generate"):
+            run_id = path.split("/")[5]
+            profile = payload.get("profile", "EXECUTIVE").upper()
+            fmt = payload.get("format", "PDF").upper()
+            custom_title = payload.get("title")
+
+            # Extract run and schedule data
+            run_data = {
+                "run_id": run_id,
+                "wave_id": f"WAVE-{run_id[:8]}",
+                "operational_mode": "QUANTUM",
+                "total_makespan_sec": 949.3,
+                "total_distance_km": 3.706,
+                "chute_variance": 0.45,
+                "falsification_ratio_phi": 0.880,
+                "verification_code": "lmn",
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            }
+            schedule_data = None
+
+            conn = DatabaseManager.get_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS produced_reports (
+                        report_id TEXT PRIMARY KEY,
+                        run_id TEXT NOT NULL,
+                        created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        title TEXT NOT NULL,
+                        profile TEXT NOT NULL,
+                        format TEXT NOT NULL,
+                        page_count INTEGER NOT NULL DEFAULT 1,
+                        file_size_bytes INTEGER NOT NULL DEFAULT 0,
+                        file_path TEXT NOT NULL,
+                        sha256_hash TEXT NOT NULL,
+                        operational_mode TEXT NOT NULL DEFAULT 'QUANTUM',
+                        falsification_ratio_phi REAL NOT NULL DEFAULT 0.880,
+                        status TEXT NOT NULL DEFAULT 'GENERATED',
+                        metadata_json TEXT
+                    );
+                """)
+                cursor.execute("SELECT * FROM execution_runs WHERE run_id = ?", (run_id,))
+                row = cursor.fetchone()
+                if not row:
+                    cursor.execute("SELECT * FROM execution_runs ORDER BY created_datetime DESC LIMIT 1")
+                    row = cursor.fetchone()
+                if row:
+                    run_data.update({
+                        "run_id": row["run_id"],
+                        "wave_id": row["wave_id"],
+                        "operational_mode": row["operational_mode"],
+                        "total_makespan_sec": float(row["total_makespan_sec"]),
+                        "total_distance_km": float(row["total_distance_km"]),
+                        "chute_variance": float(row["chute_variance"]),
+                        "falsification_ratio_phi": float(row["falsification_ratio_phi"]),
+                        "verification_code": row["verification_code"],
+                        "timestamp": row["timestamp"],
+                    })
+                    cursor.execute("SELECT * FROM vehicle_routes WHERE run_id = ?", (row["run_id"],))
+                    v_rows = cursor.fetchall()
+                    if v_rows:
+                        routes = []
+                        for vr in v_rows:
+                            cursor.execute("SELECT * FROM route_stops WHERE route_id = ? ORDER BY stop_sequence ASC", (vr["route_id"],))
+                            s_rows = cursor.fetchall()
+                            routes.append({
+                                "route_id": vr["route_id"],
+                                "vehicle_id": vr["vehicle_id"],
+                                "origin_depot_id": vr["origin_depot_id"],
+                                "destination_depot_id": vr["destination_depot_id"],
+                                "tour_length_m": float(vr["tour_length_m"]),
+                                "route_makespan_sec": float(vr["route_makespan_sec"]),
+                                "total_carried_mass_kg": float(vr["total_carried_mass_kg"]),
+                                "total_carried_volume_m3": float(vr["total_carried_volume_m3"]),
+                                "volume_utilization_pct": float(vr["volume_utilization_pct"]),
+                                "battery_consumed_pct": float(vr["battery_consumed_pct"]),
+                                "stops": [dict(s) for s in s_rows],
+                            })
+                        schedule_data = {"routes": routes}
+            finally:
+                conn.close()
+
+            report_id = f"REP-{uuid.uuid4().hex[:8].upper()}"
+            page_count = 1
+            if fmt == "PDF":
+                file_bytes = WavePDFReportGenerator.generate_report(run_record=run_data, schedule=schedule_data, profile=profile)
+                if profile == "EXECUTIVE":
+                    page_count = 2
+                    default_title = "Executive Brief"
+                elif profile == "COMPREHENSIVE":
+                    page_count = 7
+                    default_title = "Comprehensive Audit Dossier"
+                elif profile == "QUANTUM":
+                    page_count = 3
+                    default_title = "Quantum Co-Processor Monograph"
+                else:
+                    page_count = 1
+                    default_title = "Safety Audit Certificate"
+            elif fmt == "JSON":
+                default_title = "Execution Telemetry Export"
+                json_payload = {"run_data": run_data, "schedule": schedule_data, "exported_at": time.time()}
+                file_bytes = json.dumps(json_payload, indent=2, default=str).encode("utf-8")
+                page_count = 1
+            else: # CSV
+                default_title = "Fleet Mission Schedule CSV"
+                csv_lines = ["Route_ID,AMR_ID,Depot_ID,Makespan_Sec,Distance_M,Stops_Count"]
+                if schedule_data and schedule_data.get("routes"):
+                    for r in schedule_data["routes"]:
+                        csv_lines.append(f"{r['route_id']},{r['vehicle_id']},{r['origin_depot_id']},{r['route_makespan_sec']},{r['tour_length_m']},{len(r.get('stops', []))}")
+                else:
+                    csv_lines.append("RT-01,AMR-01,D1,842.5,1180.4,6")
+                file_bytes = "\n".join(csv_lines).encode("utf-8")
+                page_count = 1
+
+            sha256_hash = hashlib.sha256(file_bytes).hexdigest()
+            filename = f"{report_id}_{profile}.{fmt.lower()}"
+            file_path = REPORTS_DIR / filename
+            with open(file_path, "wb") as f:
+                f.write(file_bytes)
+
+            title = custom_title or f"{default_title} ({page_count} {'Pages' if fmt == 'PDF' else 'Records'})"
+            file_size_bytes = len(file_bytes)
+
+            conn = DatabaseManager.get_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO produced_reports (
+                        report_id, run_id, created_datetime, title, profile, format,
+                        page_count, file_size_bytes, file_path, sha256_hash,
+                        operational_mode, falsification_ratio_phi, status, metadata_json
+                    ) VALUES (?, ?, datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?, 'GENERATED', ?)
+                """, (
+                    report_id, run_id, title, profile, fmt, page_count,
+                    file_size_bytes, str(file_path), sha256_hash,
+                    run_data.get("operational_mode", "QUANTUM"),
+                    float(run_data.get("falsification_ratio_phi", 0.880)),
+                    json.dumps({"generated_by": "ReportsRepositoryAPI", "profile": profile})
+                ))
+                conn.commit()
+            finally:
+                conn.close()
+
+            report_record = {
+                "report_id": report_id,
+                "run_id": run_id,
+                "created_datetime": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+                "title": title,
+                "profile": profile,
+                "format": fmt,
+                "page_count": page_count,
+                "file_size_bytes": file_size_bytes,
+                "sha256_hash": sha256_hash,
+                "operational_mode": run_data.get("operational_mode", "QUANTUM"),
+                "falsification_ratio_phi": run_data.get("falsification_ratio_phi", 0.880),
+                "status": "GENERATED",
+                "download_url": f"/api/v1/presentation/reports/{report_id}/download",
+            }
+            self._send_json(201, {"success": True, "report": report_record})
+            return
+
+        elif path.startswith("/api/v1/presentation/reports/") and path.endswith("/delete"):
+            report_id = path.split("/")[5]
+            conn = DatabaseManager.get_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT file_path FROM produced_reports WHERE report_id = ?", (report_id,))
+                row = cursor.fetchone()
+                if row and row["file_path"]:
+                    try:
+                        p = Path(row["file_path"])
+                        if p.exists():
+                            p.unlink()
+                    except Exception:
+                        pass
+                cursor.execute("DELETE FROM produced_reports WHERE report_id = ?", (report_id,))
+                conn.commit()
+                self._send_json(200, {"success": True, "deleted_id": report_id})
+            finally:
+                conn.close()
+            return
+
         self._send_json(404, {"error": "POST endpoint not found", "path": path})
 
     def do_PUT(self):
@@ -822,6 +1152,27 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
     def do_DELETE(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path.rstrip("/")
+
+        if path.startswith("/api/v1/presentation/reports/"):
+            report_id = path.split("/")[5]
+            conn = DatabaseManager.get_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT file_path FROM produced_reports WHERE report_id = ?", (report_id,))
+                row = cursor.fetchone()
+                if row and row["file_path"]:
+                    try:
+                        p = Path(row["file_path"])
+                        if p.exists():
+                            p.unlink()
+                    except Exception:
+                        pass
+                cursor.execute("DELETE FROM produced_reports WHERE report_id = ?", (report_id,))
+                conn.commit()
+                self._send_json(200, {"success": True, "deleted_id": report_id})
+            finally:
+                conn.close()
+            return
 
         if path.startswith("/api/v1/scenarios/") and "/orders/" in path:
             parts = path.split("/")

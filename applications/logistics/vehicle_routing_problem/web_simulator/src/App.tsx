@@ -13,6 +13,7 @@ import { QuickControlsPanel } from './components/QuickControlsPanel';
 import { NarrativeExplainerPane } from './components/NarrativeExplainerPane';
 import { CalculationModeExplanationPanel } from './components/CalculationModeExplanationPanel';
 import { HUDPanelDisplayMode } from './components/common/HUDPanel';
+import { ReportsRepositoryPanel } from './components/ReportsRepositoryPanel';
 import { QuantumUtilizationPanel } from './components/QuantumUtilizationPanel';
 import { PDFModal } from './components/PDFModal';
 import { PDFProfileId } from './data/reportsRegistry';
@@ -72,6 +73,8 @@ export const App: React.FC = () => {
   const [isQuantumPanelOpen, setIsQuantumPanelOpen] = useState(false);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [quantumPanelMode, setQuantumPanelMode] = useState<HUDPanelDisplayMode>('expanded');
+  const [reportsRepoMode, setReportsRepoMode] = useState<HUDPanelDisplayMode>('minimized');
+  const [reportsCount, setReportsCount] = useState<number>(0);
 
   // Operational State
   const [mode, setMode] = useState<'QUANTUM' | 'CLASSICAL'>('QUANTUM');
@@ -488,7 +491,13 @@ export const App: React.FC = () => {
           }
           setIsProgressModalOpen(true);
         }}
+        onToggleReportsPanel={() =>
+          setReportsRepoMode((prev) => (prev === 'expanded' ? 'minimized' : 'expanded'))
+        }
+        reportsPanelMode={reportsRepoMode}
+        reportsCount={reportsCount}
       />
+
 
       {/* Main Workspace Bar (8 Navigation Tabs + Quick Scenario Controls) */}
       <div
@@ -657,6 +666,9 @@ export const App: React.FC = () => {
               operationalMode={mode}
               quantumPanelMode={quantumPanelMode}
               onQuantumPanelModeChange={setQuantumPanelMode}
+              reportsRepoMode={reportsRepoMode}
+              onReportsRepoModeChange={setReportsRepoMode}
+              reportsCount={reportsCount}
             />
           )}
           {activeTab === '2d-route-map' && (
@@ -748,7 +760,21 @@ export const App: React.FC = () => {
           panelMode={quantumPanelMode}
           onPanelModeChange={setQuantumPanelMode}
         />
+
+        {/* Dedicated Engineering & Compliance Reports Repository Panel */}
+        <ErrorBoundary fallbackTitle="Reports Repository Panel">
+          <ReportsRepositoryPanel
+            currentRunId={currentRunId}
+            lastWave={lastWave}
+            mode={reportsRepoMode}
+            onModeChange={setReportsRepoMode}
+            onOpenPDFModal={handleOpenPDF}
+            reportsCount={reportsCount}
+            onReportsCountChange={setReportsCount}
+          />
+        </ErrorBoundary>
       </div>
+
 
       {/* Pre-Request Configuration Drawer (Advanced Tuning, Limits & Presets) */}
       <ErrorBoundary fallbackTitle="Calculation Pre-Request Customizer">
