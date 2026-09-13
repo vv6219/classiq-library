@@ -1299,6 +1299,12 @@ export const PreRequestConfigDrawer: React.FC<PreRequestConfigDrawerProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {(config.num_orders === undefined || config.num_orders <= 0) && (
+            <span style={{ fontSize: '11px', color: '#f87171', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              ⚠️ Orders cannot be 0
+            </span>
+          )}
+
           <button
             onClick={onClose}
             className="btn-secondary"
@@ -1309,6 +1315,10 @@ export const PreRequestConfigDrawer: React.FC<PreRequestConfigDrawerProps> = ({
 
           <button
             onClick={() => {
+              if (config.num_orders === undefined || config.num_orders <= 0) {
+                alert('Cannot dispatch wave with 0 orders. Workload set must contain at least 1 order (recommended: 5–150).');
+                return;
+              }
               onApplyAndDispatch();
               onClose();
             }}

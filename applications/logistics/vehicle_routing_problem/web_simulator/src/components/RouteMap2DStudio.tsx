@@ -22,11 +22,13 @@ import {
   ChevronRight,
   TrendingUp,
 } from 'lucide-react';
-import { ScheduleDetails, VehicleRoute, RouteStop } from '../services/api';
+import { ScheduleDetails, VehicleRoute, RouteStop, RunSummaryDTO } from '../services/api';
 
 interface RouteMap2DStudioProps {
   schedule: ScheduleDetails | null;
   runId?: string;
+  runs?: RunSummaryDTO[];
+  onSelectRun?: (runId: string) => void;
   onNavigateTo3D?: () => void;
 }
 
@@ -45,12 +47,15 @@ const VEHICLE_COLORS: string[] = [
 export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
   schedule,
   runId = 'RUN-ACTIVE-001',
+  runs,
+  onSelectRun,
   onNavigateTo3D,
 }) => {
-  // Routes data fallback
+  // Routes data fallback with robust validation
   const routes: VehicleRoute[] = useMemo(() => {
-    if (schedule && schedule.routes && schedule.routes.length > 0) {
-      return schedule.routes;
+    if (schedule && Array.isArray(schedule.routes) && schedule.routes.length > 0) {
+      const valid = schedule.routes.filter((r) => r && Array.isArray(r.stops) && r.stops.length > 0);
+      if (valid.length > 0) return valid;
     }
     return getFallbackRoutes();
   }, [schedule]);
@@ -87,21 +92,30 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
   // Max makespan across routes
   const maxMakespan = useMemo(() => {
     let maxT = 900;
-    routes.forEach((r) => {
-      if (r.route_makespan_sec > maxT) maxT = r.route_makespan_sec;
-      r.stops.forEach((s) => {
-        if (s.departure_time_sec > maxT) maxT = s.departure_time_sec;
+    if (routes && routes.length > 0) {
+      routes.forEach((r) => {
+        if (r && typeof r.route_makespan_sec === 'number' && !isNaN(r.route_makespan_sec) && r.route_makespan_sec > maxT) {
+          maxT = r.route_makespan_sec;
+        }
+        if (r && Array.isArray(r.stops)) {
+          r.stops.forEach((s) => {
+            if (s && typeof s.departure_time_sec === 'number' && !isNaN(s.departure_time_sec) && s.departure_time_sec > maxT) {
+              maxT = s.departure_time_sec;
+            }
+          });
+        }
       });
-    });
-    return Math.ceil(maxT);
+    }
+    return Math.max(60, Math.ceil(maxT));
   }, [routes]);
 
   // Active route for table inspection
-  const activeRoute = useMemo(() => {
+  const activeRoute: VehicleRoute | null = useMemo(() => {
+    if (!routes || routes.length === 0) return null;
     if (selectedVehicleId) {
-      return routes.find((r) => r.vehicle_id === selectedVehicleId) || routes[0];
+      return routes.find((r) => r && r.vehicle_id === selectedVehicleId) || routes[0] || null;
     }
-    return routes[0];
+    return routes[0] || null;
   }, [routes, selectedVehicleId]);
 
   // Animation frame loop for simulation
@@ -154,17 +168,24 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
 
   // Compute AMR current positions at simTime
   const amrLivePositions = useMemo(() => {
+    if (!routes || routes.length === 0) return [];
     return routes.map((route, idx) => {
       const color = VEHICLE_COLORS[idx % VEHICLE_COLORS.length];
-      const stops = route.stops;
+      const rawStops = route?.stops || [];
+      const stops = rawStops.filter(
+        (s) => s && typeof s.pos_x === 'number' && !isNaN(s.pos_x) && typeof s.pos_y === 'number' && !isNaN(s.pos_y)
+      );
       if (!stops || stops.length === 0) return { route, x: 5, y: 5, status: 'IDLE', color };
 
-      if (simTime <= stops[0].arrival_time_sec) {
-        return { route, x: stops[0].pos_x, y: stops[0].pos_y, status: 'AT_ORIGIN', color };
+      const firstStop = stops[0];
+      const firstArr = typeof firstStop.arrival_time_sec === 'number' ? firstStop.arrival_time_sec : 0;
+      if (simTime <= firstArr) {
+        return { route, x: firstStop.pos_x, y: firstStop.pos_y, status: 'AT_ORIGIN', color };
       }
 
       const lastStop = stops[stops.length - 1];
-      if (simTime >= lastStop.departure_time_sec) {
+      const lastDep = typeof lastStop.departure_time_sec === 'number' ? lastStop.departure_time_sec : 999999;
+      if (simTime >= lastDep) {
         return { route, x: lastStop.pos_x, y: lastStop.pos_y, status: 'COMPLETED', color };
       }
 
@@ -172,18 +193,22 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
         const s1 = stops[i];
         const s2 = stops[i + 1];
 
+        const s1Arr = typeof s1.arrival_time_sec === 'number' ? s1.arrival_time_sec : 0;
+        const s1Dep = typeof s1.departure_time_sec === 'number' ? s1.departure_time_sec : s1Arr;
+        const s2Arr = typeof s2.arrival_time_sec === 'number' ? s2.arrival_time_sec : s1Dep;
+
         // Dwell at stop
-        if (simTime >= s1.arrival_time_sec && simTime <= s1.departure_time_sec) {
-          return { route, x: s1.pos_x, y: s1.pos_y, status: `${s1.action} (${s1.location_id})`, color };
+        if (simTime >= s1Arr && simTime <= s1Dep) {
+          return { route, x: s1.pos_x, y: s1.pos_y, status: `${s1.action || 'DWELL'} (${s1.location_id || ''})`, color };
         }
 
         // In transit between s1 departure and s2 arrival
-        if (simTime > s1.departure_time_sec && simTime < s2.arrival_time_sec) {
-          const duration = Math.max(0.1, s2.arrival_time_sec - s1.departure_time_sec);
-          const progress = Math.min(1, Math.max(0, (simTime - s1.departure_time_sec) / duration));
+        if (simTime > s1Dep && simTime < s2Arr) {
+          const duration = Math.max(0.1, s2Arr - s1Dep);
+          const progress = Math.min(1, Math.max(0, (simTime - s1Dep) / duration));
           const curX = s1.pos_x + (s2.pos_x - s1.pos_x) * progress;
           const curY = s1.pos_y + (s2.pos_y - s1.pos_y) * progress;
-          return { route, x: curX, y: curY, status: 'TRANSIT', color };
+          return { route, x: isNaN(curX) ? s1.pos_x : curX, y: isNaN(curY) ? s1.pos_y : curY, status: 'TRANSIT', color };
         }
       }
 
@@ -193,33 +218,37 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
 
   // Filtered stops for turn-by-turn table
   const filteredStops = useMemo(() => {
-    if (!activeRoute || !activeRoute.stops) return [];
+    if (!activeRoute || !Array.isArray(activeRoute.stops)) return [];
     if (filterStopType === 'ALL') return activeRoute.stops;
-    return activeRoute.stops.filter((s) => s.location_type === filterStopType);
+    return activeRoute.stops.filter((s) => {
+      if (!s || !s.location_type) return false;
+      if (filterStopType === 'DEPOT') return (s.location_type || '').includes('DEPOT');
+      return s.location_type === filterStopType;
+    });
   }, [activeRoute, filterStopType]);
 
   // Export turn-by-turn table to CSV
   const handleExportCSV = () => {
-    if (!activeRoute) return;
+    if (!activeRoute || !Array.isArray(activeRoute.stops)) return;
     const headers = ['Sequence', 'Type', 'Location_ID', 'Pos_X', 'Pos_Y', 'Pos_Z', 'Arrival_Sec', 'Departure_Sec', 'Action', 'Order_IDs'];
     const rows = activeRoute.stops.map((s) => [
-      s.stop_sequence,
-      s.location_type,
-      s.location_id,
-      s.pos_x.toFixed(2),
-      s.pos_y.toFixed(2),
-      s.pos_z.toFixed(2),
-      s.arrival_time_sec.toFixed(1),
-      s.departure_time_sec.toFixed(1),
-      s.action,
-      `"${s.order_ids.join(';')}"`,
+      s?.stop_sequence ?? 0,
+      s?.location_type ?? 'STOP',
+      s?.location_id ?? 'LOC',
+      (s?.pos_x ?? 0).toFixed(2),
+      (s?.pos_y ?? 0).toFixed(2),
+      (s?.pos_z ?? 0).toFixed(2),
+      (s?.arrival_time_sec ?? 0).toFixed(1),
+      (s?.departure_time_sec ?? 0).toFixed(1),
+      s?.action ?? 'MOVE',
+      `"${(s?.order_ids || []).join(';')}"`,
     ]);
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `${activeRoute.vehicle_id}_turn_by_turn_${Date.now()}.csv`);
+    link.setAttribute('download', `${activeRoute.vehicle_id || 'AMR'}_turn_by_turn_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -276,6 +305,55 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
               >
                 G=(V, A) DIRECTED TOURS
               </span>
+
+              {/* Persistent 2D Studio Run ID Identificator & Selector */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '2px 8px',
+                  borderRadius: '5px',
+                  backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                  border: '1px solid rgba(0, 240, 255, 0.4)',
+                  boxShadow: '0 0 10px rgba(0, 240, 255, 0.15)',
+                  marginLeft: '4px',
+                }}
+              >
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#00f0ff', boxShadow: '0 0 6px #00f0ff' }} />
+                <span style={{ fontSize: '9px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+                  RUN:
+                </span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', fontFamily: 'var(--font-mono, monospace)' }}>
+                  {runId || schedule?.run_id || 'ACTIVE'}
+                </span>
+                {runs && runs.length > 0 && onSelectRun && (
+                  <select
+                    value={runId || schedule?.run_id || ''}
+                    onChange={(e) => onSelectRun(e.target.value)}
+                    title="Switch active Run ID for 2D Route Studio"
+                    style={{
+                      background: '#070b14',
+                      border: '1px solid rgba(0, 240, 255, 0.3)',
+                      borderRadius: '4px',
+                      color: '#f0f4f8',
+                      fontSize: '10px',
+                      fontFamily: 'var(--font-mono, monospace)',
+                      fontWeight: 600,
+                      padding: '2px 6px',
+                      cursor: 'pointer',
+                      outline: 'none',
+                      marginLeft: '4px',
+                    }}
+                  >
+                    {runs.map((r) => (
+                      <option key={r.run_id} value={r.run_id} style={{ background: '#0d1527', color: '#f0f4f8' }}>
+                        {r.run_id} ({r.operational_mode || 'VRP'})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
             </div>
             <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#64748b' }}>
               Orthogonal 2D coordinate routing plot with turn-by-turn kinematics &amp; ISO 3691-4 HRI zoning
@@ -304,13 +382,17 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
           </button>
 
           {routes.map((r, idx) => {
+            if (!r || !r.vehicle_id) return null;
             const isSel = selectedVehicleId === r.vehicle_id;
             const vColor = VEHICLE_COLORS[idx % VEHICLE_COLORS.length];
+            const stopCount = Array.isArray(r.stops) ? r.stops.length : 0;
+            const dist = typeof r.tour_length_m === 'number' ? r.tour_length_m.toFixed(1) : '0.0';
+            const makespan = typeof r.route_makespan_sec === 'number' ? r.route_makespan_sec.toFixed(1) : '0.0';
             return (
               <button
                 key={r.vehicle_id}
                 onClick={() => setSelectedVehicleId(r.vehicle_id)}
-                title={`Focus on ${r.vehicle_id}: ${r.tour_length_m.toFixed(1)}m, ${r.route_makespan_sec.toFixed(1)}s, ${r.stops.length} stops.`}
+                title={`Focus on ${r.vehicle_id}: ${dist}m, ${makespan}s, ${stopCount} stops.`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -328,7 +410,7 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
               >
                 <div style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: vColor, boxShadow: `0 0 6px ${vColor}` }} />
                 <span>{r.vehicle_id}</span>
-                <span style={{ fontSize: '9px', color: '#64748b' }}>({r.stops.length})</span>
+                <span style={{ fontSize: '9px', color: '#64748b' }}>({stopCount})</span>
               </button>
             );
           })}
@@ -486,6 +568,33 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
             </button>
           </div>
 
+          {/* Top Right Floating Badge: Current Run ID Identificator on 2D Map */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '14px',
+              zIndex: 15,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              backgroundColor: 'rgba(12, 16, 28, 0.9)',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              border: '1px solid rgba(0, 240, 255, 0.35)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 240, 255, 0.1)',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#00f0ff', boxShadow: '0 0 6px #00f0ff' }} />
+            <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+              2D MAP RUN ID:
+            </span>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: '#00f0ff', fontFamily: 'var(--font-mono, monospace)' }}>
+              {runId || schedule?.run_id || 'RUN-ACTIVE-001'}
+            </span>
+          </div>
+
           {/* SVG Canvas Container */}
           <div
             style={{
@@ -632,11 +741,15 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
 
               {/* Render Vehicle Directed Paths */}
               {routes.map((route, rIdx) => {
+                if (!route) return null;
                 const isFocused = selectedVehicleId === null || selectedVehicleId === route.vehicle_id;
                 if (!isFocused) return null;
 
                 const color = VEHICLE_COLORS[rIdx % VEHICLE_COLORS.length];
-                const stops = route.stops;
+                const rawStops = Array.isArray(route.stops) ? route.stops : [];
+                const stops = rawStops.filter(
+                  (s) => s && typeof s.pos_x === 'number' && !isNaN(s.pos_x) && typeof s.pos_y === 'number' && !isNaN(s.pos_y)
+                );
                 if (stops.length < 2) return null;
 
                 // Path points
@@ -644,7 +757,7 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
                 const pathD = `M ${pathPoints}`;
 
                 return (
-                  <g key={route.route_id} id={`route-${route.vehicle_id}`}>
+                  <g key={route.route_id || `route-${rIdx}`} id={`route-${route.vehicle_id || rIdx}`}>
                     {/* Glow backdrop line */}
                     <path
                       d={pathD}
@@ -669,24 +782,25 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
 
                     {/* Stop Nodes along Route */}
                     {stops.map((st, sIdx) => {
-                      const isHovered = hoveredStop?.stop.stop_id === st.stop_id;
+                      const isHovered = hoveredStop?.stop?.stop_id === st.stop_id;
                       const isSel = selectedStop?.stop_id === st.stop_id;
-                      const isOrigin = st.location_type === 'DEPOT_START' || st.location_type === 'DEPOT';
-                      const isEnd = st.location_type === 'DEPOT_END';
-                      const isDrop = st.location_type === 'DROP' || st.location_type === 'CHUTE';
+                      const locType = st.location_type || '';
+                      const isOrigin = locType === 'DEPOT_START' || locType === 'DEPOT';
+                      const isEnd = locType === 'DEPOT_END';
+                      const isDrop = locType === 'DROP' || locType === 'CHUTE';
 
                       const radius = isHovered || isSel ? 3.0 : isOrigin || isEnd ? 2.5 : 1.8;
                       const nodeFill = isOrigin ? '#00f0ff' : isEnd ? '#10b981' : isDrop ? '#ec4899' : color;
 
                       return (
                         <g
-                          key={st.stop_id}
+                          key={st.stop_id || `stop-${sIdx}`}
                           style={{ cursor: 'pointer' }}
-                          onMouseEnter={() => setHoveredStop({ stop: st, vehicleId: route.vehicle_id, color })}
+                          onMouseEnter={() => setHoveredStop({ stop: st, vehicleId: route.vehicle_id || 'AMR', color })}
                           onMouseLeave={() => setHoveredStop(null)}
                           onClick={() => {
                             setSelectedStop(st);
-                            setSelectedVehicleId(route.vehicle_id);
+                            if (route.vehicle_id) setSelectedVehicleId(route.vehicle_id);
                           }}
                         >
                           {/* Pulsing ring on hover/select */}
@@ -713,7 +827,7 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
                               fontWeight="bold"
                               textAnchor="middle"
                             >
-                              {st.stop_sequence}
+                              {st.stop_sequence ?? sIdx}
                             </text>
                           )}
                         </g>
@@ -725,11 +839,14 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
 
               {/* Animated AMR Vehicle Markers at simTime */}
               {amrLivePositions.map((amr, idx) => {
-                const isFocused = selectedVehicleId === null || selectedVehicleId === amr.route.vehicle_id;
+                const isFocused = selectedVehicleId === null || selectedVehicleId === amr.route?.vehicle_id;
                 if (!isFocused) return null;
 
+                const posX = typeof amr.x === 'number' && !isNaN(amr.x) ? amr.x : 5;
+                const posY = typeof amr.y === 'number' && !isNaN(amr.y) ? amr.y : 5;
+
                 return (
-                  <g key={`live-amr-${idx}`} transform={`translate(${amr.x}, ${amr.y})`}>
+                  <g key={`live-amr-${idx}`} transform={`translate(${posX}, ${posY})`}>
                     {/* Ambient Glow */}
                     <circle cx="0" cy="0" r="3.5" fill={amr.color} fillOpacity="0.25" />
                     {/* Outer border */}
@@ -738,7 +855,7 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
                     <circle cx="0" cy="0" r="1.1" fill={amr.color} />
                     {/* Vehicle ID Tag */}
                     <text x="0" y="-3.5" fill="#ffffff" fontSize="2.0" fontWeight="bold" textAnchor="middle">
-                      {amr.route.vehicle_id}
+                      {amr.route?.vehicle_id || `AMR-${idx + 1}`}
                     </text>
                   </g>
                 );
@@ -766,7 +883,7 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                   <span style={{ color: hoveredStop.color, fontWeight: 700 }}>
-                    {hoveredStop.vehicleId} • STOP #{hoveredStop.stop.stop_sequence}
+                    {hoveredStop.vehicleId} • STOP #{hoveredStop.stop?.stop_sequence ?? 0}
                   </span>
                   <span
                     style={{
@@ -777,22 +894,22 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
                       color: '#cbd5e1',
                     }}
                   >
-                    {hoveredStop.stop.location_type}
+                    {hoveredStop.stop?.location_type || 'STOP'}
                   </span>
                 </div>
 
                 <div style={{ color: '#f0f4f8', fontWeight: 600, fontSize: '12px', marginBottom: '6px' }}>
-                  {hoveredStop.stop.location_id}
+                  {hoveredStop.stop?.location_id || 'N/A'}
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', color: '#94a3b8', fontSize: '10px' }}>
-                  <div>Arr: <strong style={{ color: '#38bdf8' }}>{hoveredStop.stop.arrival_time_sec.toFixed(1)}s</strong></div>
-                  <div>Dep: <strong style={{ color: '#38bdf8' }}>{hoveredStop.stop.departure_time_sec.toFixed(1)}s</strong></div>
-                  <div>Coord: <strong>({hoveredStop.stop.pos_x.toFixed(1)}, {hoveredStop.stop.pos_y.toFixed(1)})m</strong></div>
-                  <div>Action: <strong style={{ color: '#10b981' }}>{hoveredStop.stop.action}</strong></div>
+                  <div>Arr: <strong style={{ color: '#38bdf8' }}>{(hoveredStop.stop?.arrival_time_sec ?? 0).toFixed(1)}s</strong></div>
+                  <div>Dep: <strong style={{ color: '#38bdf8' }}>{(hoveredStop.stop?.departure_time_sec ?? 0).toFixed(1)}s</strong></div>
+                  <div>Coord: <strong>({(hoveredStop.stop?.pos_x ?? 0).toFixed(1)}, {(hoveredStop.stop?.pos_y ?? 0).toFixed(1)})m</strong></div>
+                  <div>Action: <strong style={{ color: '#10b981' }}>{hoveredStop.stop?.action || 'MOVE'}</strong></div>
                 </div>
 
-                {hoveredStop.stop.order_ids && hoveredStop.stop.order_ids.length > 0 && (
+                {hoveredStop.stop?.order_ids && hoveredStop.stop.order_ids.length > 0 && (
                   <div style={{ marginTop: '6px', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.08)', fontSize: '9px', color: '#64748b' }}>
                     SKU Demand: {hoveredStop.stop.order_ids.join(', ')}
                   </div>
@@ -909,211 +1026,222 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
             overflow: 'hidden',
           }}
         >
-          {/* Active Route Header & KPI Card */}
-          <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', backgroundColor: '#090d18' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: '#f0f4f8',
-                    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                  }}
-                >
-                  {activeRoute.vehicle_id}
-                </span>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>Route ID: {activeRoute.route_id}</span>
-              </div>
-
-              <span
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  color: '#10b981',
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid #10b981',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                }}
-              >
-                MTZ ACYCLIC PASSED
-              </span>
-            </div>
-
-            {/* 4 KPIs Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div style={{ backgroundColor: '#111827', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                <div style={{ fontSize: '10px', color: '#94a3b8' }}>Tour Distance</div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
-                  {activeRoute.tour_length_m.toFixed(1)} m
-                </div>
-              </div>
-
-              <div style={{ backgroundColor: '#111827', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                <div style={{ fontSize: '10px', color: '#94a3b8' }}>Tour Makespan</div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)' }}>
-                  {activeRoute.route_makespan_sec.toFixed(1)} s
-                </div>
-              </div>
-
-              <div style={{ backgroundColor: '#111827', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                <div style={{ fontSize: '10px', color: '#94a3b8' }}>Carried Payload</div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#fbbf24', fontFamily: 'var(--font-mono)' }}>
-                  {activeRoute.total_carried_mass_kg.toFixed(1)} kg <span style={{ fontSize: '10px', color: '#64748b' }}>/ 200kg</span>
-                </div>
-              </div>
-
-              <div style={{ backgroundColor: '#111827', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                <div style={{ fontSize: '10px', color: '#94a3b8' }}>Battery Depletion</div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#a855f7', fontFamily: 'var(--font-mono)' }}>
-                  {activeRoute.battery_consumed_pct.toFixed(1)}% <span style={{ fontSize: '10px', color: '#64748b' }}>(SOC &ge; 20%)</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Table Filters & Count */}
-          <div
-            style={{
-              padding: '10px 18px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: '#080c16',
-            }}
-          >
-            <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>
-              Turn-by-Turn Waypoints ({filteredStops.length} stops)
-            </div>
-
-            <div style={{ display: 'flex', gap: '4px' }}>
-              {['ALL', 'PICKUP', 'DROP', 'DEPOT'].map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setFilterStopType(t)}
-                  style={{
-                    fontSize: '9px',
-                    padding: '2px 6px',
-                    borderRadius: '3px',
-                    cursor: 'pointer',
-                    backgroundColor: filterStopType === t ? 'rgba(0, 240, 255, 0.2)' : 'transparent',
-                    border: filterStopType === t ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.08)',
-                    color: filterStopType === t ? '#00f0ff' : '#64748b',
-                  }}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Turn-by-Turn Waypoints Scrollable Table */}
-          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 14px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', fontFamily: 'var(--font-mono, monospace)' }}>
-              <thead>
-                <tr style={{ color: '#64748b', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', textAlign: 'left' }}>
-                  <th style={{ padding: '6px 4px', fontWeight: 600 }}>#</th>
-                  <th style={{ padding: '6px 4px', fontWeight: 600 }}>Type</th>
-                  <th style={{ padding: '6px 4px', fontWeight: 600 }}>Location</th>
-                  <th style={{ padding: '6px 4px', fontWeight: 600 }}>Arr</th>
-                  <th style={{ padding: '6px 4px', fontWeight: 600 }}>Dep</th>
-                  <th style={{ padding: '6px 4px', fontWeight: 600 }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStops.map((st) => {
-                  const isSelected = selectedStop?.stop_id === st.stop_id;
-                  const isHovered = hoveredStop?.stop.stop_id === st.stop_id;
-                  const isDrop = st.location_type === 'DROP' || st.location_type === 'CHUTE';
-                  const isPickup = st.location_type === 'PICKUP';
-                  const isDepot = st.location_type.includes('DEPOT');
-
-                  return (
-                    <tr
-                      key={st.stop_id}
-                      onClick={() => setSelectedStop(st)}
-                      onMouseEnter={() => setHoveredStop({ stop: st, vehicleId: activeRoute.vehicle_id, color: '#00f0ff' })}
-                      onMouseLeave={() => setHoveredStop(null)}
+          {activeRoute ? (
+            <>
+              {/* Active Route Header & KPI Card */}
+              <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', backgroundColor: '#090d18' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span
                       style={{
-                        backgroundColor: isSelected
-                          ? 'rgba(0, 240, 255, 0.15)'
-                          : isHovered
-                          ? 'rgba(255, 255, 255, 0.05)'
-                          : 'transparent',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.1s ease',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: '#f0f4f8',
+                        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                        padding: '3px 8px',
+                        borderRadius: '4px',
                       }}
                     >
-                      <td style={{ padding: '6px 4px', color: '#94a3b8' }}>{st.stop_sequence}</td>
-                      <td style={{ padding: '6px 4px' }}>
-                        <span
+                      {activeRoute.vehicle_id || 'AMR'}
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>Route ID: {activeRoute.route_id || 'ROUTE-N/A'}</span>
+                  </div>
+
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      color: '#10b981',
+                      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid #10b981',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    MTZ ACYCLIC PASSED
+                  </span>
+                </div>
+
+                {/* 4 KPIs Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={{ backgroundColor: '#111827', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <div style={{ fontSize: '10px', color: '#94a3b8' }}>Tour Distance</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
+                      {(activeRoute.tour_length_m ?? 0).toFixed(1)} m
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#111827', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <div style={{ fontSize: '10px', color: '#94a3b8' }}>Tour Makespan</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)' }}>
+                      {(activeRoute.route_makespan_sec ?? 0).toFixed(1)} s
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#111827', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <div style={{ fontSize: '10px', color: '#94a3b8' }}>Carried Payload</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#fbbf24', fontFamily: 'var(--font-mono)' }}>
+                      {(activeRoute.total_carried_mass_kg ?? 0).toFixed(1)} kg <span style={{ fontSize: '10px', color: '#64748b' }}>/ 200kg</span>
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#111827', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <div style={{ fontSize: '10px', color: '#94a3b8' }}>Battery Depletion</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#a855f7', fontFamily: 'var(--font-mono)' }}>
+                      {(activeRoute.battery_consumed_pct ?? 0).toFixed(1)}% <span style={{ fontSize: '10px', color: '#64748b' }}>(SOC &ge; 20%)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Table Filters & Count */}
+              <div
+                style={{
+                  padding: '10px 18px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: '#080c16',
+                }}
+              >
+                <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>
+                  Turn-by-Turn Waypoints ({filteredStops.length} stops)
+                </div>
+
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {['ALL', 'PICKUP', 'DROP', 'DEPOT'].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setFilterStopType(t)}
+                      style={{
+                        fontSize: '9px',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        backgroundColor: filterStopType === t ? 'rgba(0, 240, 255, 0.2)' : 'transparent',
+                        border: filterStopType === t ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.08)',
+                        color: filterStopType === t ? '#00f0ff' : '#64748b',
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Turn-by-Turn Waypoints Scrollable Table */}
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 14px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', fontFamily: 'var(--font-mono, monospace)' }}>
+                  <thead>
+                    <tr style={{ color: '#64748b', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', textAlign: 'left' }}>
+                      <th style={{ padding: '6px 4px', fontWeight: 600 }}>#</th>
+                      <th style={{ padding: '6px 4px', fontWeight: 600 }}>Type</th>
+                      <th style={{ padding: '6px 4px', fontWeight: 600 }}>Location</th>
+                      <th style={{ padding: '6px 4px', fontWeight: 600 }}>Arr</th>
+                      <th style={{ padding: '6px 4px', fontWeight: 600 }}>Dep</th>
+                      <th style={{ padding: '6px 4px', fontWeight: 600 }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredStops.map((st, idx) => {
+                      if (!st) return null;
+                      const isSelected = selectedStop?.stop_id === st.stop_id;
+                      const isHovered = hoveredStop?.stop?.stop_id === st.stop_id;
+                      const locType = st.location_type || '';
+                      const isDrop = locType === 'DROP' || locType === 'CHUTE';
+                      const isPickup = locType === 'PICKUP';
+
+                      return (
+                        <tr
+                          key={st.stop_id || `stop-${st.stop_sequence ?? idx}`}
+                          onClick={() => setSelectedStop(st)}
+                          onMouseEnter={() => setHoveredStop({ stop: st, vehicleId: activeRoute.vehicle_id || 'AMR', color: '#00f0ff' })}
+                          onMouseLeave={() => setHoveredStop(null)}
                           style={{
-                            fontSize: '9px',
-                            padding: '1px 4px',
-                            borderRadius: '3px',
-                            fontWeight: 700,
-                            backgroundColor: isDrop
-                              ? 'rgba(236, 72, 153, 0.2)'
-                              : isPickup
-                              ? 'rgba(56, 189, 248, 0.2)'
-                              : 'rgba(16, 185, 129, 0.2)',
-                            color: isDrop ? '#ec4899' : isPickup ? '#38bdf8' : '#10b981',
+                            backgroundColor: isSelected
+                              ? 'rgba(0, 240, 255, 0.15)'
+                              : isHovered
+                              ? 'rgba(255, 255, 255, 0.05)'
+                              : 'transparent',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.1s ease',
                           }}
                         >
-                          {st.location_type}
-                        </span>
-                      </td>
-                      <td style={{ padding: '6px 4px', color: '#f0f4f8', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {st.location_id}
-                      </td>
-                      <td style={{ padding: '6px 4px', color: '#38bdf8' }}>{st.arrival_time_sec.toFixed(0)}s</td>
-                      <td style={{ padding: '6px 4px', color: '#94a3b8' }}>{st.departure_time_sec.toFixed(0)}s</td>
-                      <td style={{ padding: '6px 4px', color: isDrop ? '#ec4899' : '#34d399', fontWeight: 600 }}>
-                        {st.action}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                          <td style={{ padding: '6px 4px', color: '#94a3b8' }}>{st.stop_sequence ?? idx}</td>
+                          <td style={{ padding: '6px 4px' }}>
+                            <span
+                              style={{
+                                fontSize: '9px',
+                                padding: '1px 4px',
+                                borderRadius: '3px',
+                                fontWeight: 700,
+                                backgroundColor: isDrop
+                                  ? 'rgba(236, 72, 153, 0.2)'
+                                  : isPickup
+                                  ? 'rgba(56, 189, 248, 0.2)'
+                                  : 'rgba(16, 185, 129, 0.2)',
+                                color: isDrop ? '#ec4899' : isPickup ? '#38bdf8' : '#10b981',
+                              }}
+                            >
+                              {locType || 'STOP'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '6px 4px', color: '#f0f4f8', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {st.location_id || 'N/A'}
+                          </td>
+                          <td style={{ padding: '6px 4px', color: '#38bdf8' }}>{(st.arrival_time_sec ?? 0).toFixed(0)}s</td>
+                          <td style={{ padding: '6px 4px', color: '#94a3b8' }}>{(st.departure_time_sec ?? 0).toFixed(0)}s</td>
+                          <td style={{ padding: '6px 4px', color: isDrop ? '#ec4899' : '#34d399', fontWeight: 600 }}>
+                            {st.action || 'MOVE'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
 
-          {/* Selected Waypoint Detailed Card */}
-          {selectedStop && (
-            <div
-              style={{
-                padding: '12px 18px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                backgroundColor: '#090d18',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#00f0ff' }}>
-                  INSPECTING STOP #{selectedStop.stop_sequence}
-                </span>
-                <button
-                  onClick={() => setSelectedStop(null)}
-                  style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '10px', cursor: 'pointer' }}
+              {/* Selected Waypoint Detailed Card */}
+              {selectedStop && (
+                <div
+                  style={{
+                    padding: '12px 18px',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                    backgroundColor: '#090d18',
+                  }}
                 >
-                  Close
-                </button>
-              </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#00f0ff' }}>
+                      INSPECTING STOP #{selectedStop.stop_sequence ?? 0}
+                    </span>
+                    <button
+                      onClick={() => setSelectedStop(null)}
+                      style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '10px', cursor: 'pointer' }}
+                    >
+                      Close
+                    </button>
+                  </div>
 
-              <div style={{ fontSize: '12px', fontWeight: 600, color: '#f0f4f8', marginBottom: '4px' }}>
-                {selectedStop.location_id} ({selectedStop.location_type})
-              </div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#f0f4f8', marginBottom: '4px' }}>
+                    {selectedStop.location_id || 'N/A'} ({selectedStop.location_type || 'STOP'})
+                  </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11px', color: '#94a3b8' }}>
-                <div>Coordinates: <strong style={{ color: '#fff' }}>({selectedStop.pos_x.toFixed(1)}, {selectedStop.pos_y.toFixed(1)}, {selectedStop.pos_z.toFixed(1)})m</strong></div>
-                <div>Service Time: <strong style={{ color: '#fff' }}>{(selectedStop.departure_time_sec - selectedStop.arrival_time_sec).toFixed(1)}s</strong></div>
-                <div>Action: <strong style={{ color: '#10b981' }}>{selectedStop.action}</strong></div>
-                <div>Assigned Orders: <strong style={{ color: '#38bdf8' }}>{selectedStop.order_ids.length}</strong></div>
-              </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11px', color: '#94a3b8' }}>
+                    <div>Coordinates: <strong style={{ color: '#fff' }}>({(selectedStop.pos_x ?? 0).toFixed(1)}, {(selectedStop.pos_y ?? 0).toFixed(1)}, {(selectedStop.pos_z ?? 0).toFixed(1)})m</strong></div>
+                    <div>Service Time: <strong style={{ color: '#fff' }}>{((selectedStop.departure_time_sec ?? 0) - (selectedStop.arrival_time_sec ?? 0)).toFixed(1)}s</strong></div>
+                    <div>Action: <strong style={{ color: '#10b981' }}>{selectedStop.action || 'MOVE'}</strong></div>
+                    <div>Assigned Orders: <strong style={{ color: '#38bdf8' }}>{selectedStop.order_ids?.length ?? 0}</strong></div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ padding: '32px 20px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
+              <Navigation size={28} style={{ color: '#00f0ff', marginBottom: '12px', opacity: 0.7 }} />
+              <div style={{ color: '#cbd5e1', fontWeight: 600, marginBottom: '6px' }}>No Active Vehicle Route</div>
+              <div>Select a vehicle from the top bar to inspect turn-by-turn waypoints.</div>
             </div>
           )}
         </div>

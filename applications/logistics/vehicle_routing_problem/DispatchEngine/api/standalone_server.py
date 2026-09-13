@@ -764,6 +764,16 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
         elif path == "/api/v1/dispatch/waves":
             custom_scen_id = payload.get("scenario_id")
             num_orders = int(payload.get("num_orders", 80))
+            if num_orders <= 0:
+                self._send_json(
+                    400,
+                    {
+                        "error": "ZERO_ORDERS_REJECTED",
+                        "message": "Cannot dispatch wave with 0 orders. Workload set must contain at least 1 order (recommended: 5–150).",
+                    },
+                )
+                return
+
             num_vehicles = int(payload.get("num_vehicles", 4))
             seed = int(payload.get("seed", 42))
             mode_str = payload.get("operational_mode", "QUANTUM")

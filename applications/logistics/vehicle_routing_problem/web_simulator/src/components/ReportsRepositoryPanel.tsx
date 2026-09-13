@@ -247,8 +247,8 @@ export const ReportsRepositoryPanel: React.FC<ReportsRepositoryPanelProps> = ({
   return (
     <HUDPanel
       id="reports-repository-panel"
-      title="REPORTS REPOSITORY"
-      icon={<FileText size={16} color="#00f0ff" />}
+      title="REPORTS MANAGER STUDIO"
+      icon={<FileText size={16} color="#10b981" />}
       badge={{
         text: `${reports.length} SAVED`,
         color: '#00f0ff',

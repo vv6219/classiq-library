@@ -510,6 +510,10 @@ export async function dispatchWave(params: {
   lagrangian_weights?: Record<string, number>;
   kinematics_config?: Record<string, number>;
 }): Promise<WaveExecutionResponse> {
+  if (!params.num_orders || params.num_orders <= 0) {
+    throw new Error('Cannot dispatch wave with 0 orders. Workload set must contain at least 1 order (recommended: 5–150).');
+  }
+
   try {
     const res = await fetch(`${API_BASE}/dispatch/waves`, {
       method: 'POST',

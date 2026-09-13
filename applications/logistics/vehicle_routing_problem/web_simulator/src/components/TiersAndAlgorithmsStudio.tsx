@@ -40,6 +40,7 @@ interface TiersAndAlgorithmsStudioProps {
   tierParams: Record<string, number>;
   onChangeTierParam: (paramKey: string, val: number) => void;
   onNavigateToQuantumStudio?: () => void;
+  selectedTierKey?: string;
 }
 
 interface TierDetail {
@@ -91,6 +92,7 @@ export const TiersAndAlgorithmsStudio: React.FC<TiersAndAlgorithmsStudioProps> =
   tierParams,
   onChangeTierParam,
   onNavigateToQuantumStudio,
+  selectedTierKey,
 }) => {
   // Selection State: can inspect either a Tier or an Algorithm
   const [selectedItem, setSelectedItem] = useState<{
@@ -99,8 +101,16 @@ export const TiersAndAlgorithmsStudio: React.FC<TiersAndAlgorithmsStudioProps> =
     tierId?: string;
   }>({
     type: 'tier',
-    id: 'tier1',
+    id: selectedTierKey || 'tier1',
   });
+
+  // Synchronize when selectedTierKey is clicked from sidebar
+  React.useEffect(() => {
+    if (selectedTierKey) {
+      setSelectedItem({ type: 'tier', id: selectedTierKey });
+      setIsSubPanelOpen(true);
+    }
+  }, [selectedTierKey]);
 
   const [subPanelTab, setSubPanelTab] = useState<'meaning' | 'param_deepdive' | 'problem_solving' | 'math' | 'acronyms' | 'contracts' | 'solver'>('meaning');
   const [selectedParamKey, setSelectedParamKey] = useState<string>('fcm_fuzziness_m');

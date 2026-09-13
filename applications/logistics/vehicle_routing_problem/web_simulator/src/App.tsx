@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { NavigationStep, NavigationSnapshot, StudioTabId } from './types/navigationState';
+import { computeCurrentNavigationStep } from './utils/navigationHelper';
 import { TopbarHUD } from './components/TopbarHUD';
 import { ThreeWarehouseCanvas } from './components/ThreeWarehouseCanvas';
 import { DatasetStudio } from './components/DatasetStudio';
@@ -20,6 +22,7 @@ import { PDFProfileId } from './data/reportsRegistry';
 import { ConceptExplanationModal } from './components/ConceptExplanationModal';
 import { LegalFooterBar } from './components/LegalFooterBar';
 import { LegalModal } from './components/LegalModal';
+import { ZeroOrdersBlockModal } from './components/ZeroOrdersBlockModal';
 import {
   dispatchWave,
   fetchSchedule,
@@ -37,6 +40,8 @@ import {
   DispatchProgressState,
   INITIAL_PIPELINE_STEPS,
 } from './components/DispatchProgressModal';
+import { SidebarNavigation } from './components/navigation/SidebarNavigation';
+import { BreadcrumbsBar } from './components/navigation/BreadcrumbsBar';
 import { trackTabChange, trackButtonClick } from './utils/analytics';
 import {
   Box,
@@ -59,6 +64,28 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry'
   >('3d-sim');
+
+  // Sidebar & Layout State: Always start on first load with expanded sidebar
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('wms_sidebar_width_v1');
+      if (saved && Number(saved) >= 200) return Number(saved);
+    } catch (e) {}
+    return 260;
+  });
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(true);
+  const [isSidebarPinned, setIsSidebarPinned] = useState<boolean>(true);
+  const [selectedEntity, setSelectedEntity] = useState<{
+    type: 'AMR' | 'CHUTE' | 'DEPOT' | 'ORDER';
+    id: string;
+    telemetry?: any;
+  } | null>(null);
+  const [cameraPreset, setCameraPreset] = useState<'overview' | 'top' | 'isometric' | 'follow' | 'chute-focus' | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('wms_sidebar_width_v1', String(sidebarWidth));
+  }, [sidebarWidth]);
+
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [selectedPdfProfile, setSelectedPdfProfile] = useState<PDFProfileId>('EXECUTIVE');
 
@@ -69,12 +96,30 @@ export const App: React.FC = () => {
   const [isConceptModalOpen, setIsConceptModalOpen] = useState(false);
   const [isConfigDrawerOpen, setIsConfigDrawerOpen] = useState(false);
   const [isQuickDrawerOpen, setIsQuickDrawerOpen] = useState(false);
+  const [isDatasetGeneratorOpen, setIsDatasetGeneratorOpen] = useState(false);
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
   const [isQuantumPanelOpen, setIsQuantumPanelOpen] = useState(false);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [quantumPanelMode, setQuantumPanelMode] = useState<HUDPanelDisplayMode>('expanded');
   const [reportsRepoMode, setReportsRepoMode] = useState<HUDPanelDisplayMode>('minimized');
   const [reportsCount, setReportsCount] = useState<number>(0);
+
+  const [selectedTier, setSelectedTier] = useState<string>('tier1');
+  const [generatorInitialParam, setGeneratorInitialParam] = useState<string>('num_orders');
+  const [isZeroOrdersModalOpen, setIsZeroOrdersModalOpen] = useState(false);
+  const [zeroOrdersToastMessage, setZeroOrdersToastMessage] = useState<string | null>(null);
+
+  const showZeroOrdersToast = (msg: string) => {
+    setZeroOrdersToastMessage(msg);
+    setTimeout(() => setZeroOrdersToastMessage(null), 5000);
+  };
+
+  const handleOpenOrdersDepotGenerator = (paramKey: string = 'num_orders') => {
+    setGeneratorInitialParam(paramKey);
+    trackTabChange(activeTab, 'dataset');
+    setActiveTab('dataset');
+    setIsDatasetGeneratorOpen(true);
+  };
 
   // Operational State
   const [mode, setMode] = useState<'QUANTUM' | 'CLASSICAL'>('QUANTUM');
@@ -122,7 +167,109 @@ export const App: React.FC = () => {
   const [dispatchProgress, setDispatchProgress] = useState<DispatchProgressState | null>(null);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
 
-  // Initial Load: Archetypes, Runs, Initial Wave Dispatch
+  // Navigation History Stack for Active Back Link and Lineage Tracking
+  const [navHistory, setNavHistory] = useState<NavigationSnapshot[]>([]);
+  const isNavigatingBackRef = useRef(false);
+
+  // Compute Active Hierarchical Navigation Step
+  const currentNavStep = useMemo<NavigationStep>(() => {
+    return computeCurrentNavigationStep({
+      facilityId: 'WMS-IND-01',
+      facilityName: 'Berlin Mega-Hub',
+      selectedArchetype: selectedArchetype,
+      activeTab: activeTab as StudioTabId,
+      selectedTier: selectedTier || 'tier1',
+      selectedEntity: selectedEntity,
+      cameraPreset: cameraPreset,
+      reportsRepoMode: reportsRepoMode,
+      currentRunId: currentRunId,
+      numOrders: numOrders,
+      numVehicles: numVehicles,
+      operationalMode: mode as 'QUANTUM' | 'CLASSICAL',
+    });
+  }, [
+    selectedArchetype,
+    activeTab,
+    selectedTier,
+    selectedEntity,
+    cameraPreset,
+    reportsRepoMode,
+    currentRunId,
+    numOrders,
+    numVehicles,
+    mode,
+  ]);
+
+  // Record History on Navigation Changes
+  useEffect(() => {
+    if (isNavigatingBackRef.current) {
+      isNavigatingBackRef.current = false;
+      return;
+    }
+    setNavHistory((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.step.id === currentNavStep.id) {
+        return prev;
+      }
+      const snapshot: NavigationSnapshot = {
+        step: currentNavStep,
+        activeTab: activeTab as StudioTabId,
+        selectedArchetype: selectedArchetype,
+        selectedTier: selectedTier || 'tier1',
+        selectedEntity: selectedEntity,
+        cameraPreset: cameraPreset,
+        reportsRepoMode: reportsRepoMode,
+        timestamp: Date.now(),
+      };
+      const next = [...prev, snapshot];
+      if (next.length > 30) next.shift();
+      return next;
+    });
+  }, [currentNavStep, activeTab, selectedArchetype, selectedTier, selectedEntity, cameraPreset, reportsRepoMode]);
+
+  // Back Navigation Handler
+  const handleGoBack = () => {
+    if (navHistory.length <= 1) return;
+    isNavigatingBackRef.current = true;
+    const nextHistory = [...navHistory];
+    nextHistory.pop(); // Remove current state
+    const previousSnapshot = nextHistory[nextHistory.length - 1];
+    setNavHistory(nextHistory);
+
+    if (previousSnapshot) {
+      if (previousSnapshot.activeTab) {
+        trackTabChange(activeTab, previousSnapshot.activeTab);
+        setActiveTab(previousSnapshot.activeTab);
+      }
+      if (previousSnapshot.selectedArchetype) {
+        setSelectedArchetype(previousSnapshot.selectedArchetype);
+      }
+      if (previousSnapshot.selectedTier) {
+        setSelectedTier(previousSnapshot.selectedTier);
+      }
+      setSelectedEntity(previousSnapshot.selectedEntity || null);
+      setCameraPreset(previousSnapshot.cameraPreset || 'overview');
+      if (previousSnapshot.reportsRepoMode) {
+        setReportsRepoMode(previousSnapshot.reportsRepoMode);
+      }
+    }
+  };
+
+  // Direct Segment Click Navigation Handler
+  const handleNavigateSegment = (segment: { level: string; label: string; id: string; tab?: StudioTabId }) => {
+    if (segment.tab) {
+      trackTabChange(activeTab, segment.tab);
+      setActiveTab(segment.tab);
+    } else if (segment.level === 'archetype') {
+      setSelectedArchetype(segment.id);
+    } else if (segment.level === 'facility') {
+      setActiveTab('3d-sim');
+      setCameraPreset('overview');
+      setSelectedEntity(null);
+    }
+  };
+
+  // Initial Load: Archetypes, Runs
   useEffect(() => {
     fetchArchetypes()
       .then((data) => {
@@ -134,7 +281,6 @@ export const App: React.FC = () => {
       .catch((err) => console.warn('Archetypes fetch error:', err));
 
     loadHistoricalRuns();
-    handleDispatch(true);
   }, []);
 
   // Synchronize document.title with Active Studio Tab for SEO & Navigation Clarity
@@ -161,6 +307,8 @@ export const App: React.FC = () => {
         if (!currentScenarioId || currentScenarioId.startsWith('SCENARIO-AUTO')) {
           setCurrentScenarioId(data[0].scenario_id || 'SCEN-7D42F06D');
         }
+        // Initialize with first canonical run without dispatching new duplicate runs
+        handleSelectHistoricalRun(data[0].run_id);
       }
     } catch (err) {
       console.warn('Failed to load historical runs:', err);
@@ -228,6 +376,16 @@ export const App: React.FC = () => {
     optionsOverride?: { num_orders?: number; num_vehicles?: number; seed?: number },
     actionType: 'DISPATCH_WAVE' | 'RE_RUN' | 'DATASET_DISPATCH' = 'DISPATCH_WAVE'
   ) => {
+    const effectiveOrders = optionsOverride?.num_orders ?? preRequestConfig.num_orders ?? numOrders;
+
+    // NEVER DISPATCH SET WITH 0 ORDERS! BLOCK AND SHOW MESSAGE!
+    if (!effectiveOrders || effectiveOrders <= 0) {
+      setIsSolving(false);
+      showZeroOrdersToast('⚠️ Dispatch Blocked: Order count is 0. Workload set must contain at least 1 order (recommended: 5–150).');
+      setIsZeroOrdersModalOpen(true);
+      return;
+    }
+
     setIsSolving(true);
     const targetScenario = scenarioIdOverride || currentScenarioId;
 
@@ -422,12 +580,52 @@ export const App: React.FC = () => {
     await handleDispatch(false, currentScenarioId, undefined, 'RE_RUN');
   };
 
+  const handleSetDefaultOrdersAndDispatch = (count = 20) => {
+    setNumOrders(count);
+    setPreRequestConfig((prev) => ({ ...prev, num_orders: count }));
+    setIsZeroOrdersModalOpen(false);
+    handleDispatch(false, undefined, { num_orders: count }, 'DISPATCH_WAVE');
+  };
+
   const resetAllDefaults = () => {
     const defaults: Record<string, any> = {};
     Object.entries(CONFIG_LIMITS).forEach(([k, spec]) => {
       defaults[k] = spec.default;
     });
     setPreRequestConfig(defaults);
+  };
+
+  const handleOpenProgressModal = () => {
+    if (!dispatchProgress) {
+      const initialSteps = INITIAL_PIPELINE_STEPS.map((s, idx) => ({
+        ...s,
+        status: 'completed' as const,
+        elapsedMs: Math.round(Math.random() * 30 + 15),
+        metric:
+          idx === 6
+            ? `Committed: ${currentRunId || 'RUN-ACTIVE'} (Verified)`
+            : idx === 4
+            ? `Makespan: ${lastWave?.total_fleet_makespan_sec ? lastWave.total_fleet_makespan_sec.toFixed(1) + 's' : '949.3s'} | Dist: ${lastWave?.total_distance_km ? lastWave.total_distance_km.toFixed(2) + 'km' : '3.71km'}`
+            : s.metric,
+      }));
+      setDispatchProgress({
+        isActive: false,
+        actionType: 'DISPATCH_WAVE',
+        scenarioId: currentScenarioId || 'SCEN-7D42F06D',
+        overallPercent: 100,
+        currentStepIndex: 6,
+        runId: currentRunId || 'RUN-ACTIVE',
+        waveId: lastWave?.wave_id || 'WAVE-ACTIVE',
+        statusMessage: `Optimization Pipeline Ready • Run ID: ${currentRunId || 'RUN-ACTIVE'}`,
+        steps: initialSteps,
+        startTime: Date.now() - 3000,
+        completedTime: Date.now(),
+        isCompleted: true,
+        isMinimized: false,
+        error: null,
+      });
+    }
+    setIsProgressModalOpen(true);
   };
 
   return (
@@ -442,199 +640,102 @@ export const App: React.FC = () => {
         color: '#f0f4f8',
       }}
     >
-      {/* Topbar HUD with Run Selector, KPIs, Re-Run, and Config Drawer Trigger */}
+      {/* Topbar HUD: Executive Control Deck with Integrated Breadcrumbs */}
       <TopbarHUD
         lastWave={lastWave}
         operationalMode={mode}
         setOperationalMode={handleModeChange}
         onDispatchClick={() => handleDispatch(false)}
         onReRunClick={handleReRun}
-        onOpenConfig={() => setIsConfigDrawerOpen(true)}
-        onOpenPDF={handleOpenPDF}
         isSolving={isSolving}
         runs={runs}
         currentRunId={currentRunId}
         onSelectRun={handleSelectHistoricalRun}
-        onToggleExplainer={() => setIsExplainerOpen(!isExplainerOpen)}
-        onToggleQuantumPanel={() => setIsQuantumPanelOpen(!isQuantumPanelOpen)}
-        onOpenConceptModal={() => setIsConceptModalOpen(true)}
         dispatchProgress={dispatchProgress}
-        onOpenProgressModal={() => {
-          if (!dispatchProgress) {
-            const initialSteps = INITIAL_PIPELINE_STEPS.map((s, idx) => ({
-              ...s,
-              status: 'completed' as const,
-              elapsedMs: Math.round(Math.random() * 30 + 15),
-              metric:
-                idx === 6
-                  ? `Committed: ${currentRunId || 'RUN-ACTIVE'} (Verified)`
-                  : idx === 4
-                  ? `Makespan: ${lastWave?.total_fleet_makespan_sec ? lastWave.total_fleet_makespan_sec.toFixed(1) + 's' : '949.3s'} | Dist: ${lastWave?.total_distance_km ? lastWave.total_distance_km.toFixed(2) + 'km' : '3.71km'}`
-                  : s.metric,
-            }));
-            setDispatchProgress({
-              isActive: false,
-              actionType: 'DISPATCH_WAVE',
-              scenarioId: currentScenarioId || 'SCEN-7D42F06D',
-              overallPercent: 100,
-              currentStepIndex: 6,
-              runId: currentRunId || 'RUN-ACTIVE',
-              waveId: lastWave?.wave_id || 'WAVE-ACTIVE',
-              statusMessage: `Optimization Pipeline Ready • Run ID: ${currentRunId || 'RUN-ACTIVE'}`,
-              steps: initialSteps,
-              startTime: Date.now() - 3000,
-              completedTime: Date.now(),
-              isCompleted: true,
-              isMinimized: false,
-              error: null,
-            });
-          }
-          setIsProgressModalOpen(true);
+        onOpenProgressModal={handleOpenProgressModal}
+        archetypes={archetypes}
+        selectedArchetype={selectedArchetype}
+        onSelectArchetype={(archKey) => {
+          setSelectedArchetype(archKey);
+          handleDispatch(false, undefined, undefined, 'DISPATCH_WAVE');
         }}
-        onToggleReportsPanel={() =>
-          setReportsRepoMode((prev) => (prev === 'expanded' ? 'minimized' : 'expanded'))
-        }
-        reportsPanelMode={reportsRepoMode}
-        reportsCount={reportsCount}
+        currentScenarioId={currentScenarioId}
+        numOrders={numOrders}
+        numVehicles={numVehicles}
+        seed={seed}
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
+          trackTabChange(activeTab, tab);
+          setActiveTab(tab);
+        }}
+        selectedEntity={selectedEntity}
+        onClearEntity={() => {
+          setSelectedEntity(null);
+          setCameraPreset('overview');
+        }}
+        onOpenConfig={() => setIsConfigDrawerOpen(true)}
+        onOpenPDF={handleOpenPDF}
+        isSidebarExpanded={isSidebarExpanded}
+        onToggleSidebar={() => setIsSidebarExpanded(!isSidebarExpanded)}
       />
 
-
-      {/* Main Workspace Bar (8 Navigation Tabs + Quick Scenario Controls) */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '4px 12px',
-          backgroundColor: '#090d16',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          zIndex: 10,
-          gap: '8px',
+      {/* Dedicated Interactive Breadcrumbs Navigation Bar */}
+      <BreadcrumbsBar
+        archetypes={archetypes}
+        selectedArchetype={selectedArchetype}
+        onSelectArchetype={(archKey) => {
+          setSelectedArchetype(archKey);
+          handleDispatch(false, undefined, undefined, 'DISPATCH_WAVE');
         }}
-      >
-        {/* Navigation Tabs (8 Studios) */}
-        <div className="workspace-tabs-container">
-          {[
-            {
-              id: '3d-sim',
-              full: '3D Warehouse Twin',
-              short: '3D Warehouse',
-              compact: '3D Twin',
-              icon: <Box size={14} />,
-            },
-            {
-              id: '2d-route-map',
-              full: '2D Route Map & Details',
-              short: '2D Route Map',
-              compact: '2D Map',
-              icon: <MapPin size={14} />,
-            },
-            {
-              id: 'dataset',
-              full: 'Dataset & Mock Data (CRUD)',
-              short: 'Dataset (CRUD)',
-              compact: 'Dataset',
-              icon: <Database size={14} />,
-            },
-            {
-              id: 'tiers',
-              full: 'Calculations Tiers & Algos',
-              short: 'Tiers & Algos',
-              compact: 'Tiers',
-              icon: <Layers size={14} />,
-            },
-            {
-              id: 'quantum',
-              full: 'Classiq Quantum Studio',
-              short: 'Quantum Studio',
-              compact: 'Quantum',
-              icon: <Atom size={14} />,
-            },
-            {
-              id: 'graphs',
-              full: 'Analytics & Graphs (10 Charts)',
-              short: 'Analytics (10)',
-              compact: 'Graphs',
-              icon: <BarChart3 size={14} />,
-            },
-            {
-              id: 'comparison',
-              full: 'Run Comparisons & Diffing',
-              short: 'Comparisons',
-              compact: 'Diff',
-              icon: <GitCompare size={14} />,
-            },
-            {
-              id: 'telemetry',
-              full: 'Live Progress & Log Console',
-              short: 'Telemetry',
-              compact: 'Logs',
-              icon: <Terminal size={14} />,
-            },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                className="workspace-tab-btn"
-                onClick={() => {
-                  trackTabChange(activeTab, tab.id, { label: tab.full });
-                  setActiveTab(tab.id as any);
-                }}
-                style={{
-                  backgroundColor: isActive ? 'rgba(0, 240, 255, 0.15)' : 'transparent',
-                  border: isActive ? '1px solid #00f0ff' : '1px solid transparent',
-                  color: isActive ? '#00f0ff' : '#94a3b8',
-                }}
-                title={tab.full}
-                onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                {tab.icon}
-                <span className="tab-text-full">{tab.full}</span>
-                <span className="tab-text-short">{tab.short}</span>
-                <span className="tab-text-compact">{tab.compact}</span>
-              </button>
-            );
-          })}
-        </div>
+        currentScenarioId={currentScenarioId}
+        numOrders={numOrders}
+        numVehicles={numVehicles}
+        seed={seed}
+        runs={runs}
+        currentRunId={currentRunId}
+        operationalMode={mode as 'QUANTUM' | 'CLASSICAL'}
+        onSelectRun={handleSelectHistoricalRun}
+        onReRunClick={handleReRun}
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
+          trackTabChange(activeTab, tab);
+          setActiveTab(tab);
+        }}
+        selectedEntity={selectedEntity}
+        onClearEntity={() => {
+          setSelectedEntity(null);
+          setCameraPreset('overview');
+        }}
+        makespan={lastWave?.total_fleet_makespan_sec ?? 949.3}
+        distance={lastWave?.total_distance_km ?? 3.71}
+        onOpenConfig={() => setIsConfigDrawerOpen(true)}
+        onOpenPDF={handleOpenPDF}
+        onResetCamera={() => {
+          setSelectedEntity(null);
+          setCameraPreset('overview');
+        }}
+        selectedTier={selectedTier}
+        onSelectTier={(tierKey) => {
+          setSelectedTier(tierKey);
+          trackTabChange(activeTab, 'tiers');
+          setActiveTab('tiers');
+        }}
+        cameraPreset={cameraPreset}
+        onSetCameraPreset={(preset) => {
+          setCameraPreset(preset);
+          if (activeTab !== '3d-sim') setActiveTab('3d-sim');
+        }}
+        reportsRepoMode={reportsRepoMode}
+        onOpenReportsStudio={() => setReportsRepoMode('expanded')}
+        onOpenOrdersDepotGenerator={handleOpenOrdersDepotGenerator}
+        onSelectEntity={(entity) => {
+          setSelectedEntity(entity);
+          if (entity.type === 'AMR') setCameraPreset('follow');
+        }}
+        currentStep={currentNavStep}
+      />
 
-        {/* Quick Scenario Drawer Toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          <button
-            onClick={() => {
-              const nextState = !isQuickDrawerOpen;
-              trackButtonClick(nextState ? 'Open_Quick_Controls' : 'Close_Quick_Controls', 'TopLevel_Navigation');
-              setIsQuickDrawerOpen(nextState);
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '5px 10px',
-              backgroundColor: isQuickDrawerOpen ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-              border: isQuickDrawerOpen ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.12)',
-              borderRadius: '6px',
-              color: isQuickDrawerOpen ? '#00f0ff' : '#e2e8f0',
-              fontSize: '11px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            title="Toggle Quick Controls drawer to adjust industrial warehouse archetypes, AMR fleet sizing, order batch volume, and random seeds."
-          >
-            <Sliders size={13} />
-            <span className="quick-controls-text">Quick Controls</span>
-            {isQuickDrawerOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
-          </button>
-        </div>
-      </div>
-
-      {/* Workspace Body */}
+      {/* Workspace Body: Left-Docked Multi-Level Sidebar + Central Viewport */}
       <div
         style={{
           display: 'flex',
@@ -645,6 +746,78 @@ export const App: React.FC = () => {
           transition: 'padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
+        {/* Multi-Level Sidebar Navigation with Dynamic Splitter */}
+        <SidebarNavigation
+          activeTab={activeTab}
+          onSelectTab={(tab) => {
+            trackTabChange(activeTab, tab);
+            setActiveTab(tab);
+          }}
+          selectedEntity={selectedEntity}
+          onSelectEntity={(entity) => {
+            setSelectedEntity(entity);
+            if (entity.type === 'AMR') {
+              setCameraPreset('follow');
+            }
+          }}
+          onClearEntity={() => {
+            setSelectedEntity(null);
+            setCameraPreset('overview');
+          }}
+          sidebarWidth={sidebarWidth}
+          setSidebarWidth={setSidebarWidth}
+          isExpanded={isSidebarExpanded}
+          setIsExpanded={setIsSidebarExpanded}
+          isPinned={isSidebarPinned}
+          setIsPinned={setIsSidebarPinned}
+          onOpenConfig={() => setIsConfigDrawerOpen(true)}
+          onOpenQuickDrawer={() => setIsQuickDrawerOpen(!isQuickDrawerOpen)}
+          onOpenPDF={handleOpenPDF}
+          onToggleExplainer={() => setIsExplainerOpen(!isExplainerOpen)}
+          onToggleQuantumPanel={() => setIsQuantumPanelOpen(!isQuantumPanelOpen)}
+          onOpenConceptModal={() => setIsConceptModalOpen(true)}
+          onOpenStepsModal={handleOpenProgressModal}
+          onToggleReportsPanel={() =>
+            setReportsRepoMode((prev) => (prev === 'expanded' ? 'minimized' : 'expanded'))
+          }
+          onOpenReportsStudio={() => setReportsRepoMode('expanded')}
+          onSetCameraPreset={(preset) => {
+            setCameraPreset(preset);
+            if (activeTab !== '3d-sim') {
+              setActiveTab('3d-sim');
+            }
+          }}
+          cameraPreset={cameraPreset}
+          onSelectArchetype={(archKey) => {
+            setSelectedArchetype(archKey);
+            trackTabChange(activeTab, 'dataset');
+            setActiveTab('dataset');
+          }}
+          selectedArchetype={selectedArchetype}
+          reportsCount={reportsCount}
+          onOpenOrdersDepotGenerator={handleOpenOrdersDepotGenerator}
+          selectedTier={selectedTier}
+          onSelectTier={(tierKey) => {
+            setSelectedTier(tierKey);
+            trackTabChange(activeTab, 'tiers');
+            setActiveTab('tiers');
+          }}
+          onMinimizeAllPanels={() => {
+            setQuantumPanelMode('minimized');
+            setReportsRepoMode('minimized');
+          }}
+          onRestoreAllPanels={() => {
+            setQuantumPanelMode('expanded');
+            setReportsRepoMode('expanded');
+          }}
+          onNavigate={(item) => {
+            if (item.targetTab) {
+              trackTabChange(activeTab, item.targetTab);
+              setActiveTab(item.targetTab);
+            }
+          }}
+        />
+
         {/* Main View Area */}
         <div
           style={{
@@ -662,6 +835,9 @@ export const App: React.FC = () => {
           {activeTab === '3d-sim' && (
             <ThreeWarehouseCanvas
               schedule={schedule}
+              runId={currentRunId}
+              runs={runs}
+              onSelectRun={handleSelectHistoricalRun}
               onNavigateTo2D={() => setActiveTab('2d-route-map')}
               operationalMode={mode}
               quantumPanelMode={quantumPanelMode}
@@ -669,14 +845,27 @@ export const App: React.FC = () => {
               reportsRepoMode={reportsRepoMode}
               onReportsRepoModeChange={setReportsRepoMode}
               reportsCount={reportsCount}
+              selectedVehicleId={selectedEntity?.type === 'AMR' ? selectedEntity.id : null}
+              onSelectVehicle={(vehId) => {
+                if (vehId) {
+                  setSelectedEntity({ type: 'AMR', id: vehId });
+                } else {
+                  setSelectedEntity(null);
+                }
+              }}
+              cameraPreset={cameraPreset}
             />
           )}
           {activeTab === '2d-route-map' && (
-            <RouteMap2DStudio
-              schedule={schedule}
-              runId={currentRunId}
-              onNavigateTo3D={() => setActiveTab('3d-sim')}
-            />
+            <ErrorBoundary fallbackTitle="2D Coordinate Routing Map Studio">
+              <RouteMap2DStudio
+                schedule={schedule}
+                runId={currentRunId}
+                runs={runs}
+                onSelectRun={handleSelectHistoricalRun}
+                onNavigateTo3D={() => setActiveTab('3d-sim')}
+              />
+            </ErrorBoundary>
           )}
           {activeTab === 'dataset' && (
             <DatasetStudio
@@ -696,6 +885,10 @@ export const App: React.FC = () => {
                   mode: r.operational_mode,
                 })),
               ]}
+              isGeneratorOpen={isDatasetGeneratorOpen}
+              onCloseGenerator={() => setIsDatasetGeneratorOpen(false)}
+              selectedArchetype={selectedArchetype}
+              initialParamKey={generatorInitialParam}
             />
           )}
           {activeTab === 'tiers' && (
@@ -709,6 +902,7 @@ export const App: React.FC = () => {
                 setTierParams((prev) => ({ ...prev, [paramKey]: val }))
               }
               onNavigateToQuantumStudio={() => setActiveTab('quantum')}
+              selectedTierKey={selectedTier}
             />
           )}
           {activeTab === 'quantum' && <QuantumStudio runId={currentRunId} />}
@@ -759,6 +953,8 @@ export const App: React.FC = () => {
           isExplainerOpen={isExplainerOpen}
           panelMode={quantumPanelMode}
           onPanelModeChange={setQuantumPanelMode}
+          sidebarWidth={sidebarWidth}
+          isSidebarExpanded={isSidebarExpanded}
         />
 
         {/* Dedicated Engineering & Compliance Reports Repository Panel */}
@@ -835,13 +1031,73 @@ export const App: React.FC = () => {
       />
 
       {/* Permanently Frozen Legal & Copyright Footer Bar (Multi-Resolution Responsive) */}
-      <LegalFooterBar onOpenLegalModal={() => setIsLegalModalOpen(true)} />
+      <LegalFooterBar
+        onOpenLegalModal={() => setIsLegalModalOpen(true)}
+        currentStep={currentNavStep}
+        canGoBack={navHistory.length > 1}
+        previousStepLabel={navHistory.length > 1 ? navHistory[navHistory.length - 2].step.label : undefined}
+        onGoBack={handleGoBack}
+        onNavigateSegment={handleNavigateSegment}
+        operationalMode={mode as 'QUANTUM' | 'CLASSICAL'}
+        currentRunId={currentRunId}
+      />
 
       {/* Full Corporate Governance, Patent & Intellectual Property Modal */}
       <LegalModal
         isOpen={isLegalModalOpen}
         onClose={() => setIsLegalModalOpen(false)}
       />
+
+      {/* Zero Orders Prevention & Validation Modal */}
+      <ZeroOrdersBlockModal
+        isOpen={isZeroOrdersModalOpen}
+        onClose={() => setIsZeroOrdersModalOpen(false)}
+        onSetDefaultOrdersAndDispatch={handleSetDefaultOrdersAndDispatch}
+        onOpenGenerator={() => handleOpenOrdersDepotGenerator('num_orders')}
+        configuredOrders={preRequestConfig.num_orders ?? numOrders}
+      />
+
+      {/* Floating Alert Toast for Zero Orders Prevention */}
+      {zeroOrdersToastMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '72px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+            backgroundColor: 'rgba(239, 68, 68, 0.95)',
+            border: '1px solid #f87171',
+            borderRadius: '8px',
+            padding: '10px 18px',
+            color: '#ffffff',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(239, 68, 68, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontSize: '12px',
+            fontWeight: 700,
+            backdropFilter: 'blur(12px)',
+            animation: 'fadeIn 0.2s ease',
+          }}
+        >
+          <span>{zeroOrdersToastMessage}</span>
+          <button
+            onClick={() => setZeroOrdersToastMessage(null)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#ffffff',
+              cursor: 'pointer',
+              fontWeight: 800,
+              fontSize: '14px',
+              padding: '0 4px',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Multi-Tier Quantum-Classical Dispatch & Re-Run Progress Modal with Detailed 7-Step Status List & DataSet Description */}
       {isProgressModalOpen && (

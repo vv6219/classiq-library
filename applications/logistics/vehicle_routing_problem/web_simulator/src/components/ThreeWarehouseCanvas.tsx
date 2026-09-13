@@ -15,8 +15,9 @@ import {
   Box,
   Maximize2,
   CheckCircle2,
+  Sparkles,
 } from 'lucide-react';
-import { ScheduleDetails, VehicleRoute } from '../services/api';
+import { ScheduleDetails, VehicleRoute, RunSummaryDTO } from '../services/api';
 import {
   calculateFloorBoundaryMetrics,
   generateRackAisles,
@@ -34,6 +35,9 @@ import { PanelStackDock } from './common/PanelStackManager';
 
 interface ThreeWarehouseCanvasProps {
   schedule: ScheduleDetails | null;
+  runId?: string;
+  runs?: RunSummaryDTO[];
+  onSelectRun?: (runId: string) => void;
   onNavigateTo2D?: () => void;
   operationalMode?: string;
   quantumPanelMode?: HUDPanelDisplayMode;
@@ -41,10 +45,16 @@ interface ThreeWarehouseCanvasProps {
   reportsRepoMode?: HUDPanelDisplayMode;
   onReportsRepoModeChange?: (mode: HUDPanelDisplayMode) => void;
   reportsCount?: number;
+  selectedVehicleId?: string | null;
+  onSelectVehicle?: (id: string | null) => void;
+  cameraPreset?: 'overview' | 'top' | 'isometric' | 'follow' | 'chute-focus' | null;
 }
 
 export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
   schedule,
+  runId,
+  runs,
+  onSelectRun,
   onNavigateTo2D,
   operationalMode = 'QUANTUM',
   quantumPanelMode = 'expanded',
@@ -52,12 +62,15 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
   reportsRepoMode = 'minimized',
   onReportsRepoModeChange,
   reportsCount = 0,
+  selectedVehicleId,
+  onSelectVehicle,
+  cameraPreset,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [simSpeed, setSimSpeed] = useState<number>(2.0);
   const [currentTime, setCurrentTime] = useState<number>(0);
-  const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<string | null>(selectedVehicleId || null);
 
   // Layer Toggles
   const [showPerimeterBarrier, setShowPerimeterBarrier] = useState<boolean>(true);
@@ -94,6 +107,26 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
   const animFrameIdRef = useRef<number>(0);
   const maxMakespan = useRef<number>(950.0);
   const cameraTargetRef = useRef<THREE.Vector3>(new THREE.Vector3(75, 0, 50));
+  const selectionRingRef = useRef<THREE.Mesh | null>(null);
+
+  // Helper to find AMR mesh with robust ID normalization (AMR_001, AMR-01, amr_1)
+  const getAmrMesh = (vId: string | null) => {
+    if (!vId) return undefined;
+    if (amrMeshesRef.current.has(vId)) return amrMeshesRef.current.get(vId);
+    const norm = vId.toUpperCase().replace(/[-_]/g, '').replace(/^AMR0*/, 'AMR');
+    for (const [key, mesh] of amrMeshesRef.current.entries()) {
+      if (key.toUpperCase().replace(/[-_]/g, '').replace(/^AMR0*/, 'AMR') === norm) {
+        return mesh;
+      }
+    }
+    return undefined;
+  };
+
+  // Reset simulation clock and sync 3D view whenever Run ID or schedule changes
+  useEffect(() => {
+    setCurrentTime(0);
+    setIsPlaying(true);
+  }, [schedule?.run_id, runId]);
 
   // 1. Calculate Active Routes and Boundary Metrics
   const activeRoutes = useMemo(() => {
@@ -165,6 +198,21 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
     dirLight.shadow.camera.bottom = -dSize;
     scene.add(dirLight);
 
+    // Glowing AMR Selection Ring on the warehouse floor
+    const ringGeo = new THREE.RingGeometry(1.6, 2.2, 32);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.9,
+    });
+    const selRing = new THREE.Mesh(ringGeo, ringMat);
+    selRing.rotation.x = -Math.PI / 2;
+    selRing.position.set(0, 0.08, 0);
+    selRing.visible = false;
+    scene.add(selRing);
+    selectionRingRef.current = selRing;
+
     // Corner Accent Lights
     const blueLight = new THREE.PointLight(0x00f0ff, 1.8, 120);
     blueLight.position.set(15, 25, 15);
@@ -181,12 +229,14 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
     // Mouse Orbit Controls (Smooth drag and zoom)
     let isDragging = false;
     let prevMouse = { x: 0, y: 0 };
+    let mouseDownPos = { x: 0, y: 0 };
 
     const onMouseDown = (e: MouseEvent) => {
-      // Don't drag if clicking UI buttons
-      if ((e.target as HTMLElement).closest('.glass-panel, .glass-card, button, input')) return;
+      // Don't drag if clicking UI buttons or selects
+      if ((e.target as HTMLElement).closest('.glass-panel, .glass-card, button, input, select')) return;
       isDragging = true;
       prevMouse = { x: e.clientX, y: e.clientY };
+      mouseDownPos = { x: e.clientX, y: e.clientY };
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -215,8 +265,27 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
       prevMouse = { x: e.clientX, y: e.clientY };
     };
 
-    const onMouseUp = () => {
+    const onMouseUp = (e: MouseEvent) => {
       isDragging = false;
+      const dist = Math.hypot(e.clientX - mouseDownPos.x, e.clientY - mouseDownPos.y);
+      // Click detection: raycast to select AMR in 3D scene
+      if (dist < 6 && cameraRef.current && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), cameraRef.current);
+
+        for (const [vId, amrGroup] of amrMeshesRef.current.entries()) {
+          const intersects = raycaster.intersectObjects(amrGroup.children, true);
+          if (intersects.length > 0) {
+            setSelectedVehicle(vId);
+            if (onSelectVehicle) onSelectVehicle(vId);
+            return;
+          }
+        }
+      }
     };
 
     const onWheel = (e: WheelEvent) => {
@@ -239,14 +308,21 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
       if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
       const w = containerRef.current.clientWidth;
       const h = containerRef.current.clientHeight;
+      if (w === 0 || h === 0) return;
       cameraRef.current.aspect = w / h;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(w, h);
     };
     window.addEventListener('resize', handleResize);
 
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    resizeObserver.observe(container);
+
     return () => {
       cancelAnimationFrame(animFrameIdRef.current);
+      resizeObserver.disconnect();
       container.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
@@ -634,6 +710,17 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
         }
       });
 
+      // Update floor selection ring position to follow chosen AMR
+      if (selectionRingRef.current) {
+        const selMesh = getAmrMesh(selectedVehicle);
+        if (selMesh) {
+          selectionRingRef.current.visible = true;
+          selectionRingRef.current.position.set(selMesh.position.x, 0.08, selMesh.position.z);
+        } else {
+          selectionRingRef.current.visible = false;
+        }
+      }
+
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
@@ -643,7 +730,7 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
 
     animFrameIdRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animFrameIdRef.current);
-  }, [isPlaying, simSpeed, currentTime, activeRoutes]);
+  }, [isPlaying, simSpeed, currentTime, activeRoutes, selectedVehicle]);
 
   // Handler to Reset Camera View
   const handleResetCamera = () => {
@@ -655,15 +742,67 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
     cameraRef.current.lookAt(cX, 0, cZ);
   };
 
+  // Sync external vehicle selection
+  useEffect(() => {
+    if (selectedVehicleId !== undefined) {
+      setSelectedVehicle(selectedVehicleId);
+      if (selectedVehicleId) {
+        const mesh = getAmrMesh(selectedVehicleId);
+        if (mesh && cameraRef.current) {
+          cameraTargetRef.current.set(mesh.position.x, 0, mesh.position.z);
+          cameraRef.current.lookAt(mesh.position.x, 0, mesh.position.z);
+        }
+      }
+    }
+  }, [selectedVehicleId]);
+
+  // Handle Camera Presets
+  useEffect(() => {
+    if (!cameraRef.current || !cameraPreset) return;
+    const cX = floorMetrics.centerX;
+    const cZ = floorMetrics.centerZ;
+
+    if (cameraPreset === 'overview') {
+      handleResetCamera();
+    } else if (cameraPreset === 'top') {
+      cameraTargetRef.current.set(cX, 0, cZ);
+      cameraRef.current.position.set(cX, Math.max(120, floorMetrics.facilityHeight * 1.45), cZ + 0.01);
+      cameraRef.current.lookAt(cX, 0, cZ);
+    } else if (cameraPreset === 'isometric') {
+      cameraTargetRef.current.set(cX, 0, cZ);
+      cameraRef.current.position.set(cX + 80, 80, cZ + 80);
+      cameraRef.current.lookAt(cX, 0, cZ);
+    } else if (cameraPreset === 'follow') {
+      const vId = selectedVehicleId || selectedVehicle || (activeRoutes[0]?.vehicle_id);
+      if (vId) {
+        const mesh = getAmrMesh(vId);
+        if (mesh) {
+          cameraTargetRef.current.copy(mesh.position);
+          cameraRef.current.position.set(mesh.position.x - 12, mesh.position.y + 10, mesh.position.z - 12);
+          cameraRef.current.lookAt(mesh.position);
+        }
+      }
+    } else if (cameraPreset === 'chute-focus') {
+      const chutes = extractChutesFromRoutes(activeRoutes);
+      if (chutes && chutes.length > 0) {
+        const c = chutes[0];
+        cameraTargetRef.current.set(c.x, 0, c.z);
+        cameraRef.current.position.set(c.x, 35, c.z + 40);
+        cameraRef.current.lookAt(c.x, 0, c.z);
+      }
+    }
+  }, [cameraPreset, selectedVehicleId, floorMetrics]);
+
   // Handler to Focus on a Specific Vehicle
   const handleFocusVehicle = (vehId: string) => {
-    const mesh = amrMeshesRef.current.get(vehId);
+    const mesh = getAmrMesh(vehId);
     if (!mesh || !cameraRef.current) return;
     const pos = mesh.position;
     cameraTargetRef.current.set(pos.x, 0, pos.z);
     cameraRef.current.position.set(pos.x, 42, pos.z + 50);
     cameraRef.current.lookAt(pos.x, 0, pos.z);
     setSelectedVehicle(vehId);
+    onSelectVehicle?.(vehId);
   };
 
   return (
@@ -979,6 +1118,99 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
         )}
       </div>
 
+      {/* Persistent 3D Digital Twin Run ID Identificator HUD Card */}
+      <div
+        className="glass-card"
+        style={{
+          position: 'absolute',
+          top: '16px',
+          right: isLegendOpen ? '440px' : '16px',
+          zIndex: 14,
+          padding: '8px 14px',
+          borderRadius: '8px',
+          background: 'rgba(7, 11, 20, 0.9)',
+          border: '1px solid rgba(0, 240, 255, 0.4)',
+          boxShadow: '0 4px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 240, 255, 0.15)',
+          backdropFilter: 'blur(12px)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          transition: 'right 0.2s ease',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div
+            style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: '#00f0ff',
+              boxShadow: '0 0 8px #00f0ff',
+            }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '9px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.05em' }}>
+                3D TWIN RUN ID
+              </span>
+              <span
+                style={{
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  padding: '1px 5px',
+                  borderRadius: '3px',
+                  backgroundColor: operationalMode === 'QUANTUM' ? 'rgba(0, 240, 255, 0.18)' : 'rgba(245, 158, 11, 0.18)',
+                  color: operationalMode === 'QUANTUM' ? '#00f0ff' : '#f59e0b',
+                  border: `1px solid ${operationalMode === 'QUANTUM' ? 'rgba(0, 240, 255, 0.4)' : 'rgba(245, 158, 11, 0.4)'}`,
+                }}
+              >
+                {operationalMode}
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#f0f4f8',
+                fontFamily: 'var(--font-mono, monospace)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {runId || schedule?.run_id || 'RUN_LIVE_OPTIMAL'}
+            </span>
+          </div>
+        </div>
+
+        {/* Run Selector Combobox Dropdown */}
+        {runs && runs.length > 0 && onSelectRun && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderLeft: '1px solid rgba(255, 255, 255, 0.12)', paddingLeft: '10px' }}>
+            <select
+              value={runId || schedule?.run_id || ''}
+              onChange={(e) => onSelectRun(e.target.value)}
+              title="Switch active Run ID for 3D Digital Twin"
+              style={{
+                background: '#0d1527',
+                border: '1px solid rgba(0, 240, 255, 0.4)',
+                borderRadius: '5px',
+                color: '#f0f4f8',
+                fontSize: '11px',
+                fontFamily: 'var(--font-mono, monospace)',
+                fontWeight: 600,
+                padding: '4px 8px',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+            >
+              {runs.map((r) => (
+                <option key={r.run_id} value={r.run_id} style={{ background: '#0d1527', color: '#f0f4f8' }}>
+                  {r.run_id} ({r.operational_mode || 'VRP'}) - {r.makespan_sec ? `${r.makespan_sec.toFixed(0)}s` : 'active'}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
       {/* Selected AMR Live Telemetry HUD Panel */}
       {selectedVehicle && (
         <HUDPanel
@@ -998,7 +1230,7 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
           isClosable={true}
           accentColor="#38bdf8"
           positionStyle={{
-            top: '16px',
+            top: '80px',
             right: isLegendOpen ? '440px' : '16px',
           }}
           width="280px"

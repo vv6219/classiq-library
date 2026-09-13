@@ -54,16 +54,21 @@ interface DatasetStudioProps {
     options?: { num_orders?: number; num_vehicles?: number; seed?: number }
   ) => void;
   availableScenarios?: Array<{ id: string; name: string; mode?: string }>;
+  isGeneratorOpen?: boolean;
+  onCloseGenerator?: () => void;
+  selectedArchetype?: string;
+  initialParamKey?: string;
 }
 
 const DEFAULT_BENCHMARK_SCENARIOS = [
-  { id: 'SCEN-7D42F06D', name: 'SCEN-7D42F06D (60 ord, 8 AMRs, Benchmark)' },
-  { id: 'SCEN-00CE0A36', name: 'SCEN-00CE0A36 (100 ord, 4 AMRs, Pareto Zone A)' },
-  { id: 'SCEN-7BE4A77D', name: 'SCEN-7BE4A77D (40 ord, 4 AMRs, High Throughput)' },
-  { id: 'SCEN-A5777BBF', name: 'SCEN-A5777BBF (30 ord, 3 AMRs, Rapid Wave)' },
-  { id: 'SCEN-C478110A', name: 'SCEN-C478110A (50 ord, 6 AMRs, Multi-Depot)' },
-  { id: 'SCEN-08AD80F2', name: 'SCEN-08AD80F2 (Hazmat ADR Heavy)' },
-  { id: 'SCEN-1B64274B', name: 'SCEN-1B64274B (Peak Surge Fleet)' },
+  { id: 'SCEN-7D42F06D', name: 'SCEN-7D42F06D (60 orders, 8 AMRs, Benchmark)' },
+  { id: 'SCEN-00CE0A36', name: 'SCEN-00CE0A36 (101 orders, 4 AMRs, Pareto Zone A)' },
+  { id: 'SCEN-48A114D5', name: 'SCEN-48A114D5 (150 orders, 4 AMRs, Heavy Wave)' },
+  { id: 'SCEN-7BE4A77D', name: 'SCEN-7BE4A77D (25 orders, 4 AMRs, High Throughput)' },
+  { id: 'SCEN-CLIENT-GEN-999', name: 'SCEN-CLIENT-GEN-999 (20 orders, 3 AMRs, Client Gen)' },
+  { id: 'SCEN-1B64274B', name: 'SCEN-1B64274B (15 orders, 4 AMRs, Peak Surge)' },
+  { id: 'SCEN-45C0E700', name: 'SCEN-45C0E700 (8 orders, 2 AMRs, Wave-8Orders)' },
+  { id: 'SCEN-EF6DBAE3', name: 'SCEN-EF6DBAE3 (5 orders, 2 AMRs, Wave-5Orders)' },
 ];
 
 export const DatasetStudio: React.FC<DatasetStudioProps> = ({
@@ -71,6 +76,10 @@ export const DatasetStudio: React.FC<DatasetStudioProps> = ({
   onSelectScenario,
   onDispatchDataset,
   availableScenarios = [],
+  isGeneratorOpen,
+  onCloseGenerator,
+  selectedArchetype,
+  initialParamKey,
 }) => {
   const [dataset, setDataset] = useState<DatasetDTO | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +88,12 @@ export const DatasetStudio: React.FC<DatasetStudioProps> = ({
 
   // Modals State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [internalGenerateModalOpen, setInternalGenerateModalOpen] = useState(false);
+  const isGenerateModalOpen = isGeneratorOpen !== undefined ? isGeneratorOpen : internalGenerateModalOpen;
+  const setIsGenerateModalOpen = (open: boolean) => {
+    setInternalGenerateModalOpen(open);
+    if (!open && onCloseGenerator) onCloseGenerator();
+  };
   const [editingOrder, setEditingOrder] = useState<OrderDTO | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationMsg, setGenerationMsg] = useState<string | null>(null);
@@ -224,6 +238,21 @@ export const DatasetStudio: React.FC<DatasetStudioProps> = ({
   const [isParamSpeaking, setIsParamSpeaking] = useState<boolean>(false);
   const [isParamCopied, setIsParamCopied] = useState<boolean>(false);
   const [isParamSubPanelOpen, setIsParamSubPanelOpen] = useState<boolean>(true);
+
+  // Synchronize initialParamKey when opened from sidebar
+  useEffect(() => {
+    if (initialParamKey) {
+      setSelectedParamKey(initialParamKey);
+      setIsParamSubPanelOpen(true);
+    }
+  }, [initialParamKey, isGeneratorOpen]);
+
+  // Synchronize selectedArchetype from sidebar
+  useEffect(() => {
+    if (selectedArchetype) {
+      setGenerateParams((prev) => ({ ...prev, archetype: selectedArchetype }));
+    }
+  }, [selectedArchetype]);
 
   const parameterExplanations: Record<string, {
     key: string;
@@ -849,8 +878,13 @@ export const DatasetStudio: React.FC<DatasetStudioProps> = ({
             id="btn-dispatch-dataset"
             onClick={() => {
               const currentScenId = dataset?.scenario_id || scenarioId;
+              const orderCount = dataset?.orders?.length ?? dataset?.order_count ?? 0;
+              if (orderCount <= 0) {
+                alert('Cannot dispatch dataset: Scenario has 0 orders. Please add orders or generate a scenario before dispatching.');
+                return;
+              }
               onDispatchDataset(currentScenId, {
-                num_orders: dataset?.order_count,
+                num_orders: orderCount,
                 num_vehicles: dataset?.fleet_size,
               });
             }}
