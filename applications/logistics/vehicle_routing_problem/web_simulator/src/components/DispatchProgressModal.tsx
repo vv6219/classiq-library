@@ -248,6 +248,7 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
 
   const [activeSubTab, setActiveSubTab] = useState<'pipeline' | 'parameters' | 'dataset'>('pipeline');
   const [showAllParameters, setShowAllParameters] = useState<boolean>(false);
+  const [isDatasetExpanded, setIsDatasetExpanded] = useState<boolean>(false);
 
   if (!progress.isActive && !progress.isCompleted) return null;
 
@@ -452,7 +453,7 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
       <div
         style={{
           width: '100%',
-          maxWidth: '820px',
+          maxWidth: 'min(980px, 95vw)',
           maxHeight: '94vh',
           backgroundColor: '#070f1e',
           border: '1px solid rgba(0, 240, 255, 0.45)',
@@ -694,301 +695,399 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
           </div>
         </div>
 
-        {/* ========================================================================= */}
-        {/* WELL-DESIGNED INFORMATION PANEL: CURRENT PROCESSING DATASET DESCRIPTION   */}
-        {/* ========================================================================= */}
-        <div
-          style={{
-            margin: '10px 20px 0',
-            padding: '12px 14px',
-            borderRadius: '10px',
-            backgroundColor: 'rgba(15, 23, 42, 0.75)',
-            border: '1px solid rgba(0, 240, 255, 0.25)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-          }}
-        >
-          {/* Panel Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Database size={14} style={{ color: '#00f0ff' }} />
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  color: '#38bdf8',
-                }}
-              >
-                Current Processing DataSet Description & Workload Profile
-              </span>
-            </div>
-            <span
-              style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                padding: '2px 8px',
-                borderRadius: '4px',
-                backgroundColor: 'rgba(56, 189, 248, 0.15)',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
-                color: '#38bdf8',
-                fontFamily: 'monospace',
-              }}
-            >
-              {currentScenarioId}
-            </span>
-          </div>
-
-          {/* Archetype & Description */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
-                {archetypeName}
-              </span>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>•</span>
-              <span style={{ fontSize: '11px', color: '#00f0ff', fontWeight: 500 }}>
-                {stressTarget}
-              </span>
-            </div>
-            <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: 1.35 }}>
-              {archetypeDescription}
-            </div>
-          </div>
-
-          {/* 6 Key Dataset Topology & Parameter Metrics Grid */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(6, 1fr)',
-              gap: '6px',
-              marginTop: '4px',
-            }}
-          >
-            {/* Orders */}
-            <div
-              style={{
-                padding: '5px 8px',
-                borderRadius: '6px',
-                backgroundColor: 'rgba(0, 240, 255, 0.06)',
-                border: '1px solid rgba(0, 240, 255, 0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>Orders</span>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#00f0ff', fontFamily: 'monospace' }}>
-                {orderCount} Items
-              </span>
-            </div>
-
-            {/* Fleet Size */}
-            <div
-              style={{
-                padding: '5px 8px',
-                borderRadius: '6px',
-                backgroundColor: 'rgba(168, 85, 247, 0.06)',
-                border: '1px solid rgba(168, 85, 247, 0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>AMR Fleet</span>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#c084fc', fontFamily: 'monospace' }}>
-                {fleetSize} Robots
-              </span>
-            </div>
-
-            {/* Depots */}
-            <div
-              style={{
-                padding: '5px 8px',
-                borderRadius: '6px',
-                backgroundColor: 'rgba(59, 130, 246, 0.06)',
-                border: '1px solid rgba(59, 130, 246, 0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>Depots</span>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#60a5fa', fontFamily: 'monospace' }}>
-                {depotCount} Docks
-              </span>
-            </div>
-
-            {/* Chutes */}
-            <div
-              style={{
-                padding: '5px 8px',
-                borderRadius: '6px',
-                backgroundColor: 'rgba(236, 72, 153, 0.06)',
-                border: '1px solid rgba(236, 72, 153, 0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>Chutes</span>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#f472b6', fontFamily: 'monospace' }}>
-                {chuteCount} Ports
-              </span>
-            </div>
-
-            {/* Random Seed */}
-            <div
-              style={{
-                padding: '5px 8px',
-                borderRadius: '6px',
-                backgroundColor: 'rgba(251, 191, 36, 0.06)',
-                border: '1px solid rgba(251, 191, 36, 0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>RNG Seed</span>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#fbbf24', fontFamily: 'monospace' }}>
-                Seed {randomSeed}
-              </span>
-            </div>
-
-            {/* Operational Mode */}
-            <div
-              style={{
-                padding: '5px 8px',
-                borderRadius: '6px',
-                backgroundColor: 'rgba(16, 185, 129, 0.06)',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>Mode</span>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399', fontFamily: 'monospace' }}>
-                {opMode}
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* View Mode Bar & Parameter Expand Controls */}
         <div
           style={{
-            padding: '10px 20px 4px',
+            padding: '10px 20px',
+            backgroundColor: 'rgba(10, 15, 28, 0.95)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button
               onClick={() => setActiveSubTab('pipeline')}
               style={{
-                padding: '4px 10px',
+                padding: '5px 12px',
                 borderRadius: '6px',
                 fontSize: '11px',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
                 border: 'none',
                 background: activeSubTab === 'pipeline' ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                 color: activeSubTab === 'pipeline' ? '#00f0ff' : '#94a3b8',
-                borderBottom: activeSubTab === 'pipeline' ? '2px solid #00f0ff' : 'none',
+                boxShadow: activeSubTab === 'pipeline' ? '0 0 10px rgba(0, 240, 255, 0.25)' : 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '5px',
+                transition: 'all 0.15s ease',
               }}
             >
               <Activity size={12} />
               <span>Pipeline Steps (7)</span>
             </button>
             <button
-              onClick={() => setActiveSubTab('parameters')}
+              onClick={() => {
+                setActiveSubTab('parameters');
+                const allOpen: Record<string, boolean> = {};
+                progress.steps.forEach((s) => {
+                  allOpen[s.id] = true;
+                });
+                setExpandedSteps(allOpen);
+              }}
               style={{
-                padding: '4px 10px',
+                padding: '5px 12px',
                 borderRadius: '6px',
                 fontSize: '11px',
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
                 border: 'none',
                 background: activeSubTab === 'parameters' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                 color: activeSubTab === 'parameters' ? '#fbbf24' : '#94a3b8',
-                borderBottom: activeSubTab === 'parameters' ? '2px solid #fbbf24' : 'none',
+                boxShadow: activeSubTab === 'parameters' ? '0 0 10px rgba(251, 191, 36, 0.25)' : 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '5px',
+                transition: 'all 0.15s ease',
               }}
             >
               <Sliders size={12} />
               <span>Step Calculation Parameters (42)</span>
             </button>
+            <button
+              onClick={() => setActiveSubTab('dataset')}
+              style={{
+                padding: '5px 12px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                border: 'none',
+                background: activeSubTab === 'dataset' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                color: activeSubTab === 'dataset' ? '#38bdf8' : '#94a3b8',
+                boxShadow: activeSubTab === 'dataset' ? '0 0 10px rgba(56, 189, 248, 0.25)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Database size={12} />
+              <span>DataSet Profile ({currentScenarioId})</span>
+            </button>
           </div>
 
+          {/* Unified Expand / Collapse All Button with Dynamic Arrow */}
           <button
             onClick={() => {
-              const next = !showAllParameters;
-              setShowAllParameters(next);
-              const allExpanded: Record<string, boolean> = {};
+              const areAllExpanded = progress.steps.length > 0 && progress.steps.every((s) => expandedSteps[s.id]);
+              const nextState = !areAllExpanded;
+              const allUpdated: Record<string, boolean> = {};
               progress.steps.forEach((s) => {
-                allExpanded[s.id] = next;
+                allUpdated[s.id] = nextState;
               });
-              setExpandedSteps(allExpanded);
+              setExpandedSteps(allUpdated);
+              setShowAllParameters(nextState);
+              if (!nextState && activeSubTab === 'parameters') {
+                setActiveSubTab('pipeline');
+              }
             }}
             style={{
-              background: 'none',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#94a3b8',
-              borderRadius: '6px',
-              padding: '3px 8px',
+              background: progress.steps.every((s) => expandedSteps[s.id])
+                ? 'linear-gradient(135deg, rgba(251, 191, 36, 0.22), rgba(245, 158, 11, 0.12))'
+                : 'linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(14, 165, 233, 0.12))',
+              border: progress.steps.every((s) => expandedSteps[s.id])
+                ? '1px solid rgba(251, 191, 36, 0.65)'
+                : '1px solid rgba(0, 240, 255, 0.6)',
+              color: progress.steps.every((s) => expandedSteps[s.id]) ? '#fbbf24' : '#00f0ff',
+              borderRadius: '7px',
+              padding: '6px 14px',
               fontSize: '11px',
+              fontWeight: 800,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '7px',
+              boxShadow: progress.steps.every((s) => expandedSteps[s.id])
+                ? '0 0 14px rgba(251, 191, 36, 0.3)'
+                : '0 0 14px rgba(0, 240, 255, 0.3)',
+              transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
+            title={
+              progress.steps.every((s) => expandedSteps[s.id])
+                ? 'Collapse all 7 execution steps'
+                : 'Expand all 7 execution steps and calculation parameters'
+            }
           >
-            {showAllParameters ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            <span>{showAllParameters ? 'Collapse All Parameters' : 'Expand All Parameters'}</span>
+            {progress.steps.every((s) => expandedSteps[s.id]) ? (
+              <ChevronUp size={15} style={{ strokeWidth: 2.5 }} />
+            ) : (
+              <ChevronDown size={15} style={{ strokeWidth: 2.5 }} />
+            )}
+            <span>
+              {progress.steps.every((s) => expandedSteps[s.id])
+                ? 'Collapse All Steps (7)'
+                : 'Expand All Steps & Parameters (7)'}
+            </span>
           </button>
         </div>
 
-        {/* Detailed Status List with Step Calculation Parameters */}
+        {/* ========================================================================= */}
+        {/* MAIN SCROLLABLE CONTENT BODY (Steps, Parameters & Dataset Profile)         */}
+        {/* ========================================================================= */}
         <div
           style={{
-            flex: 1,
+            flex: '1 1 auto',
+            minHeight: 0,
             overflowY: 'auto',
-            padding: '8px 20px 14px',
+            padding: '14px 20px 20px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '8px',
+            gap: '12px',
+          }}
+        >
+          {/* Collapsible / Expandable DataSet Workload Banner */}
+          <div
+            style={{
+              flexShrink: 0,
+              padding: '10px 14px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(15, 23, 42, 0.8)',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div
+              onClick={() => setIsDatasetExpanded(!isDatasetExpanded)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+              title="Click to toggle full dataset specifications"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Database size={14} style={{ color: '#38bdf8' }} />
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    color: '#38bdf8',
+                  }}
+                >
+                  Active DataSet Profile: <span style={{ color: '#00f0ff', fontFamily: 'monospace' }}>{currentScenarioId}</span>
+                </span>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>•</span>
+                <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 600 }}>
+                  {archetypeName}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                  {orderCount} Orders • {fleetSize} AMRs • {depotCount} Depots • {chuteCount} Chutes
+                </span>
+                <div
+                  style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '5px',
+                    backgroundColor: isDatasetExpanded ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {isDatasetExpanded || activeSubTab === 'dataset' ? (
+                    <ChevronUp size={13} color="#38bdf8" />
+                  ) : (
+                    <ChevronDown size={13} color="#94a3b8" />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Expandable Dataset Topology Grid */}
+            {(isDatasetExpanded || activeSubTab === 'dataset') && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  paddingTop: '8px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
+              >
+                <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: 1.4 }}>
+                  {archetypeDescription} — <span style={{ color: '#00f0ff' }}>{stressTarget}</span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                    gap: '6px',
+                  }}
+                >
+                  {/* Orders */}
+                  <div
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(0, 240, 255, 0.06)',
+                      border: '1px solid rgba(0, 240, 255, 0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>Orders</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#00f0ff', fontFamily: 'monospace' }}>
+                      {orderCount} Items
+                    </span>
+                  </div>
+
+                  {/* Fleet Size */}
+                  <div
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(168, 85, 247, 0.06)',
+                      border: '1px solid rgba(168, 85, 247, 0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>AMR Fleet</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#c084fc', fontFamily: 'monospace' }}>
+                      {fleetSize} Robots
+                    </span>
+                  </div>
+
+                  {/* Depots */}
+                  <div
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(59, 130, 246, 0.06)',
+                      border: '1px solid rgba(59, 130, 246, 0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>Depots</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#60a5fa', fontFamily: 'monospace' }}>
+                      {depotCount} Docks
+                    </span>
+                  </div>
+
+                  {/* Chutes */}
+                  <div
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(236, 72, 153, 0.06)',
+                      border: '1px solid rgba(236, 72, 153, 0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>Chutes</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#f472b6', fontFamily: 'monospace' }}>
+                      {chuteCount} Ports
+                    </span>
+                  </div>
+
+                  {/* Random Seed */}
+                  <div
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(251, 191, 36, 0.06)',
+                      border: '1px solid rgba(251, 191, 36, 0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>RNG Seed</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#fbbf24', fontFamily: 'monospace' }}>
+                      Seed {randomSeed}
+                    </span>
+                  </div>
+
+                  {/* Operational Mode */}
+                  <div
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(16, 185, 129, 0.06)',
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#94a3b8' }}>Mode</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#34d399', fontFamily: 'monospace' }}>
+                      {opMode}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+        {/* Pipeline Steps List */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
           }}
         >
           {progress.steps.map((step, idx) => {
             const isCurrent = step.status === 'running';
             const isDone = step.status === 'completed';
             const isError = step.status === 'error';
-            const isExpanded = expandedSteps[step.id] || showAllParameters || activeSubTab === 'parameters' || isCurrent;
+            const isExpanded = Boolean(expandedSteps[step.id]) || isCurrent;
 
             return (
               <div
                 key={step.id}
                 style={{
+                  flexShrink: 0,
                   borderRadius: '10px',
                   backgroundColor: isCurrent
-                    ? 'rgba(0, 240, 255, 0.07)'
+                    ? 'rgba(0, 240, 255, 0.08)'
                     : isDone
-                    ? 'rgba(15, 23, 42, 0.65)'
-                    : 'rgba(15, 23, 42, 0.35)',
+                    ? 'rgba(15, 23, 42, 0.8)'
+                    : 'rgba(15, 23, 42, 0.45)',
                   border: `1px solid ${
                     isCurrent
-                      ? 'rgba(0, 240, 255, 0.45)'
+                      ? 'rgba(0, 240, 255, 0.55)'
                       : isDone
-                      ? 'rgba(16, 185, 129, 0.25)'
-                      : 'rgba(255, 255, 255, 0.06)'
+                      ? isExpanded
+                        ? 'rgba(0, 240, 255, 0.45)'
+                        : 'rgba(16, 185, 129, 0.3)'
+                      : 'rgba(255, 255, 255, 0.08)'
                   }`,
-                  boxShadow: isCurrent ? '0 0 16px rgba(0, 240, 255, 0.15)' : 'none',
+                  boxShadow: isCurrent
+                    ? '0 0 18px rgba(0, 240, 255, 0.2)'
+                    : isExpanded
+                    ? '0 4px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 240, 255, 0.1)'
+                    : '0 2px 6px rgba(0, 0, 0, 0.3)',
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                   overflow: 'hidden',
                 }}
               >
@@ -996,17 +1095,21 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
                 <div
                   onClick={() => toggleStep(step.id)}
                   style={{
-                    padding: '10px 14px',
+                    padding: '12px 16px',
                     display: 'flex',
-                    alignItems: 'flex-start',
+                    alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: '12px',
+                    gap: '14px',
                     cursor: 'pointer',
+                    backgroundColor: isExpanded ? 'rgba(0, 240, 255, 0.03)' : 'transparent',
+                    borderBottom: isExpanded ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                    transition: 'background-color 0.15s ease',
                   }}
+                  title={isExpanded ? 'Click to collapse step parameters' : 'Click to expand step parameters'}
                 >
                   {/* Left: Step Info */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', flex: 1 }}>
-                    <div style={{ marginTop: '2px' }}>{getStepIcon(step)}</div>
+                    <div style={{ marginTop: '3px' }}>{getStepIcon(step)}</div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
@@ -1014,7 +1117,7 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
                           style={{
                             fontSize: '10px',
                             fontWeight: 800,
-                            color: '#64748b',
+                            color: isExpanded ? '#00f0ff' : '#64748b',
                             fontFamily: 'monospace',
                           }}
                         >
@@ -1053,9 +1156,9 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
                       <div
                         style={{
                           fontSize: '13px',
-                          fontWeight: 600,
-                          color: isCurrent ? '#00f0ff' : isDone ? '#e2e8f0' : '#94a3b8',
-                          marginTop: '2px',
+                          fontWeight: 700,
+                          color: isCurrent ? '#00f0ff' : isDone ? '#f8fafc' : '#94a3b8',
+                          marginTop: '3px',
                         }}
                       >
                         {step.title}
@@ -1064,9 +1167,9 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
                       <div
                         style={{
                           fontSize: '11px',
-                          color: isCurrent ? '#cbd5e1' : '#64748b',
+                          color: isCurrent ? '#cbd5e1' : '#94a3b8',
                           marginTop: '2px',
-                          lineHeight: 1.35,
+                          lineHeight: 1.4,
                         }}
                       >
                         {step.description}
@@ -1074,17 +1177,17 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Right: Step Status Badge & Expand Caret */}
+                  {/* Right: Step Status Badge & Expand Arrow */}
                   <div
                     style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'flex-end',
-                      gap: '4px',
+                      gap: '5px',
                       flexShrink: 0,
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span
                         style={{
                           fontSize: '10px',
@@ -1109,7 +1212,23 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
                       >
                         {isDone ? 'COMPLETED' : isCurrent ? 'RUNNING...' : isError ? 'FAILED' : 'QUEUED'}
                       </span>
-                      {isExpanded ? <ChevronUp size={14} color="#64748b" /> : <ChevronDown size={14} color="#64748b" />}
+
+                      <div
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '6px',
+                          backgroundColor: isExpanded ? 'rgba(0, 240, 255, 0.18)' : 'rgba(255, 255, 255, 0.06)',
+                          border: isExpanded ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid rgba(255, 255, 255, 0.12)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.15s ease',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {isExpanded ? <ChevronUp size={15} color="#00f0ff" /> : <ChevronDown size={15} color="#94a3b8" />}
+                      </div>
                     </div>
 
                     {step.elapsedMs !== undefined && (
@@ -1146,84 +1265,135 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
                 {isExpanded && step.calculationParams && step.calculationParams.length > 0 && (
                   <div
                     style={{
-                      padding: '8px 14px 10px',
-                      backgroundColor: 'rgba(7, 15, 30, 0.75)',
-                      borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                      padding: '14px 18px 16px',
+                      backgroundColor: 'rgba(5, 10, 20, 0.94)',
+                      borderTop: '1px solid rgba(0, 240, 255, 0.18)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
                     }}
                   >
+                    {/* Operational Summary Strip */}
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        marginBottom: '6px',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Sliders size={11} style={{ color: '#fbbf24' }} />
+                        <Sliders size={13} style={{ color: '#fbbf24' }} />
                         <span
                           style={{
-                            fontSize: '10px',
-                            fontWeight: 700,
+                            fontSize: '10.5px',
+                            fontWeight: 800,
                             textTransform: 'uppercase',
                             letterSpacing: '0.04em',
                             color: '#fbbf24',
                           }}
                         >
-                          Step 0{step.stepNumber} Current Calculation Parameters & Mathematical Constraints
+                          Step 0{step.stepNumber} Mathematical Parameters & Optimization Bounds
                         </span>
                       </div>
-                      <span style={{ fontSize: '10px', color: '#64748b' }}>
-                        {step.calculationParams.length} Active Parameters
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {step.metric && (
+                          <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 600 }}>
+                            Gate: {step.metric}
+                          </span>
+                        )}
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '2px 7px',
+                            borderRadius: '4px',
+                            backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                            color: '#fbbf24',
+                          }}
+                        >
+                          {step.calculationParams.length} Parameters
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Parameters Grid */}
+                    {/* Parameters Grid (Spacious, Fully Responsive Cards with No Inside Text Truncation) */}
                     <div
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(3, 1fr)',
-                        gap: '6px',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                        gap: '8px',
                       }}
                     >
                       {step.calculationParams.map((param) => (
                         <div
                           key={param.key}
                           style={{
-                            padding: '4px 8px',
-                            borderRadius: '5px',
-                            backgroundColor: 'rgba(15, 23, 42, 0.8)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            padding: '9px 12px',
+                            borderRadius: '7px',
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            border: '1px solid rgba(255, 255, 255, 0.09)',
                             display: 'flex',
                             flexDirection: 'column',
+                            gap: '3px',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.35)',
                           }}
                           title={param.hint}
                         >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                            <span
+                              style={{
+                                fontSize: '10.5px',
+                                color: '#cbd5e1',
+                                fontWeight: 600,
+                                lineHeight: 1.25,
+                              }}
+                            >
+                              {param.label}
+                            </span>
+                            {param.unit && (
+                              <span
+                                style={{
+                                  fontSize: '9px',
+                                  color: '#64748b',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                  padding: '1px 5px',
+                                  borderRadius: '3px',
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {param.unit}
+                              </span>
+                            )}
+                          </div>
                           <span
                             style={{
-                              fontSize: '9px',
-                              color: '#94a3b8',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {param.label}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: '11px',
-                              fontWeight: 600,
-                              color: '#f3f4f6',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              color: '#00f0ff',
                               fontFamily: 'monospace',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              marginTop: '1px',
+                              wordBreak: 'break-word',
+                              marginTop: '2px',
                             }}
                           >
                             {param.value}
                           </span>
+                          {param.hint && (
+                            <span
+                              style={{
+                                fontSize: '9.5px',
+                                color: '#94a3b8',
+                                lineHeight: 1.35,
+                                marginTop: '2px',
+                              }}
+                            >
+                              {param.hint}
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1232,6 +1402,7 @@ export const DispatchProgressModal: React.FC<DispatchProgressModalProps> = ({
               </div>
             );
           })}
+        </div>
         </div>
 
         {/* Footer Bar */}

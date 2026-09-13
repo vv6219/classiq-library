@@ -8,10 +8,22 @@ interface PDFModalProps {
   runId: string;
   isOpen: boolean;
   onClose: () => void;
+  initialProfile?: 'EXECUTIVE' | 'COMPREHENSIVE' | 'QUANTUM' | 'CERTIFICATE';
 }
 
-export const PDFModal: React.FC<PDFModalProps> = ({ runId, isOpen, onClose }) => {
-  const [profile, setProfile] = useState<'EXECUTIVE' | 'COMPREHENSIVE' | 'QUANTUM' | 'CERTIFICATE'>('EXECUTIVE');
+export const PDFModal: React.FC<PDFModalProps> = ({
+  runId,
+  isOpen,
+  onClose,
+  initialProfile = 'EXECUTIVE',
+}) => {
+  const [profile, setProfile] = useState<'EXECUTIVE' | 'COMPREHENSIVE' | 'QUANTUM' | 'CERTIFICATE'>(initialProfile);
+
+  React.useEffect(() => {
+    if (isOpen && initialProfile) {
+      setProfile(initialProfile);
+    }
+  }, [isOpen, initialProfile]);
 
   if (!isOpen) return null;
 
@@ -20,27 +32,27 @@ export const PDFModal: React.FC<PDFModalProps> = ({ runId, isOpen, onClose }) =>
   const profiles = [
     {
       id: 'EXECUTIVE',
-      title: 'Executive 1-Pager',
+      title: 'Executive Brief (2 Pages)',
       icon: <FileText size={16} />,
-      desc: 'High-level KPI scorecard, fleet makespan, route distance, and executive summary.',
+      desc: 'High-level KPI scorecard, 4-way solver benchmark, AMR fleet mission schedule & battery/payload margins.',
     },
     {
       id: 'COMPREHENSIVE',
-      title: 'Comprehensive Dossier',
+      title: 'Comprehensive Dossier (7 Pages)',
       icon: <Layers size={16} />,
-      desc: 'Complete multi-tier schedule, 3D LIFO DAG graphs, chute accumulation, and kinematic profiles.',
+      desc: 'Full 15-rule audit checklist, 150m×100m coordinate tour routing, 3D LIFO DAG plan/elevation, kinematics & OpenTelemetry waterfall.',
     },
     {
       id: 'QUANTUM',
-      title: 'Quantum Monograph',
+      title: 'Quantum Monograph (3 Pages)',
       icon: <Atom size={16} />,
-      desc: 'Bloch sphere state coordinates, QAOA energy surface, bitstring spectrum, and Shannon entropy.',
+      desc: 'QAOA energy landscape surface, bitstring spectrum, Shannon entropy phase transition, and native Qmod synthesis metrics.',
     },
     {
       id: 'CERTIFICATE',
-      title: 'Safety Audit Certificate',
+      title: 'Safety Audit Certificate (1 Page)',
       icon: <Award size={16} />,
-      desc: 'DIN EN ISO 3691-4 & 4-Gate Invariant audit compliance certificate with cryptographic proof.',
+      desc: 'DIN EN ISO 3691-4 & 4-Gate Invariant audit compliance certificate with cryptographic SHA-256 seal.',
     },
   ];
 

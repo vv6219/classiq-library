@@ -29,13 +29,24 @@ import {
 } from '../utils/floorBoundsCalculator';
 import { CodeLmnBadge } from './CodeLmnBadge';
 import { Scene3DLegendPanel } from './Scene3DLegendPanel';
+import { HUDPanel, HUDPanelDisplayMode } from './common/HUDPanel';
+import { PanelStackDock } from './common/PanelStackManager';
 
 interface ThreeWarehouseCanvasProps {
   schedule: ScheduleDetails | null;
   onNavigateTo2D?: () => void;
+  operationalMode?: string;
+  quantumPanelMode?: HUDPanelDisplayMode;
+  onQuantumPanelModeChange?: (mode: HUDPanelDisplayMode) => void;
 }
 
-export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ schedule, onNavigateTo2D }) => {
+export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
+  schedule,
+  onNavigateTo2D,
+  operationalMode = 'QUANTUM',
+  quantumPanelMode = 'expanded',
+  onQuantumPanelModeChange,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [simSpeed, setSimSpeed] = useState<number>(2.0);
@@ -47,6 +58,22 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
   const [showRacks, setShowRacks] = useState<boolean>(true);
   const [showStopWaypoints, setShowStopWaypoints] = useState<boolean>(true);
   const [isLegendOpen, setIsLegendOpen] = useState<boolean>(false);
+
+  // HUD Panel Stack Display Modes
+  const [floorEnvelopeMode, setFloorEnvelopeMode] = useState<HUDPanelDisplayMode>('expanded');
+  const [amrTelemetryMode, setAmrTelemetryMode] = useState<HUDPanelDisplayMode>('expanded');
+
+  const handleMinimizeAll = () => {
+    setFloorEnvelopeMode('minimized');
+    setAmrTelemetryMode('minimized');
+    if (onQuantumPanelModeChange) onQuantumPanelModeChange('minimized');
+  };
+
+  const handleRestoreAll = () => {
+    setFloorEnvelopeMode('expanded');
+    setAmrTelemetryMode('expanded');
+    if (onQuantumPanelModeChange) onQuantumPanelModeChange('expanded');
+  };
 
   // References for Three.js objects
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -636,32 +663,89 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
       {/* 3D WebGL Canvas Container */}
       <div ref={containerRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
 
-      {/* TOP-LEFT: Floor Boundary & Route Stops Leakage Verification Card */}
-      <div
-        className="glass-card"
-        style={{
-          position: 'absolute',
-          top: '16px',
-          left: '16px',
-          width: '320px',
-          padding: '14px',
-          zIndex: 10,
-          backgroundColor: 'rgba(10, 14, 23, 0.88)',
-          border: floorMetrics.isFullyContained ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid rgba(239, 68, 68, 0.6)',
-          borderRadius: '10px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+      {/* TOP-CENTER: Central HUD Panel Stack Dock Controller */}
+      <PanelStackDock
+        state={{
+          floorEnvelope: floorEnvelopeMode,
+          amrTelemetry: amrTelemetryMode,
+          quantumCoProc: quantumPanelMode,
+          isLegendOpen,
+          selectedVehicleId: selectedVehicle,
+          operationalMode,
         }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShieldCheck size={16} color={floorMetrics.isFullyContained ? '#00f0ff' : '#ef4444'} />
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#f0f4f8' }}>
-              FLOOR SURFACE ENVELOPE
-            </span>
-          </div>
-          <CodeLmnBadge />
-        </div>
+        actions={{
+          setFloorEnvelopeMode,
+          setAmrTelemetryMode,
+          setQuantumCoProcMode: (m) => {
+            if (onQuantumPanelModeChange) onQuantumPanelModeChange(m);
+          },
+          setIsLegendOpen,
+          minimizeAll: handleMinimizeAll,
+          restoreAll: handleRestoreAll,
+        }}
+      />
 
+      {/* TOP-LEFT: Floor Boundary & Route Stops Leakage Verification Panel */}
+      <HUDPanel
+        id="floor-surface-envelope-panel"
+        title="FLOOR SURFACE ENVELOPE"
+        icon={<ShieldCheck size={16} color={floorMetrics.isFullyContained ? '#00f0ff' : '#ef4444'} />}
+        badge={{
+          text: floorMetrics.isFullyContained ? '100% CONTAINED' : 'LEAKAGE',
+          color: floorMetrics.isFullyContained ? '#34d399' : '#f87171',
+          bg: floorMetrics.isFullyContained ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.2)',
+          border: floorMetrics.isFullyContained ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.5)',
+        }}
+        summaryText={`${floorMetrics.facilityWidth.toFixed(0)}m × ${floorMetrics.facilityHeight.toFixed(0)}m • 0 Leakage`}
+        mode={floorEnvelopeMode}
+        onModeChange={setFloorEnvelopeMode}
+        accentColor={floorMetrics.isFullyContained ? '#00f0ff' : '#ef4444'}
+        positionStyle={{ top: '16px', left: '16px' }}
+        width="330px"
+        zIndex={15}
+        actions={
+          <div style={{ display: 'flex', gap: '3px' }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPerimeterBarrier(!showPerimeterBarrier);
+              }}
+              style={{
+                padding: '2px 6px',
+                fontSize: '9.5px',
+                fontWeight: 600,
+                borderRadius: '3px',
+                backgroundColor: showPerimeterBarrier ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                border: showPerimeterBarrier ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.12)',
+                color: showPerimeterBarrier ? '#00f0ff' : '#94a3b8',
+                cursor: 'pointer',
+              }}
+              title="Toggle perimeter fence visibility"
+            >
+              Fence
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowRacks(!showRacks);
+              }}
+              style={{
+                padding: '2px 6px',
+                fontSize: '9.5px',
+                fontWeight: 600,
+                borderRadius: '3px',
+                backgroundColor: showRacks ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                border: showRacks ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.12)',
+                color: showRacks ? '#38bdf8' : '#94a3b8',
+                cursor: 'pointer',
+              }}
+              title="Toggle storage racks visibility"
+            >
+              Racks
+            </button>
+          </div>
+        }
+      >
         {/* Status Indicator */}
         <div
           style={{
@@ -714,7 +798,7 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
           </div>
         </div>
 
-        {/* Interactive 3D Layer Toggles */}
+        {/* Action Controls */}
         <div
           style={{
             marginTop: '10px',
@@ -725,36 +809,6 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
             justifyContent: 'space-between',
           }}
         >
-          <button
-            onClick={() => setShowPerimeterBarrier(!showPerimeterBarrier)}
-            style={{
-              padding: '3px 8px',
-              fontSize: '10px',
-              fontWeight: 600,
-              borderRadius: '4px',
-              backgroundColor: showPerimeterBarrier ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-              border: showPerimeterBarrier ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.1)',
-              color: showPerimeterBarrier ? '#00f0ff' : '#94a3b8',
-              cursor: 'pointer',
-            }}
-          >
-            Boundary Fence
-          </button>
-          <button
-            onClick={() => setShowRacks(!showRacks)}
-            style={{
-              padding: '3px 8px',
-              fontSize: '10px',
-              fontWeight: 600,
-              borderRadius: '4px',
-              backgroundColor: showRacks ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-              border: showRacks ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
-              color: showRacks ? '#38bdf8' : '#94a3b8',
-              cursor: 'pointer',
-            }}
-          >
-            Aisle Racks
-          </button>
           <button
             onClick={handleResetCamera}
             style={{
@@ -791,7 +845,7 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
             <Layers size={11} /> Legend &amp; Tours
           </button>
         </div>
-      </div>
+      </HUDPanel>
 
       {/* Floating Simulation Controls Overlay */}
       <div
@@ -914,49 +968,83 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({ sche
         )}
       </div>
 
-      {/* Selected AMR Live Telemetry HUD Card */}
+      {/* Selected AMR Live Telemetry HUD Panel */}
       {selectedVehicle && (
-        <div
-          className="glass-card"
-          style={{
-            position: 'absolute',
-            top: '20px',
-            right: isLegendOpen ? '440px' : '20px',
-            width: '260px',
-            padding: '16px',
-            zIndex: 10,
-            transition: 'right 0.25s ease',
+        <HUDPanel
+          id="amr-live-telemetry-panel"
+          title={`${selectedVehicle} TELEMETRY`}
+          icon={<Navigation size={16} color="#38bdf8" />}
+          badge={{
+            text: 'MISSION ACTIVE',
+            color: '#34d399',
+            bg: 'rgba(16, 185, 129, 0.18)',
+            border: 'rgba(16, 185, 129, 0.4)',
           }}
+          summaryText="1.38 m/s • 88.4% SoC"
+          mode={amrTelemetryMode}
+          onModeChange={setAmrTelemetryMode}
+          onClose={() => setSelectedVehicle(null)}
+          isClosable={true}
+          accentColor="#38bdf8"
+          positionStyle={{
+            top: '16px',
+            right: isLegendOpen ? '440px' : '16px',
+          }}
+          width="280px"
+          zIndex={15}
+          actions={
+            <button
+              onClick={() => handleFocusVehicle(selectedVehicle)}
+              style={{
+                padding: '2px 6px',
+                fontSize: '9.5px',
+                fontWeight: 600,
+                borderRadius: '3px',
+                backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                border: '1px solid #38bdf8',
+                color: '#38bdf8',
+                cursor: 'pointer',
+              }}
+              title={`Focus 3D camera on ${selectedVehicle}`}
+            >
+              Focus
+            </button>
+          }
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Navigation size={18} color="#60a5fa" />
-              <span style={{ fontWeight: 700, fontSize: '14px', color: '#f3f4f6' }}>{selectedVehicle} TELEMETRY</span>
-            </div>
-            <span style={{ fontSize: '10px', background: '#065f46', color: '#34d399', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
-              MISSION ACTIVE
-            </span>
-          </div>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9ca3af' }}>
               <span>Speed:</span>
-              <span style={{ color: '#60a5fa', fontWeight: 600 }}>1.38 m/s</span>
+              <span style={{ color: '#60a5fa', fontWeight: 600 }}>1.38 m/s (Nominal)</span>
             </div>
+            {/* Speed bar */}
+            <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ width: '92%', height: '100%', backgroundColor: '#60a5fa', borderRadius: '2px' }} />
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9ca3af' }}>
               <span>Battery SOC:</span>
-              <span style={{ color: '#34d399', fontWeight: 600 }}>88.4%</span>
+              <span style={{ color: '#34d399', fontWeight: 600 }}>88.4% (Reserve ≥ 20%)</span>
             </div>
+            {/* Battery bar */}
+            <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ width: '88.4%', height: '100%', backgroundColor: '#34d399', borderRadius: '2px' }} />
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9ca3af' }}>
               <span>Payload:</span>
-              <span style={{ color: '#fbbf24', fontWeight: 600 }}>142.5 kg</span>
+              <span style={{ color: '#fbbf24', fontWeight: 600 }}>142.5 kg / 200 kg (71.2%)</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9ca3af' }}>
+            {/* Payload bar */}
+            <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ width: '71.2%', height: '100%', backgroundColor: '#fbbf24', borderRadius: '2px' }} />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9ca3af', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <span>ISO 3691-4 Zone:</span>
-              <span style={{ color: '#e5e7eb' }}>NOMINAL (FREE)</span>
+              <span style={{ color: '#10b981', fontWeight: 700 }}>NOMINAL (FREE)</span>
             </div>
           </div>
-        </div>
+        </HUDPanel>
       )}
 
       {/* 3D Scene Intelligence & Legend Drawer Panel */}

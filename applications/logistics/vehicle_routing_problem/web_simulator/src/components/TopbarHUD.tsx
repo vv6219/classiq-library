@@ -3,6 +3,8 @@ import { Play, FileText, Cpu, ShieldCheck, Zap, RotateCcw, Sliders, History, Boo
 import { WaveExecutionResponse, RunSummaryDTO } from '../services/api';
 import { CodeLmnBadge } from './CodeLmnBadge';
 import { DispatchProgressState } from './DispatchProgressModal';
+import { ReportsDropdownMenu } from './ReportsDropdownMenu';
+import { PDFProfileId } from '../data/reportsRegistry';
 import {
   trackButtonClick,
   trackLinkClick,
@@ -18,7 +20,7 @@ interface TopbarHUDProps {
   onDispatchClick: () => void;
   onReRunClick: () => void;
   onOpenConfig: () => void;
-  onOpenPDF: () => void;
+  onOpenPDF: (profile?: PDFProfileId) => void;
   isSolving: boolean;
   runs: RunSummaryDTO[];
   currentRunId: string;
@@ -113,19 +115,36 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
             >
               YES&amp;NO QUANTUM
             </span>
-            <span
+            <button
+              onClick={() => {
+                const nextMode = operationalMode === 'QUANTUM' ? 'CLASSICAL' : 'QUANTUM';
+                trackButtonClick('Toggle_Operational_Mode_Badge', 'TopLevel_HUD', { newMode: nextMode });
+                setOperationalMode(nextMode);
+              }}
               style={{
                 fontSize: '10px',
-                background: 'rgba(6, 182, 212, 0.2)',
-                border: '1px solid rgba(6, 182, 212, 0.5)',
-                color: '#22d3ee',
-                padding: '1px 6px',
-                borderRadius: '4px',
-                fontWeight: 600,
+                background: operationalMode === 'QUANTUM' ? 'rgba(6, 182, 212, 0.22)' : 'rgba(251, 191, 36, 0.2)',
+                border: operationalMode === 'QUANTUM' ? '1px solid rgba(6, 182, 212, 0.6)' : '1px solid rgba(251, 191, 36, 0.5)',
+                color: operationalMode === 'QUANTUM' ? '#22d3ee' : '#fbbf24',
+                padding: '2px 8px',
+                borderRadius: '5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                boxShadow: operationalMode === 'QUANTUM' ? '0 0 10px rgba(6, 182, 212, 0.3)' : '0 0 10px rgba(251, 191, 36, 0.25)',
+                transition: 'all 0.2s ease',
               }}
+              title={
+                operationalMode === 'QUANTUM'
+                  ? 'Active: Classiq Quantum Co-Processor (32Q QAOA). Click to switch to Classical CPU.'
+                  : 'Active: Classical Solvers (HGS-ADC). Click to switch to Classiq Quantum Co-Processor.'
+              }
             >
-              CLASSIQ CO-PROC
-            </span>
+              {operationalMode === 'QUANTUM' ? <Sparkles size={11} /> : <Cpu size={11} />}
+              <span>{operationalMode === 'QUANTUM' ? 'CLASSIQ CO-PROC (32Q)' : 'CLASSICAL CPU MODE'}</span>
+            </button>
 
             {/* Native Telegram Channel Join Link */}
             <a
@@ -426,6 +445,118 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
           <span>Config</span>
         </button>
 
+        {/* ========================================================================= */}
+        {/* QUANTUM / CLASSIQ CO-PROCESSOR CALCULATION ENGINE SWITCH                  */}
+        {/* ========================================================================= */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: '#070f1e',
+            border: operationalMode === 'QUANTUM'
+              ? '1px solid rgba(0, 240, 255, 0.45)'
+              : '1px solid rgba(251, 191, 36, 0.45)',
+            borderRadius: '8px',
+            padding: '2px',
+            gap: '3px',
+            boxShadow: operationalMode === 'QUANTUM'
+              ? '0 0 14px rgba(0, 240, 255, 0.25), inset 0 0 8px rgba(0, 240, 255, 0.05)'
+              : '0 0 14px rgba(251, 191, 36, 0.2), inset 0 0 8px rgba(251, 191, 36, 0.05)',
+            transition: 'all 0.2s ease',
+          }}
+          title={
+            operationalMode === 'QUANTUM'
+              ? 'Active Engine: Classiq Quantum Co-Processor (QAOA + SC-QFCM, 32 Qubits, 1024 Shots). Click Classical to toggle.'
+              : 'Active Engine: Classical Deterministic Solvers (HGS-ADC + CP-SAT). Click Quantum to toggle.'
+          }
+        >
+          {/* Quantum (Classiq) Switch Tab */}
+          <button
+            onClick={() => {
+              trackButtonClick('Switch_Mode_Quantum', 'TopLevel_HUD');
+              setOperationalMode('QUANTUM');
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '5px 12px',
+              borderRadius: '6px',
+              border: operationalMode === 'QUANTUM'
+                ? '1px solid rgba(0, 240, 255, 0.7)'
+                : '1px solid transparent',
+              background: operationalMode === 'QUANTUM'
+                ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(168, 85, 247, 0.25))'
+                : 'transparent',
+              color: operationalMode === 'QUANTUM' ? '#00f0ff' : '#64748b',
+              fontSize: '11.5px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              transition: 'all 0.18s ease',
+              boxShadow: operationalMode === 'QUANTUM' ? '0 0 10px rgba(0, 240, 255, 0.3)' : 'none',
+            }}
+          >
+            <Sparkles size={13} color={operationalMode === 'QUANTUM' ? '#00f0ff' : '#64748b'} />
+            <span>Quantum (Classiq)</span>
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 800,
+                padding: '1px 5px',
+                borderRadius: '3px',
+                backgroundColor: operationalMode === 'QUANTUM' ? 'rgba(0, 240, 255, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                color: operationalMode === 'QUANTUM' ? '#38bdf8' : '#64748b',
+                fontFamily: 'monospace',
+              }}
+            >
+              32Q
+            </span>
+          </button>
+
+          {/* Classical Switch Tab */}
+          <button
+            onClick={() => {
+              trackButtonClick('Switch_Mode_Classical', 'TopLevel_HUD');
+              setOperationalMode('CLASSICAL');
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '5px 12px',
+              borderRadius: '6px',
+              border: operationalMode === 'CLASSICAL'
+                ? '1px solid rgba(251, 191, 36, 0.7)'
+                : '1px solid transparent',
+              background: operationalMode === 'CLASSICAL'
+                ? 'linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.18))'
+                : 'transparent',
+              color: operationalMode === 'CLASSICAL' ? '#fbbf24' : '#64748b',
+              fontSize: '11.5px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              transition: 'all 0.18s ease',
+              boxShadow: operationalMode === 'CLASSICAL' ? '0 0 10px rgba(251, 191, 36, 0.3)' : 'none',
+            }}
+          >
+            <Cpu size={13} color={operationalMode === 'CLASSICAL' ? '#fbbf24' : '#64748b'} />
+            <span>Classical</span>
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 800,
+                padding: '1px 5px',
+                borderRadius: '3px',
+                backgroundColor: operationalMode === 'CLASSICAL' ? 'rgba(251, 191, 36, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                color: operationalMode === 'CLASSICAL' ? '#f59e0b' : '#64748b',
+                fontFamily: 'monospace',
+              }}
+            >
+              CPU
+            </span>
+          </button>
+        </div>
+
         {/* Re-Run Button */}
         <button
           onClick={() => {
@@ -445,7 +576,7 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
             background: isReRunSolving ? 'rgba(251, 191, 36, 0.15)' : 'rgba(251, 191, 36, 0.05)',
             boxShadow: isReRunSolving ? '0 0 12px rgba(251, 191, 36, 0.4)' : 'none',
           }}
-          title="Re-execute current wave calculation with active configuration (produces new unique run_id)"
+          title={`Re-execute current wave calculation using ${operationalMode === 'QUANTUM' ? 'Classiq Quantum Co-Processor' : 'Classical Solvers'} (produces new unique run_id)`}
         >
           <RotateCcw size={14} className={isSolving ? 'spin' : ''} />
           <span>
@@ -460,29 +591,47 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
             onDispatchClick();
           }}
           disabled={isSolving}
-          className="btn-quantum"
-          style={{ fontSize: '12px', padding: '8px 16px' }}
+          className={operationalMode === 'QUANTUM' ? 'btn-quantum' : 'btn-primary'}
+          style={{
+            fontSize: '12px',
+            padding: '8px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: operationalMode === 'CLASSICAL'
+              ? 'linear-gradient(135deg, #d97706 0%, #b45309 100%)'
+              : undefined,
+            boxShadow: operationalMode === 'CLASSICAL'
+              ? '0 0 16px rgba(245, 158, 11, 0.35)'
+              : undefined,
+          }}
+          title={
+            operationalMode === 'QUANTUM'
+              ? 'Dispatch Wave via Classiq Quantum Co-Processor (32 Qubits QAOA)'
+              : 'Dispatch Wave via Classical Solvers (HGS-ADC + CP-SAT)'
+          }
         >
-          <Play size={14} className={isDispatchSolving ? 'spin' : ''} />
+          {operationalMode === 'QUANTUM' ? (
+            <Sparkles size={14} className={isDispatchSolving ? 'spin' : ''} />
+          ) : (
+            <Play size={14} className={isDispatchSolving ? 'spin' : ''} />
+          )}
           <span>
-            {isDispatchSolving ? `Solving (${progressPercent}%)...` : 'Dispatch Wave'}
+            {isDispatchSolving
+              ? `Solving (${progressPercent}%)...`
+              : operationalMode === 'QUANTUM'
+              ? 'Dispatch Quantum Wave'
+              : 'Dispatch Classical Wave'}
           </span>
         </button>
 
-        {/* PDF Export Button */}
-        <button
-          onClick={() => {
-            trackButtonClick('Export_PDF_Audit', 'TopLevel_HUD', { run_id: currentRunId });
-            onOpenPDF();
-          }}
+        {/* Engineering & Compliance Reports Dropdown Menu */}
+        <ReportsDropdownMenu
+          runId={currentRunId}
+          lastWave={lastWave}
+          onOpenPDF={onOpenPDF}
           disabled={!currentRunId}
-          className="btn-primary"
-          style={{ fontSize: '12px', padding: '8px 14px' }}
-          title="Generate and view ISO 3691-4 signed PDF engineering report"
-        >
-          <FileText size={14} />
-          <span>PDF</span>
-        </button>
+        />
 
         {/* Swagger UI API Link */}
         <a

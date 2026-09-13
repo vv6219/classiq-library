@@ -377,7 +377,7 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
             profile = query.get("profile", ["EXECUTIVE"])[0]
             run_data = {
                 "run_id": run_id,
-                "wave_id": f"WAVE-{run_id}",
+                "wave_id": f"WAVE-{run_id[:8]}",
                 "operational_mode": "QUANTUM",
                 "total_makespan_sec": 949.3,
                 "total_distance_km": 3.706,
@@ -386,7 +386,57 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                 "verification_code": "lmn",
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
             }
-            pdf_bytes = WavePDFReportGenerator.generate_report(run_record=run_data, profile=profile)
+            schedule_data = None
+
+            try:
+                conn = DatabaseManager.get_connection()
+                try:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM execution_runs WHERE run_id = ?", (run_id,))
+                    row = cursor.fetchone()
+                    if not row:
+                        cursor.execute("SELECT * FROM execution_runs ORDER BY created_datetime DESC LIMIT 1")
+                        row = cursor.fetchone()
+                    if row:
+                        run_data.update({
+                            "run_id": row["run_id"],
+                            "wave_id": row["wave_id"],
+                            "operational_mode": row["operational_mode"],
+                            "total_makespan_sec": float(row["total_makespan_sec"]),
+                            "total_distance_km": float(row["total_distance_km"]),
+                            "chute_variance": float(row["chute_variance"]),
+                            "falsification_ratio_phi": float(row["falsification_ratio_phi"]),
+                            "verification_code": row["verification_code"],
+                            "timestamp": row["timestamp"],
+                        })
+                        cursor.execute("SELECT * FROM vehicle_routes WHERE run_id = ?", (row["run_id"],))
+                        v_rows = cursor.fetchall()
+                        if v_rows:
+                            routes = []
+                            for vr in v_rows:
+                                cursor.execute("SELECT * FROM route_stops WHERE route_id = ? ORDER BY stop_sequence ASC", (vr["route_id"],))
+                                s_rows = cursor.fetchall()
+                                stops = [dict(s) for s in s_rows]
+                                routes.append({
+                                    "route_id": vr["route_id"],
+                                    "vehicle_id": vr["vehicle_id"],
+                                    "origin_depot_id": vr["origin_depot_id"],
+                                    "destination_depot_id": vr["destination_depot_id"],
+                                    "tour_length_m": float(vr["tour_length_m"]),
+                                    "route_makespan_sec": float(vr["route_makespan_sec"]),
+                                    "total_carried_mass_kg": float(vr["total_carried_mass_kg"]),
+                                    "total_carried_volume_m3": float(vr["total_carried_volume_m3"]),
+                                    "volume_utilization_pct": float(vr["volume_utilization_pct"]),
+                                    "battery_consumed_pct": float(vr["battery_consumed_pct"]),
+                                    "stops": stops,
+                                })
+                            schedule_data = {"routes": routes}
+                finally:
+                    conn.close()
+            except Exception:
+                pass
+
+            pdf_bytes = WavePDFReportGenerator.generate_report(run_record=run_data, schedule=schedule_data, profile=profile)
             self._send_binary(200, "application/pdf", pdf_bytes, filename=f"WaveReport_{run_id}_{profile}.pdf")
             return
 

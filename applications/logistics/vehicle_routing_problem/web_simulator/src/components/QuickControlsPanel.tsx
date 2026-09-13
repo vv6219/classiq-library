@@ -465,56 +465,106 @@ export const QuickControlsPanel: React.FC<QuickControlsPanelProps> = ({
             {/* Active Calculation Engine Switcher */}
             <div
               style={{
-                padding: '12px',
-                borderRadius: '8px',
+                padding: '12px 14px',
+                borderRadius: '10px',
                 backgroundColor: '#0c101c',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: mode === 'QUANTUM'
+                  ? '1px solid rgba(0, 240, 255, 0.35)'
+                  : '1px solid rgba(251, 191, 36, 0.35)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                transition: 'border-color 0.2s ease',
               }}
             >
-              <div style={{ fontSize: '11px', color: '#f0f4f8', fontWeight: 600, marginBottom: '6px' }}>
-                Co-Processing Engine Architecture
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={13} style={{ color: mode === 'QUANTUM' ? '#00f0ff' : '#fbbf24' }} />
+                  <span style={{ fontSize: '11px', color: '#f0f4f8', fontWeight: 700 }}>
+                    Co-Processing Calculation Engine
+                  </span>
+                </div>
+                <span
+                  style={{
+                    fontSize: '9.5px',
+                    fontWeight: 800,
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    backgroundColor: mode === 'QUANTUM' ? 'rgba(0, 240, 255, 0.15)' : 'rgba(251, 191, 36, 0.15)',
+                    color: mode === 'QUANTUM' ? '#00f0ff' : '#fbbf24',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  {mode === 'QUANTUM' ? '32Q HARDWARE ACTIVE' : 'CPU MULTI-THREADED'}
+                </span>
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {/* Quantum Classiq Card */}
+                <div
                   onClick={() => setMode && setMode('QUANTUM')}
                   style={{
-                    flex: 1,
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    border: mode === 'QUANTUM' ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.1)',
-                    backgroundColor: mode === 'QUANTUM' ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                    color: mode === 'QUANTUM' ? '#00f0ff' : '#94a3b8',
-                    fontSize: '11px',
-                    fontWeight: 700,
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: mode === 'QUANTUM' ? '1px solid rgba(0, 240, 255, 0.7)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    backgroundColor: mode === 'QUANTUM' ? 'rgba(0, 240, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                    boxShadow: mode === 'QUANTUM' ? '0 0 14px rgba(0, 240, 255, 0.25)' : 'none',
                     cursor: 'pointer',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    flexDirection: 'column',
                     gap: '4px',
+                    transition: 'all 0.18s ease',
                   }}
+                  title="Select Classiq Quantum QAOA + SC-QFCM Co-Processor"
                 >
-                  <Sparkles size={12} /> Classiq QAOA
-                </button>
-                <button
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Sparkles size={13} color={mode === 'QUANTUM' ? '#00f0ff' : '#64748b'} />
+                      <span style={{ fontSize: '11px', fontWeight: 800, color: mode === 'QUANTUM' ? '#00f0ff' : '#cbd5e1' }}>
+                        Classiq QAOA
+                      </span>
+                    </div>
+                    {mode === 'QUANTUM' && (
+                      <span style={{ fontSize: '9px', color: '#38bdf8', fontWeight: 800 }}>✓ ON</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '9.5px', color: mode === 'QUANTUM' ? '#94a3b8' : '#64748b', lineHeight: 1.3 }}>
+                    Quantum Ising Ground State • 32 Qubits • 1024 Shots
+                  </div>
+                </div>
+
+                {/* Classical ALNS Card */}
+                <div
                   onClick={() => setMode && setMode('CLASSICAL')}
                   style={{
-                    flex: 1,
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    border: mode === 'CLASSICAL' ? '1px solid #a855f7' : '1px solid rgba(255, 255, 255, 0.1)',
-                    backgroundColor: mode === 'CLASSICAL' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                    color: mode === 'CLASSICAL' ? '#a855f7' : '#94a3b8',
-                    fontSize: '11px',
-                    fontWeight: 700,
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: mode === 'CLASSICAL' ? '1px solid rgba(251, 191, 36, 0.7)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    backgroundColor: mode === 'CLASSICAL' ? 'rgba(251, 191, 36, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                    boxShadow: mode === 'CLASSICAL' ? '0 0 14px rgba(251, 191, 36, 0.25)' : 'none',
                     cursor: 'pointer',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    flexDirection: 'column',
                     gap: '4px',
+                    transition: 'all 0.18s ease',
                   }}
+                  title="Select Deterministic Classical Solvers (HGS-ADC + CP-SAT)"
                 >
-                  <Cpu size={12} /> Classical ALNS
-                </button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Cpu size={13} color={mode === 'CLASSICAL' ? '#fbbf24' : '#64748b'} />
+                      <span style={{ fontSize: '11px', fontWeight: 800, color: mode === 'CLASSICAL' ? '#fbbf24' : '#cbd5e1' }}>
+                        Classical HGS
+                      </span>
+                    </div>
+                    {mode === 'CLASSICAL' && (
+                      <span style={{ fontSize: '9px', color: '#f59e0b', fontWeight: 800 }}>✓ ON</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '9.5px', color: mode === 'CLASSICAL' ? '#94a3b8' : '#64748b', lineHeight: 1.3 }}>
+                    Deterministic HGS-ADC + CP-SAT • 0 Qubits • Exact Cuts
+                  </div>
+                </div>
               </div>
             </div>
 
