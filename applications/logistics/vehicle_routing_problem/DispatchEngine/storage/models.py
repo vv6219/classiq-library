@@ -75,6 +75,7 @@ try:
         wave_id = Column(String(64), nullable=False, index=True)
         timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
         operational_mode = Column(String(32), nullable=False)
+        mode = Column(String(32), default="32Q", nullable=False)
         algorithm_ranks_used = Column(JSON, nullable=False)
         total_makespan_sec = Column(Float, nullable=False)
         total_distance_km = Column(Float, nullable=False)
@@ -340,6 +341,7 @@ except ImportError:
         chute_variance: float
         total_solve_latency_sec: float
         falsification_ratio_phi: float
+        mode: str = "32Q"
         is_falsified: bool = False
         sla_violations_count: int = 0
         verification_code: str = "lmn"

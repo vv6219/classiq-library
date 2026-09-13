@@ -43,18 +43,32 @@ export const PILLARS_CATALOG: PillarMeta[] = [
     defaultTab: 'graphs',
   },
   {
-    id: 'pillar-reports-studio',
-    title: 'Reports Manager Studio',
-    shortTitle: 'Reports Studio',
-    color: '#10b981',
-    iconName: 'FileText',
-  },
-  {
     id: 'pillar-5',
     title: 'Knowledge, Theory & Developer Tools',
     shortTitle: 'Theory & Tools',
     color: '#60a5fa',
     iconName: 'Lightbulb',
+  },
+  {
+    id: 'pillar-explainer',
+    title: 'Mission & Co-Processor Explainer',
+    shortTitle: 'Explainer',
+    color: '#38bdf8',
+    iconName: 'BookOpen',
+  },
+  {
+    id: 'pillar-sqlite-studio',
+    title: 'SQL Query Console /sqlite',
+    shortTitle: 'SQLite DB',
+    color: '#06b6d4',
+    iconName: 'Database',
+  },
+  {
+    id: 'pillar-reports-studio',
+    title: 'Reports Manager Studio',
+    shortTitle: 'Reports Studio',
+    color: '#10b981',
+    iconName: 'FileText',
   },
 ];
 

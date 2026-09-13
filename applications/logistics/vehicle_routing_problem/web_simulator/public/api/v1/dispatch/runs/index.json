@@ -12,7 +12,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-11T23:07:46.357882+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "mode": "CPU/32Q"
     },
     {
       "run_id": "RUN-9A551FDE",
@@ -26,7 +27,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-11T22:46:06.771228+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "mode": "CPU/32Q"
     },
     {
       "run_id": "RUN-DFF68DB1",
@@ -40,7 +42,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-11T22:47:16.214768+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "mode": "CPU/32Q"
     },
     {
       "run_id": "RUN-73F5EC70",
@@ -54,7 +57,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-13 09:34:04.771283",
-      "created_datetime": "2026-09-13 09:34:04.771283"
+      "created_datetime": "2026-09-13 09:34:04.771283",
+      "mode": "CPU/32Q"
     },
     {
       "run_id": "RUN-7BE4A77D",
@@ -68,7 +72,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-12T15:03:03.365731+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "mode": "CPU/32Q"
     },
     {
       "run_id": "RUN-7D42F06D",
@@ -82,7 +87,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-11T23:42:26.408334+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "mode": "CPU/32Q"
     },
     {
       "run_id": "RUN-00CE0A36",
@@ -96,7 +102,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-12T15:12:52.680192+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "mode": "CPU/32Q"
     },
     {
       "run_id": "RUN-48A114D5",
@@ -110,7 +117,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-12T23:55:55.359516+00:00",
-      "created_datetime": "2026-09-12 23:55:55"
+      "created_datetime": "2026-09-12 23:55:55",
+      "mode": "CPU/32Q"
     }
   ]
 }

@@ -76,6 +76,7 @@ export interface SidebarNavigationProps {
   selectedTier?: string;
   onSelectTier?: (tierKey: string) => void;
   onNavigate?: (item: SubMenuItem, pillar?: PillarCategory, parentGroup?: SubMenuItem) => void;
+  isExplainerOpen?: boolean;
 }
 
 export type MenuItemType = 'tab' | 'action' | 'command' | 'external' | 'group';
@@ -103,7 +104,10 @@ export interface PillarCategory {
   icon: React.ReactNode;
   color: string;
   badge?: string;
+  badgeColor?: string;
   items: SubMenuItem[];
+  onExecute?: () => void;
+  isActive?: boolean;
 }
 
 export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
@@ -138,6 +142,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   selectedTier,
   onSelectTier,
   onNavigate,
+  isExplainerOpen = false,
 }) => {
   // Helper to normalize entity IDs for robust match (AMR_001, AMR-01, amr_1)
   const normalizeEntityId = (id?: string | null) => {
@@ -218,6 +223,11 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         e.preventDefault();
         if (onOpenReportsStudio) onOpenReportsStudio();
         else onToggleReportsPanel();
+      }
+      // Alt+X: Toggle Mission Explainer Drawer
+      if (e.altKey && e.key.toLowerCase() === 'x') {
+        e.preventDefault();
+        onToggleExplainer();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -906,14 +916,6 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
             ],
           },
           {
-            id: 'menu-explainer-pane',
-            label: 'Mission & Co-Processor Explainer',
-            shortLabel: 'Explainer Pane',
-            icon: <BookOpen size={14} />,
-            type: 'action',
-            onExecute: onToggleExplainer,
-          },
-          {
             id: 'menu-steps-progress',
             label: 'Execution Pipeline Latency & Steps',
             shortLabel: '7-Step Pipeline',
@@ -928,13 +930,6 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
             icon: <Code size={14} />,
             type: 'group',
             children: [
-              {
-                id: 'dev-sqlite-studio',
-                label: 'SQLite WASM Database Studio',
-                type: 'external',
-                externalUrl: '/sqlite_db_studio.html',
-                icon: <ExternalLink size={12} />,
-              },
               {
                 id: 'dev-swagger',
                 label: 'DispatchEngine OpenAPI / Swagger UI Runner',
@@ -953,6 +948,74 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                 icon: <ExternalLink size={12} />,
               },
             ],
+          },
+        ],
+      },
+      {
+        id: 'pillar-explainer',
+        title: 'Mission & Co-Processor Explainer',
+        shortTitle: 'Explainer',
+        icon: <BookOpen size={16} />,
+        color: '#38bdf8',
+        badge: isExplainerOpen ? 'Open' : 'Drawer',
+        badgeColor: isExplainerOpen ? '#00f0ff' : '#38bdf8',
+        isActive: isExplainerOpen,
+        onExecute: onToggleExplainer,
+        items: [
+          {
+            id: 'menu-explainer-toggle',
+            label: isExplainerOpen ? 'Close Explainer Drawer' : 'Open Explainer Drawer',
+            shortLabel: 'Toggle Explainer',
+            icon: <BookOpen size={14} />,
+            type: 'action',
+            shortcut: 'Alt+X',
+            badge: isExplainerOpen ? 'Active' : 'Drawer',
+            badgeColor: isExplainerOpen ? '#00f0ff' : '#94a3b8',
+            tooltip: 'Toggle the bottom Mission & Co-Processor Explainer drawer (Alt+X)',
+            onExecute: onToggleExplainer,
+          },
+          {
+            id: 'sub-explainer-concept',
+            label: 'Open Mathematical & Theoretical Dossier',
+            type: 'command',
+            icon: <Lightbulb size={12} />,
+            badge: 'Theory',
+            badgeColor: '#60a5fa',
+            onExecute: onOpenConceptModal,
+          },
+          {
+            id: 'sub-explainer-pipeline',
+            label: 'Open 7-Step Dispatch Pipeline Modal',
+            type: 'command',
+            icon: <ListOrdered size={12} />,
+            badge: '7-Steps',
+            badgeColor: '#38bdf8',
+            onExecute: onOpenStepsModal,
+          },
+        ],
+      },
+      {
+        id: 'pillar-sqlite-studio',
+        title: 'SQL Query Console /sqlite',
+        shortTitle: 'SQLite DB',
+        icon: <Database size={16} />,
+        color: '#06b6d4',
+        badge: 'WASM',
+        badgeColor: '#06b6d4',
+        onExecute: () => {
+          window.open('/sqlite', '_blank', 'noopener,noreferrer');
+        },
+        items: [
+          {
+            id: 'menu-sqlite-studio-main',
+            label: 'SQL Query Console (/sqlite)',
+            shortLabel: 'SQL Console',
+            icon: <Database size={14} />,
+            type: 'external',
+            externalUrl: '/sqlite',
+            badge: 'WASM',
+            badgeColor: '#06b6d4',
+            tooltip: 'Open in-browser SQL Query Console & SQLite database workspace (/sqlite)',
           },
         ],
       },
@@ -1052,6 +1115,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
       onOpenReportsStudio,
       onMinimizeAllPanels,
       onRestoreAllPanels,
+      isExplainerOpen,
     ]
   );
 
@@ -1526,36 +1590,47 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                 <div key={pillar.id} style={{ borderRadius: '6px' }}>
                   {/* Pillar Header Accordion */}
                   <div
-                    onClick={() => togglePillar(pillar.id)}
+                    onClick={() => {
+                      if (pillar.onExecute) {
+                        pillar.onExecute();
+                      }
+                      togglePillar(pillar.id);
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '7px 8px',
                       borderRadius: '6px',
-                      backgroundColor: isPillarExpanded ? 'rgba(255, 255, 255, 0.04)' : 'transparent',
+                      backgroundColor: pillar.isActive
+                        ? `${pillar.color}22`
+                        : isPillarExpanded
+                        ? 'rgba(255, 255, 255, 0.04)'
+                        : 'transparent',
+                      border: pillar.isActive ? `1px solid ${pillar.color}60` : '1px solid transparent',
+                      boxShadow: pillar.isActive ? `0 0 10px ${pillar.color}25` : 'none',
                       cursor: 'pointer',
-                      transition: 'background-color 0.15s ease',
+                      transition: 'all 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.07)';
+                      if (!pillar.isActive) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.07)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = isPillarExpanded ? 'rgba(255, 255, 255, 0.04)' : 'transparent';
+                      if (!pillar.isActive) e.currentTarget.style.backgroundColor = isPillarExpanded ? 'rgba(255, 255, 255, 0.04)' : 'transparent';
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ color: pillar.color }}>{pillar.icon}</span>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#f1f5f9' }}>{pillar.title}</span>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: pillar.isActive ? '#ffffff' : '#f1f5f9' }}>{pillar.title}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                       {pillar.badge && (
                         <span
                           style={{
                             fontSize: '9px',
-                            color: pillar.color,
-                            backgroundColor: `${pillar.color}1a`,
-                            border: `1px solid ${pillar.color}40`,
+                            color: pillar.badgeColor || pillar.color,
+                            backgroundColor: `${pillar.badgeColor || pillar.color}1a`,
+                            border: `1px solid ${pillar.badgeColor || pillar.color}40`,
                             padding: '1px 5px',
                             borderRadius: '4px',
                             fontWeight: 600,
@@ -1903,7 +1978,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 
 
             {pillars.map((pillar) => {
-              const isPillarActive = pillar.items.some(
+              const isPillarActive = pillar.isActive || pillar.items.some(
                 (item) => item.type === 'tab' && item.targetTab === activeTab
               );
               return (
@@ -1922,8 +1997,12 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                 >
                   <button
                     onClick={() => {
-                      setIsExpanded(true);
-                      setExpandedPillars(new Set([pillar.id]));
+                      if (pillar.onExecute) {
+                        pillar.onExecute();
+                      } else {
+                        setIsExpanded(true);
+                        setExpandedPillars(new Set([pillar.id]));
+                      }
                     }}
                     style={{
                       width: '38px',
@@ -1938,10 +2017,25 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                       cursor: 'pointer',
                       boxShadow: isPillarActive ? `0 0 12px ${pillar.color}40` : 'none',
                       transition: 'all 0.15s ease',
+                      position: 'relative',
                     }}
                     title={pillar.title}
                   >
                     {pillar.icon}
+                    {pillar.isActive && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: '3px',
+                          right: '3px',
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          backgroundColor: pillar.color,
+                          boxShadow: `0 0 6px ${pillar.color}`,
+                        }}
+                      />
+                    )}
                   </button>
 
                   {/* Floating Flyout Card on Hover in Collapsed Mode */}

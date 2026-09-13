@@ -64,6 +64,7 @@ class DispatchOrchestrator:
         quantum_config: Optional[Dict[str, Any]] = None,
         lagrangian_weights: Optional[Dict[str, float]] = None,
         kinematics_config: Optional[Dict[str, float]] = None,
+        run_mode: Optional[str] = None,
     ) -> Tuple[RoutingScheduleDTO, KinematicTrajectoryDTO, List[SimulationFrameDTO], DashboardHUDDTO]:
         wave_id = pool.wave_id
         t_global_start = time.perf_counter()
@@ -159,24 +160,23 @@ class DispatchOrchestrator:
             "summary": {"waypoints_count": sum(len(t.waypoints) for t in trajectories.trajectories)},
         })
 
-        # 6. Presentation Framing & Dashboard Compilation
-        frames = SimulationFrameBuilder.build_frames(trajectories, fps=10)
-        phi_ratio = 0.88 if mode == OperationalMode.QUANTUM else 0.92
-        hud = DashboardAggregator.compile_hud(
-            wave_id=wave_id,
-            operational_mode=mode.value,
-            schedule=schedule,
-            falsification_phi=phi_ratio,
-        )
-
         total_solve_sec = time.perf_counter() - t_global_start
 
-        # 7. Database Persistence
+        # 6. Database Persistence
+        # Map operational mode to concise execution mode: '32Q' for Quantum, 'CPU' for Classical
+        if run_mode:
+            exec_run_mode = "32Q" if ("32Q" in str(run_mode).upper() or "QUANTUM" in str(run_mode).upper()) else "CPU"
+        elif mode == OperationalMode.QUANTUM:
+            exec_run_mode = "32Q"
+        else:
+            exec_run_mode = "CPU"
+
         scen_id = scenario_id or f"SCEN-{wave_id}"
         run_id = self.repo.save_execution_run(
             scenario_id=scen_id,
             wave_id=wave_id,
             mode=mode.value,
+            run_mode=exec_run_mode,
             algo_ranks={str(k): v.value for k, v in ranks.items()},
             makespan=schedule.fleet_makespan_sec,
             distance=schedule.total_fleet_distance_km,
@@ -185,6 +185,17 @@ class DispatchOrchestrator:
             phi=phi_ratio,
             is_falsified=bool(phi_ratio >= 1.0),
             tier_summaries=tier_summaries,
+        )
+
+        # 7. Presentation Framing & Dashboard Compilation
+        frames = SimulationFrameBuilder.build_frames(trajectories, fps=10)
+        phi_ratio = 0.88 if mode == OperationalMode.QUANTUM else 0.92
+        hud = DashboardAggregator.compile_hud(
+            wave_id=wave_id,
+            operational_mode=mode.value,
+            schedule=schedule,
+            falsification_phi=phi_ratio,
+            run_id=run_id,
         )
 
         # Deep Persistence: Routes, Stops, Placements, LIFO DAG, Gates, Chutes

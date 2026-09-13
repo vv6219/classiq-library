@@ -28,7 +28,9 @@ import {
   fetchSchedule,
   fetchArchetypes,
   fetchRuns,
+  getCustomRuns,
   CONFIG_LIMITS,
+  CANONICAL_BENCHMARK_RUNS,
   ScheduleDetails,
   ArchetypeMeta,
   RunSummaryDTO,
@@ -38,6 +40,7 @@ import { RouteMap2DStudio } from './components/RouteMap2DStudio';
 import {
   DispatchProgressModal,
   DispatchProgressState,
+  DispatchPipelineStep,
   INITIAL_PIPELINE_STEPS,
 } from './components/DispatchProgressModal';
 import { SidebarNavigation } from './components/navigation/SidebarNavigation';
@@ -160,8 +163,8 @@ export const App: React.FC = () => {
 
   // Run & Execution State
   const [isSolving, setIsSolving] = useState(false);
-  const [currentRunId, setCurrentRunId] = useState<string>('');
-  const [runs, setRuns] = useState<RunSummaryDTO[]>([]);
+  const [currentRunId, setCurrentRunId] = useState<string>(CANONICAL_BENCHMARK_RUNS[0]?.run_id || 'RUN-7D42F06D');
+  const [runs, setRuns] = useState<RunSummaryDTO[]>(CANONICAL_BENCHMARK_RUNS);
   const [lastWave, setLastWave] = useState<WaveExecutionResponse | null>(null);
   const [schedule, setSchedule] = useState<ScheduleDetails | null>(null);
   const [dispatchProgress, setDispatchProgress] = useState<DispatchProgressState | null>(null);
@@ -299,59 +302,6 @@ export const App: React.FC = () => {
     document.title = `${currentTabName} | Quantum WMS Optimizer | YesAndNo Group`;
   }, [activeTab]);
 
-  const loadHistoricalRuns = async () => {
-    try {
-      const data = await fetchRuns(30);
-      if (data && data.length > 0) {
-        setRuns(data);
-        if (!currentScenarioId || currentScenarioId.startsWith('SCENARIO-AUTO')) {
-          setCurrentScenarioId(data[0].scenario_id || 'SCEN-7D42F06D');
-        }
-        // Initialize with first canonical run without dispatching new duplicate runs
-        handleSelectHistoricalRun(data[0].run_id);
-      }
-    } catch (err) {
-      console.warn('Failed to load historical runs:', err);
-    }
-  };
-
-  const handleSelectHistoricalRun = async (runId: string) => {
-    if (!runId) return;
-    setCurrentRunId(runId);
-    const foundRun = runs.find((r) => r.run_id === runId);
-    if (foundRun && foundRun.operational_mode) {
-      setMode(foundRun.operational_mode as any);
-    }
-    if (foundRun) {
-      if (foundRun.scenario_id) {
-        setCurrentScenarioId(foundRun.scenario_id);
-      }
-      setLastWave({
-        run_id: foundRun.run_id,
-        scenario_id: foundRun.scenario_id,
-        wave_id: foundRun.wave_id,
-        operational_mode: foundRun.operational_mode,
-        algorithm_ranks_used: {},
-        total_fleet_makespan_sec: foundRun.makespan_sec,
-        total_distance_km: foundRun.distance_km,
-        chute_balance_variance: foundRun.chute_variance,
-        total_solve_latency_sec: foundRun.solve_latency_sec,
-        falsification_ratio_phi: foundRun.falsification_ratio_phi,
-        is_falsified: foundRun.is_falsified,
-        routes: [],
-      });
-    }
-
-    try {
-      const sched = await fetchSchedule(runId);
-      if (sched && sched.routes) {
-        setSchedule(sched);
-      }
-    } catch (err) {
-      console.warn('Could not load schedule for run:', runId, err);
-    }
-  };
-
   const handleModeChange = (newMode: string) => {
     const validMode = (newMode === 'CLASSICAL' ? 'CLASSICAL' : 'QUANTUM') as 'QUANTUM' | 'CLASSICAL';
     setMode(validMode);
@@ -368,6 +318,115 @@ export const App: React.FC = () => {
         tier3: 'RANK_1Q_CLASSIQ_QAOA',
       }));
     }
+  };
+
+  const loadHistoricalRuns = async (preserveRunId?: string) => {
+    try {
+      const data = await fetchRuns(30);
+      if (data && data.length > 0) {
+        setRuns((prev) => {
+          const dataIds = new Set(data.map((d) => d.run_id));
+          const unsaved = prev.filter((p) => !dataIds.has(p.run_id));
+          return [...unsaved, ...data];
+        });
+        const targetId = preserveRunId || currentRunId;
+        if (targetId && data.some((r) => r.run_id === targetId)) {
+          handleSelectHistoricalRun(targetId);
+        } else if (!currentRunId && data.length > 0) {
+          handleSelectHistoricalRun(data[0].run_id);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load historical runs:', err);
+    }
+  };
+
+  const handleSelectHistoricalRun = async (runId: string) => {
+    if (!runId) return;
+    setCurrentRunId(runId);
+    const allKnownRuns = [...getCustomRuns(), ...runs, ...CANONICAL_BENCHMARK_RUNS];
+    const foundRun = allKnownRuns.find((r) => r.run_id === runId);
+    if (foundRun && foundRun.operational_mode) {
+      const targetMode = (foundRun.operational_mode === 'CLASSICAL' || (foundRun.mode && foundRun.mode.toUpperCase() === 'CPU'))
+        ? 'CLASSICAL'
+        : 'QUANTUM';
+      handleModeChange(targetMode);
+    }
+    if (foundRun) {
+      if (foundRun.scenario_id) {
+        setCurrentScenarioId(foundRun.scenario_id);
+      }
+      setLastWave((prev) => ({
+        ...prev,
+        run_id: foundRun.run_id,
+        scenario_id: foundRun.scenario_id,
+        wave_id: foundRun.wave_id || `WAVE-${foundRun.run_id.replace('RUN-', '')}`,
+        operational_mode: foundRun.operational_mode,
+        mode: foundRun.mode || (foundRun.operational_mode === 'QUANTUM' ? '32Q' : 'CPU'),
+        total_fleet_makespan_sec: foundRun.makespan_sec,
+        total_distance_km: foundRun.distance_km,
+        chute_balance_variance: foundRun.chute_variance,
+        total_solve_latency_sec: foundRun.solve_latency_sec,
+        falsification_ratio_phi: foundRun.falsification_ratio_phi,
+        is_falsified: foundRun.is_falsified,
+      }));
+    }
+
+    try {
+      const sched = await fetchSchedule(runId);
+      if (sched && sched.routes && sched.routes.length > 0) {
+        setSchedule(sched);
+      }
+    } catch (err) {
+      console.warn('Could not load schedule for run:', runId, err);
+    }
+  };
+
+  const getPipelineStepsForMode = (currentMode: 'QUANTUM' | 'CLASSICAL'): DispatchPipelineStep[] => {
+    return INITIAL_PIPELINE_STEPS.map((s) => {
+      if (s.id === 'step_2_mode') {
+        return {
+          ...s,
+          algorithm: currentMode === 'QUANTUM' ? 'AlgorithmSelectorEngine (Pareto Rank 1Q)' : 'AlgorithmSelectorEngine (Classical CPU HGS-ADC)',
+          metric: currentMode === 'QUANTUM' ? 'Quantum 32Q / Co-Processor Rank Selected' : 'Classical CPU / HGS-ADC Rank Selected',
+          calculationParams: s.calculationParams.map((p) =>
+            p.key === 'selected_mode'
+              ? { ...p, value: currentMode === 'QUANTUM' ? 'QUANTUM (32Q Co-Processor Assisted)' : 'CLASSICAL (CPU Multithreaded Solvers)' }
+              : p.key === 'pareto_frontier'
+              ? { ...p, value: currentMode === 'QUANTUM' ? 'T1: 1Q, T2: 1, T3: 1Q, T4: 1' : 'T1: 1, T2: 1, T3: 1, T4: 1' }
+              : p
+          ),
+        };
+      }
+      if (s.id === 'step_3_tier1') {
+        return {
+          ...s,
+          algorithm: currentMode === 'QUANTUM' ? 'Tier1Rank1QQuantumFCMSolver (FCM)' : 'Tier1Rank1KMeansSolver (Capacitated K-Means)',
+          calculationParams: s.calculationParams.map((p) =>
+            p.key === 'solver_rank'
+              ? { ...p, value: currentMode === 'QUANTUM' ? 'RANK_1Q_QUANTUM_FCM' : 'RANK_1_KMEANS_CAPACITATED' }
+              : p
+          ),
+        };
+      }
+      if (s.id === 'step_5_tier3') {
+        return {
+          ...s,
+          title: currentMode === 'QUANTUM' ? 'Multi-Depot VRPTW & QAOA Tour Optimization' : 'Multi-Depot VRPTW & HGS-ADC Tour Optimization',
+          algorithm: currentMode === 'QUANTUM' ? 'Tier3Rank1QQAOASolver (Classiq QAOA / HGS)' : 'Tier3Rank1HGSADCSolver (HGS-ADC Classical)',
+          calculationParams: currentMode === 'QUANTUM'
+            ? s.calculationParams
+            : [
+                { key: 'solver_engine', label: 'Routing Engine', value: 'HGS-ADC (Hybrid Genetic Search)', hint: 'Advanced population-based search with diversity management' },
+                { key: 'population_size', label: 'Population Size', value: '40 Individuals', hint: 'Genetic algorithm chromosome pool size' },
+                { key: 'time_limit', label: 'Time Limit', value: '5.0s', unit: 'Wall-Clock Limit', hint: 'Maximum optimization search budget' },
+                { key: 'lagrangian_weights', label: 'Lagrangian (α, β, γ, λ)', value: '1.0, 2.0, 5.0, 1.5', hint: 'Penalty terms for capacity, time-windows, battery' },
+                { key: 'subtour_penalty', label: 'Subtour Penalty (P)', value: '100.0', unit: 'Penalty Term', hint: 'Subtour violation elimination penalty' },
+              ],
+        };
+      }
+      return { ...s };
+    });
   };
 
   const handleDispatch = async (
@@ -392,8 +451,9 @@ export const App: React.FC = () => {
     let timerInterval: any = null;
 
     if (!isInitial) {
-      // Initialize detailed 7-step pipeline execution state
-      const stepsCopy = INITIAL_PIPELINE_STEPS.map((s, idx) => ({
+      // Initialize detailed 7-step pipeline execution state with current mode
+      const modeSteps = getPipelineStepsForMode(mode);
+      const stepsCopy = modeSteps.map((s, idx) => ({
         ...s,
         status: (idx === 0 ? 'running' : 'pending') as 'running' | 'pending' | 'completed' | 'error',
         elapsedMs: undefined,
@@ -456,6 +516,7 @@ export const App: React.FC = () => {
         num_vehicles: optionsOverride?.num_vehicles ?? preRequestConfig.fleet_size ?? numVehicles,
         seed: isInitial ? 42 : (optionsOverride?.seed ?? preRequestConfig.seed ?? seed),
         operational_mode: mode,
+        mode: mode === 'QUANTUM' ? '32Q' : 'CPU',
         scenario_id: targetScenario,
         tier_algorithms: activeTiers,
         quantum_config: {
@@ -494,6 +555,7 @@ export const App: React.FC = () => {
           wave_id: resp.wave_id,
           timestamp: new Date().toISOString(),
           operational_mode: resp.operational_mode,
+          mode: resp.mode || (mode === 'QUANTUM' ? '32Q' : 'CPU'),
           makespan_sec: resp.total_fleet_makespan_sec,
           distance_km: resp.total_distance_km,
           chute_variance: resp.chute_balance_variance,
@@ -546,9 +608,6 @@ export const App: React.FC = () => {
             routes: resp.routes,
           });
         }
-
-        // Refresh historical runs list
-        loadHistoricalRuns();
       }
     } catch (err: any) {
       if (timerInterval) clearTimeout(timerInterval);
@@ -774,6 +833,7 @@ export const App: React.FC = () => {
           onOpenQuickDrawer={() => setIsQuickDrawerOpen(!isQuickDrawerOpen)}
           onOpenPDF={handleOpenPDF}
           onToggleExplainer={() => setIsExplainerOpen(!isExplainerOpen)}
+          isExplainerOpen={isExplainerOpen}
           onToggleQuantumPanel={() => setIsQuantumPanelOpen(!isQuantumPanelOpen)}
           onOpenConceptModal={() => setIsConceptModalOpen(true)}
           onOpenStepsModal={handleOpenProgressModal}

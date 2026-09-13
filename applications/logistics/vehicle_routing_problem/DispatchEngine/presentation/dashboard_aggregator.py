@@ -15,10 +15,12 @@ class DashboardAggregator:
         schedule: RoutingScheduleDTO,
         quantum_res: Optional[QAOAResultsDTO] = None,
         falsification_phi: float = 0.88,
+        run_id: Optional[str] = None,
     ) -> DashboardHUDDTO:
         return DashboardHUDDTO(
             wave_id=wave_id,
             operational_mode=operational_mode,
+            run_id=run_id,
             total_makespan_sec=schedule.fleet_makespan_sec,
             fleet_distance_km=schedule.total_fleet_distance_km,
             chute_balance_variance=0.45,

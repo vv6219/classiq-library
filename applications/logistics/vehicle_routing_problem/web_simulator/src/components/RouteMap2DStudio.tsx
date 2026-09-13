@@ -22,7 +22,7 @@ import {
   ChevronRight,
   TrendingUp,
 } from 'lucide-react';
-import { ScheduleDetails, VehicleRoute, RouteStop, RunSummaryDTO } from '../services/api';
+import { ScheduleDetails, VehicleRoute, RouteStop, RunSummaryDTO, formatRunMode } from '../services/api';
 
 interface RouteMap2DStudioProps {
   schedule: ScheduleDetails | null;
@@ -348,7 +348,7 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
                   >
                     {runs.map((r) => (
                       <option key={r.run_id} value={r.run_id} style={{ background: '#0d1527', color: '#f0f4f8' }}>
-                        {r.run_id} ({r.operational_mode || 'VRP'})
+                        {r.run_id} • [{formatRunMode(r)}] {r.makespan_sec ? `${r.makespan_sec.toFixed(0)}s` : ''}
                       </option>
                     ))}
                   </select>

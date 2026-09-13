@@ -17,7 +17,7 @@ import {
   CheckCircle2,
   Sparkles,
 } from 'lucide-react';
-import { ScheduleDetails, VehicleRoute, RunSummaryDTO } from '../services/api';
+import { ScheduleDetails, VehicleRoute, RunSummaryDTO, formatRunMode } from '../services/api';
 import {
   calculateFloorBoundaryMetrics,
   generateRackAisles,
@@ -1184,6 +1184,9 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
         {/* Run Selector Combobox Dropdown */}
         {runs && runs.length > 0 && onSelectRun && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderLeft: '1px solid rgba(255, 255, 255, 0.12)', paddingLeft: '10px' }}>
+            <span style={{ fontSize: '9px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+              RUN:
+            </span>
             <select
               value={runId || schedule?.run_id || ''}
               onChange={(e) => onSelectRun(e.target.value)}
@@ -1203,7 +1206,7 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
             >
               {runs.map((r) => (
                 <option key={r.run_id} value={r.run_id} style={{ background: '#0d1527', color: '#f0f4f8' }}>
-                  {r.run_id} ({r.operational_mode || 'VRP'}) - {r.makespan_sec ? `${r.makespan_sec.toFixed(0)}s` : 'active'}
+                  {r.run_id} • [{formatRunMode(r)}] {r.makespan_sec ? `${r.makespan_sec.toFixed(0)}s` : 'active'} {r.distance_km ? `• ${r.distance_km.toFixed(2)}km` : ''}
                 </option>
               ))}
             </select>

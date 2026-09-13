@@ -47,6 +47,7 @@ class SimulationFrameDTO(StrictImmutableDTO):
 class DashboardHUDDTO(StrictImmutableDTO):
     wave_id: str
     operational_mode: str
+    run_id: Optional[str] = None
     total_makespan_sec: float
     fleet_distance_km: float
     chute_balance_variance: float

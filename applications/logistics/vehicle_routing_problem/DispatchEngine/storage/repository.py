@@ -109,9 +109,20 @@ class WarehouseRepository:
         tier_summaries: List[Dict],
         quantum_res: Optional[QAOAResultsDTO] = None,
         run_id: Optional[str] = None,
+        run_mode: Optional[str] = None,
     ) -> str:
         if not run_id:
             run_id = f"RUN-{wave_id.split('-')[-1]}"
+
+        # Resolve concise mode ("32Q" or "CPU") for execution_runs table
+        if run_mode:
+            exec_mode = "32Q" if ("32Q" in str(run_mode).upper() or "QUANTUM" in str(run_mode).upper()) else "CPU"
+        elif "QUANTUM" in str(mode).upper() or str(mode).upper() == "32Q":
+            exec_mode = "32Q"
+        else:
+            exec_mode = "CPU"
+
+        op_mode_str = "CLASSICAL" if (exec_mode == "CPU" or "CLASSIC" in str(mode).upper()) else "QUANTUM"
 
         # Ensure run_id uniqueness across multiple dispatches
         if self.is_sqlalchemy:
@@ -132,7 +143,8 @@ class WarehouseRepository:
                 run_id=run_id,
                 scenario_id=scenario_id,
                 wave_id=wave_id,
-                operational_mode=mode,
+                operational_mode=op_mode_str,
+                mode=exec_mode,
                 algorithm_ranks_used=algo_ranks,
                 total_makespan_sec=makespan,
                 total_distance_km=distance,
@@ -173,10 +185,10 @@ class WarehouseRepository:
             cursor = self.handle.cursor()
             cursor.execute(
                 """
-                INSERT INTO execution_runs (run_id, scenario_id, wave_id, timestamp, operational_mode, algorithm_ranks_used, total_makespan_sec, total_distance_km, chute_variance, total_solve_latency_sec, falsification_ratio_phi, is_falsified)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO execution_runs (run_id, scenario_id, wave_id, timestamp, operational_mode, mode, algorithm_ranks_used, total_makespan_sec, total_distance_km, chute_variance, total_solve_latency_sec, falsification_ratio_phi, is_falsified)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (run_id, scenario_id, wave_id, now_str, mode, json.dumps(algo_ranks), makespan, distance, chute_var, solve_latency, phi, 1 if is_falsified else 0),
+                (run_id, scenario_id, wave_id, now_str, op_mode_str, exec_mode, json.dumps(algo_ranks), makespan, distance, chute_var, solve_latency, phi, 1 if is_falsified else 0),
             )
             for t_info in tier_summaries:
                 cursor.execute(
@@ -775,14 +787,14 @@ class WarehouseRepository:
         return new_scenario_id
 
     def list_runs(self, limit: int = 30) -> List[Dict[str, Any]]:
-        """List historical execution runs with KPI summary."""
+        """List historical execution runs with KPI summary and run mode."""
         conn = self.handle if not self.is_sqlalchemy else None
         cursor = conn.cursor() if conn else None
         if not cursor:
             return []
 
         cursor.execute("""
-            SELECT run_id, scenario_id, wave_id, operational_mode, total_makespan_sec,
+            SELECT run_id, scenario_id, wave_id, operational_mode, mode, total_makespan_sec,
                    total_distance_km, chute_variance, total_solve_latency_sec,
                    falsification_ratio_phi, is_falsified, timestamp
             FROM execution_runs
@@ -796,6 +808,7 @@ class WarehouseRepository:
                 "scenario_id": r["scenario_id"],
                 "wave_id": r["wave_id"],
                 "operational_mode": r["operational_mode"],
+                "mode": r["mode"] if ("mode" in r.keys() and r["mode"]) else ("32Q" if r["operational_mode"] == "QUANTUM" else "CPU"),
                 "makespan_sec": r["total_makespan_sec"],
                 "distance_km": r["total_distance_km"],
                 "chute_variance": r["chute_variance"],
@@ -806,6 +819,112 @@ class WarehouseRepository:
             }
             for r in rows
         ]
+
+    def get_run(self, run_id: str) -> Optional[Dict[str, Any]]:
+        """Get single execution run details by run_id."""
+        conn = self.handle if not self.is_sqlalchemy else self._get_conn()
+        cursor = conn.cursor() if conn else None
+        if not cursor:
+            return None
+
+        cursor.execute("""
+            SELECT run_id, scenario_id, wave_id, operational_mode, mode, total_makespan_sec,
+                   total_distance_km, chute_variance, sla_violations_count, total_solve_latency_sec,
+                   falsification_ratio_phi, is_falsified, verification_code, created_datetime, timestamp
+            FROM execution_runs
+            WHERE run_id = ?
+        """, (run_id,))
+        r = cursor.fetchone()
+        if not r:
+            return None
+        return {
+            "run_id": r["run_id"],
+            "scenario_id": r["scenario_id"],
+            "wave_id": r["wave_id"],
+            "operational_mode": r["operational_mode"],
+            "mode": r["mode"] if ("mode" in r.keys() and r["mode"]) else ("32Q" if r["operational_mode"] == "QUANTUM" else "CPU"),
+            "makespan_sec": r["total_makespan_sec"],
+            "distance_km": r["total_distance_km"],
+            "chute_variance": r["chute_variance"],
+            "sla_violations_count": r["sla_violations_count"],
+            "solve_latency_sec": r["total_solve_latency_sec"],
+            "falsification_ratio_phi": r["falsification_ratio_phi"],
+            "is_falsified": bool(r["is_falsified"]),
+            "verification_code": r["verification_code"],
+            "created_datetime": r["created_datetime"],
+            "timestamp": r["timestamp"],
+        }
+
+    def update_run(self, run_id: str, updates: Dict[str, Any]) -> bool:
+        """Update fields of an execution run, including mode and operational_mode."""
+        conn = self.handle if not self.is_sqlalchemy else self._get_conn()
+        cursor = conn.cursor() if conn else None
+        if not cursor:
+            return False
+
+        allowed_fields = {
+            "mode": "mode",
+            "operational_mode": "operational_mode",
+            "makespan_sec": "total_makespan_sec",
+            "total_makespan_sec": "total_makespan_sec",
+            "distance_km": "total_distance_km",
+            "total_distance_km": "total_distance_km",
+            "chute_variance": "chute_variance",
+            "verification_code": "verification_code",
+        }
+        # Ensure mode and operational_mode remain synchronized
+        updates_copy = dict(updates)
+        if "operational_mode" in updates_copy and "mode" in updates_copy:
+            om = str(updates_copy["operational_mode"]).upper()
+            m = str(updates_copy["mode"]).upper()
+            is_quantum = "QUANTUM" in om or "32Q" in m or "32Q" in om or "QUANTUM" in m
+            updates_copy["operational_mode"] = "QUANTUM" if is_quantum else "CLASSICAL"
+            updates_copy["mode"] = "32Q" if is_quantum else "CPU"
+        elif "mode" in updates_copy and "operational_mode" not in updates_copy:
+            m = str(updates_copy["mode"]).upper()
+            updates_copy["mode"] = "32Q" if ("32Q" in m or "QUANTUM" in m) else "CPU"
+            updates_copy["operational_mode"] = "QUANTUM" if updates_copy["mode"] == "32Q" else "CLASSICAL"
+        elif "operational_mode" in updates_copy and "mode" not in updates_copy:
+            om = str(updates_copy["operational_mode"]).upper()
+            updates_copy["operational_mode"] = "QUANTUM" if ("QUANTUM" in om or "32Q" in om) else "CLASSICAL"
+            updates_copy["mode"] = "32Q" if updates_copy["operational_mode"] == "QUANTUM" else "CPU"
+
+        set_clauses = []
+        vals = []
+        for k, v in updates_copy.items():
+            if k in allowed_fields:
+                col = allowed_fields[k]
+                set_clauses.append(f"{col} = ?")
+                vals.append(v)
+
+        if not set_clauses:
+            return False
+
+        vals.append(run_id)
+        sql = f"UPDATE execution_runs SET {', '.join(set_clauses)} WHERE run_id = ?"
+        cursor.execute(sql, tuple(vals))
+        conn.commit()
+        return cursor.rowcount > 0
+
+    def delete_run(self, run_id: str) -> bool:
+        """Delete an execution run and cascade delete its associated child records."""
+        conn = self.handle if not self.is_sqlalchemy else None
+        cursor = conn.cursor() if conn else None
+        if not cursor:
+            return False
+
+        cursor.execute("DELETE FROM route_stops WHERE route_id IN (SELECT route_id FROM vehicle_routes WHERE run_id = ?)", (run_id,))
+        cursor.execute("DELETE FROM vehicle_routes WHERE run_id = ?", (run_id,))
+        cursor.execute("DELETE FROM tier_executions WHERE run_id = ?", (run_id,))
+        cursor.execute("DELETE FROM quantum_telemetry WHERE run_id = ?", (run_id,))
+        cursor.execute("DELETE FROM container_placements WHERE run_id = ?", (run_id,))
+        cursor.execute("DELETE FROM lifo_dependencies WHERE run_id = ?", (run_id,))
+        cursor.execute("DELETE FROM gate_validations WHERE run_id = ?", (run_id,))
+        cursor.execute("DELETE FROM chute_flow_dynamics WHERE run_id = ?", (run_id,))
+        cursor.execute("DELETE FROM produced_reports WHERE run_id = ?", (run_id,))
+        cursor.execute("DELETE FROM execution_runs WHERE run_id = ?", (run_id,))
+        conn.commit()
+        return cursor.rowcount > 0
 
     def compare_runs(self, run_a: str, run_b: str) -> Dict[str, Any]:
         """Compute delta comparison between two execution runs."""
@@ -829,10 +948,14 @@ class WarehouseRepository:
         var_a = row_a["chute_variance"]
         var_b = row_b["chute_variance"]
 
+        mode_a = row_a["mode"] if ("mode" in row_a.keys() and row_a["mode"]) else row_a["operational_mode"]
+        mode_b = row_b["mode"] if ("mode" in row_b.keys() and row_b["mode"]) else row_b["operational_mode"]
+
         return {
             "run_a": {
                 "run_id": row_a["run_id"],
-                "mode": row_a["operational_mode"],
+                "mode": mode_a,
+                "operational_mode": row_a["operational_mode"],
                 "makespan_sec": ms_a,
                 "distance_km": dist_a,
                 "chute_variance": var_a,
@@ -840,7 +963,8 @@ class WarehouseRepository:
             },
             "run_b": {
                 "run_id": row_b["run_id"],
-                "mode": row_b["operational_mode"],
+                "mode": mode_b,
+                "operational_mode": row_b["operational_mode"],
                 "makespan_sec": ms_b,
                 "distance_km": dist_b,
                 "chute_variance": var_b,

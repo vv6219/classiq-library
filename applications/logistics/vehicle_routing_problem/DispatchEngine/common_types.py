@@ -12,6 +12,7 @@ class OperationalMode(str, Enum):
     EMERGENCY_RECEDE = "EMERGENCY_RECEDE"
     HIGH_THROUGHPUT = "HIGH_THROUGHPUT"
     QUANTUM = "QUANTUM"
+    CLASSICAL = "CLASSICAL"
 
 
 class TierNumber(int, Enum):

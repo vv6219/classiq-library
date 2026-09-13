@@ -9,7 +9,7 @@ import {
   ListOrdered,
   Activity,
 } from 'lucide-react';
-import { WaveExecutionResponse, RunSummaryDTO, ArchetypeMeta } from '../services/api';
+import { WaveExecutionResponse, RunSummaryDTO, ArchetypeMeta, formatRunMode } from '../services/api';
 import { CodeLmnBadge } from './CodeLmnBadge';
 import { DispatchProgressState } from './DispatchProgressModal';
 import { PDFProfileId } from '../data/reportsRegistry';
@@ -86,6 +86,27 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
   const isReRunSolving = isSolving && dispatchProgress?.actionType === 'RE_RUN';
   const isDispatchSolving = isSolving && dispatchProgress?.actionType !== 'RE_RUN';
   const progressPercent = Math.round(dispatchProgress?.overallPercent ?? 0);
+
+  const effectiveRuns = React.useMemo(() => {
+    const list = [...(runs || [])];
+    if (currentRunId && !list.some((r) => r.run_id === currentRunId)) {
+      list.unshift({
+        run_id: currentRunId,
+        scenario_id: currentScenarioId || 'SCEN-7D42F06D',
+        wave_id: 'WAVE-ACTIVE',
+        operational_mode: operationalMode,
+        mode: operationalMode === 'QUANTUM' ? '32Q' : 'CPU',
+        makespan_sec: makespan,
+        distance_km: distance,
+        chute_variance: variance,
+        solve_latency_sec: 0.1,
+        falsification_ratio_phi: phi,
+        is_falsified: false,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    return list;
+  }, [runs, currentRunId, operationalMode, currentScenarioId, makespan, distance, variance, phi]);
 
   return (
     <header
@@ -247,8 +268,54 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
         </CodeLmnBadge>
       </div>
 
-      {/* RIGHT: Engine Switcher, Re-Run & Dispatch Wave Actions */}
+      {/* RIGHT: Run Selector, Engine Switcher, Re-Run & Dispatch Wave Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Run Selector Combobox Dropdown */}
+        {effectiveRuns.length > 0 && onSelectRun && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '2px 8px',
+              borderRadius: '6px',
+              background: 'rgba(7, 15, 30, 0.85)',
+              border: '1px solid rgba(0, 240, 255, 0.3)',
+              height: '28px',
+              boxSizing: 'border-box',
+            }}
+            title={`Active Run ID: ${currentRunId || 'None'} - Switch execution run`}
+          >
+            <span style={{ fontSize: '9px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.05em' }}>
+              RUN:
+            </span>
+            <select
+              value={currentRunId || ''}
+              onChange={(e) => {
+                trackButtonClick('Select_Run_Combo', 'TopbarHUD', { run_id: e.target.value });
+                onSelectRun(e.target.value);
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#38bdf8',
+                fontSize: '11px',
+                fontFamily: 'var(--font-mono, monospace)',
+                fontWeight: 700,
+                cursor: 'pointer',
+                outline: 'none',
+                maxWidth: '175px',
+              }}
+            >
+              {effectiveRuns.map((r) => (
+                <option key={r.run_id} value={r.run_id} style={{ background: '#0d1527', color: '#f0f4f8' }}>
+                  {r.run_id} • [{formatRunMode(r)}] {r.makespan_sec ? `${r.makespan_sec.toFixed(0)}s` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Operational Mode Toggle Tab */}
         <button
           onClick={() => {
@@ -329,10 +396,10 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
             transition: 'all 0.2s ease',
             boxShadow: '0 0 10px rgba(251, 191, 36, 0.2)',
           }}
-          title="Re-run active scenario with current parameters"
+          title={`Re-run active scenario with current mode: ${operationalMode} (${operationalMode === 'QUANTUM' ? '32Q QAOA' : 'CPU HGS-ADC'})`}
         >
           <RotateCcw size={13} className={isReRunSolving ? 'spin-animation' : ''} />
-          <span>{isReRunSolving ? 'Re-running...' : 'Re-Run'}</span>
+          <span>{isReRunSolving ? `Re-running (${operationalMode === 'QUANTUM' ? '32Q' : 'CPU'})...` : 'Re-Run'}</span>
         </button>
 
         {/* Primary Dispatch Wave CTA */}

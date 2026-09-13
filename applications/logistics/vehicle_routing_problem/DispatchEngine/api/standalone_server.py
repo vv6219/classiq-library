@@ -35,6 +35,21 @@ REPORTS_DIR = Path(__file__).resolve().parent.parent / "storage" / "reports"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def sync_db_replicas():
+    try:
+        import shutil
+        src_db = Path("DispatchEngine/dispatchengine.db")
+        if src_db.exists():
+            pub_db = Path("web_simulator/public/dispatchengine.db")
+            if pub_db.parent.exists():
+                shutil.copy2(src_db, pub_db)
+            dist_db = Path("web_simulator/dist/dispatchengine.db")
+            if dist_db.parent.exists():
+                shutil.copy2(src_db, dist_db)
+    except Exception:
+        pass
+
+
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
@@ -374,6 +389,20 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"run_id": run_id, "chute_flows": flows})
             finally:
                 conn.close()
+            return
+
+        elif path.startswith("/api/v1/dispatch/runs/") and len(path.split("/")) == 6:
+            run_id = path.split("/")[5]
+            session = DatabaseManager.get_session()
+            try:
+                repo = WarehouseRepository(session)
+                run_info = repo.get_run(run_id)
+                if run_info:
+                    self._send_json(200, run_info)
+                else:
+                    self._send_json(404, {"error": "Execution run not found", "run_id": run_id})
+            finally:
+                DatabaseManager.close_session(session)
             return
 
         elif path.startswith("/api/v1/presentation/runs/") and path.endswith("/report.pdf"):
@@ -776,15 +805,26 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
 
             num_vehicles = int(payload.get("num_vehicles", 4))
             seed = int(payload.get("seed", 42))
-            mode_str = payload.get("operational_mode", "QUANTUM")
+            mode_str = str(payload.get("operational_mode", "QUANTUM")).upper()
+            req_mode = payload.get("mode")
             tier_algos = payload.get("tier_algorithms", {})
             q_cfg = payload.get("quantum_config", {})
             lagr_weights = payload.get("lagrangian_weights", {})
             kin_cfg = payload.get("kinematics_config", {})
-            try:
-                op_mode = OperationalMode(mode_str)
-            except Exception:
+
+            # Resolve OperationalMode and concise execution mode ("32Q" or "CPU")
+            if "CLASSIC" in mode_str or (req_mode and "CPU" in str(req_mode).upper()):
+                op_mode = OperationalMode.CLASSICAL
+                chosen_mode = "CPU"
+            elif "QUANTUM" in mode_str or (req_mode and ("32Q" in str(req_mode).upper() or "QUANTUM" in str(req_mode).upper())):
                 op_mode = OperationalMode.QUANTUM
+                chosen_mode = "32Q"
+            else:
+                try:
+                    op_mode = OperationalMode(mode_str)
+                except Exception:
+                    op_mode = OperationalMode.QUANTUM
+                chosen_mode = "32Q" if op_mode == OperationalMode.QUANTUM else "CPU"
 
             session = DatabaseManager.get_session()
             try:
@@ -833,13 +873,15 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                     quantum_config=q_cfg,
                     lagrangian_weights=lagr_weights,
                     kinematics_config=kin_cfg,
+                    run_mode=chosen_mode,
                 )
 
                 resp = {
-                    "run_id": f"RUN-{hud.wave_id.split('-')[-1]}",
+                    "run_id": getattr(hud, "run_id", None) or f"RUN-{hud.wave_id.split('-')[-1]}",
                     "scenario_id": scen_id,
                     "wave_id": hud.wave_id,
                     "operational_mode": hud.operational_mode,
+                    "mode": chosen_mode,
                     "algorithm_ranks_used": {
                         "Tier1": "RANK_1Q_QUANTUM_FCM" if op_mode == OperationalMode.QUANTUM else "RANK_1_FCM_DR_SAA",
                         "Tier2": "RANK_1_CPSAT_MISOCP",
@@ -869,6 +911,7 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(200, resp)
             finally:
                 DatabaseManager.close_session(session)
+                sync_db_replicas()
             return
 
         elif path == "/api/v1/quantum/swap-test":
@@ -1129,6 +1172,37 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                 conn.close()
             return
 
+        elif path.startswith("/api/v1/dispatch/runs/") and path.endswith("/delete"):
+            run_id = path.split("/")[5]
+            session = DatabaseManager.get_session()
+            try:
+                repo = WarehouseRepository(session)
+                deleted = repo.delete_run(run_id)
+                if deleted:
+                    self._send_json(200, {"success": True, "run_id": run_id, "deleted": True})
+                else:
+                    self._send_json(404, {"error": "Execution run not found", "run_id": run_id})
+            finally:
+                DatabaseManager.close_session(session)
+                sync_db_replicas()
+            return
+
+        elif path.startswith("/api/v1/dispatch/runs/") and path.endswith("/update"):
+            run_id = path.split("/")[5]
+            session = DatabaseManager.get_session()
+            try:
+                repo = WarehouseRepository(session)
+                updated = repo.update_run(run_id, payload)
+                if updated:
+                    run_info = repo.get_run(run_id)
+                    self._send_json(200, {"success": True, "run_id": run_id, "updated": True, "run": run_info})
+                else:
+                    self._send_json(404, {"error": "Execution run not found or no updates applied", "run_id": run_id})
+            finally:
+                DatabaseManager.close_session(session)
+                sync_db_replicas()
+            return
+
         self._send_json(404, {"error": "POST endpoint not found", "path": path})
 
     def do_PUT(self):
@@ -1155,6 +1229,22 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                     self._send_json(404, {"error": "Order not found or no changes made", "order_id": order_id})
             finally:
                 DatabaseManager.close_session(session)
+            return
+
+        elif path.startswith("/api/v1/dispatch/runs/"):
+            run_id = path.split("/")[5]
+            session = DatabaseManager.get_session()
+            try:
+                repo = WarehouseRepository(session)
+                updated = repo.update_run(run_id, payload)
+                if updated:
+                    run_info = repo.get_run(run_id)
+                    self._send_json(200, {"success": True, "run_id": run_id, "updated": True, "run": run_info})
+                else:
+                    self._send_json(404, {"error": "Execution run not found or no updates applied", "run_id": run_id})
+            finally:
+                DatabaseManager.close_session(session)
+                sync_db_replicas()
             return
 
         self._send_json(404, {"error": "PUT endpoint not found", "path": path})
@@ -1198,6 +1288,21 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                     self._send_json(404, {"error": "Order not found", "order_id": order_id})
             finally:
                 DatabaseManager.close_session(session)
+            return
+
+        elif path.startswith("/api/v1/dispatch/runs/"):
+            run_id = path.split("/")[5]
+            session = DatabaseManager.get_session()
+            try:
+                repo = WarehouseRepository(session)
+                deleted = repo.delete_run(run_id)
+                if deleted:
+                    self._send_json(200, {"success": True, "run_id": run_id, "deleted": True})
+                else:
+                    self._send_json(404, {"error": "Execution run not found", "run_id": run_id})
+            finally:
+                DatabaseManager.close_session(session)
+                sync_db_replicas()
             return
 
         self._send_json(404, {"error": "DELETE endpoint not found", "path": path})

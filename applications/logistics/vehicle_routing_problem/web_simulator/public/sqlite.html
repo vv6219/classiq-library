@@ -504,8 +504,11 @@
         <button class="preset-btn" onclick="runPreset('SELECT order_id, sku_id, depot_id, mass_kg, hazard_class, created_datetime FROM orders ORDER BY created_datetime DESC LIMIT 25;')">
           🕒 Orders & Created Datetime
         </button>
-        <button class="preset-btn" onclick="runPreset('SELECT run_id, scenario_id, operational_mode, total_makespan_sec, total_distance_km, falsification_ratio_phi, created_datetime FROM execution_runs ORDER BY created_datetime DESC LIMIT 10;')">
-          ⚡ Execution Runs & Metrics
+        <button class="preset-btn" onclick="runPreset('SELECT run_id, scenario_id, mode, operational_mode, total_makespan_sec, total_distance_km, falsification_ratio_phi, created_datetime FROM execution_runs ORDER BY created_datetime DESC LIMIT 10;')">
+          ⚡ Execution Runs & Metrics (Mode)
+        </button>
+        <button class="preset-btn" onclick="runPreset('SELECT run_id, mode, operational_mode, total_makespan_sec, total_distance_km, falsification_ratio_phi FROM execution_runs WHERE mode = \'CPU/32Q\' ORDER BY created_datetime DESC;')">
+          💻 Runs Filter (CPU/32Q)
         </button>
         <button class="preset-btn" onclick="runPreset('SELECT * FROM quantum_telemetry LIMIT 20;')">
           ⚛️ Quantum Telemetry & Circuits

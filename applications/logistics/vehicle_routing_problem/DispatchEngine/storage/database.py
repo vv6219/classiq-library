@@ -113,6 +113,7 @@ class DatabaseManager:
                 wave_id TEXT NOT NULL,
                 timestamp TEXT NOT NULL,
                 operational_mode TEXT NOT NULL,
+                mode TEXT NOT NULL DEFAULT '32Q',
                 algorithm_ranks_used TEXT NOT NULL,
                 total_makespan_sec REAL NOT NULL,
                 total_distance_km REAL NOT NULL,
@@ -348,6 +349,15 @@ class DatabaseManager:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_telemetry_trace ON telemetry_events(trace_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_telemetry_level ON telemetry_events(log_level);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_chutes_run ON chute_flow_dynamics(run_id);")
+
+        # Ensure mode column in execution_runs for backward compatibility
+        try:
+            cursor.execute("SELECT mode FROM execution_runs LIMIT 1;")
+        except Exception:
+            try:
+                cursor.execute("ALTER TABLE execution_runs ADD COLUMN mode TEXT NOT NULL DEFAULT '32Q';")
+            except Exception:
+                pass
 
         conn.commit()
         conn.close()

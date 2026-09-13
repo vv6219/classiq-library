@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchRuns, compareRuns, RunSummaryDTO, RunComparisonDTO } from '../services/api';
+import { fetchRuns, compareRuns, RunSummaryDTO, RunComparisonDTO, formatRunMode } from '../services/api';
 import { GitCompare, TrendingDown, TrendingUp, CheckCircle2, Cpu, Zap, RefreshCw, BarChart2 } from 'lucide-react';
 import { CodeLmnBadge } from './CodeLmnBadge';
 
@@ -108,7 +108,7 @@ export const RunComparisonStudio: React.FC<RunComparisonStudioProps> = ({ onSele
           >
             {runs.map((r) => (
               <option key={r.run_id} value={r.run_id}>
-                {r.run_id} ({r.operational_mode}) - Makespan: {r.makespan_sec}s - {r.timestamp.slice(11, 19)}
+                {r.run_id} • [{formatRunMode(r)}] ({r.operational_mode}) - Makespan: {r.makespan_sec}s - {r.timestamp.slice(11, 19)}
               </option>
             ))}
           </select>
@@ -138,7 +138,7 @@ export const RunComparisonStudio: React.FC<RunComparisonStudioProps> = ({ onSele
           >
             {runs.map((r) => (
               <option key={r.run_id} value={r.run_id}>
-                {r.run_id} ({r.operational_mode}) - Makespan: {r.makespan_sec}s - {r.timestamp.slice(11, 19)}
+                {r.run_id} • [{formatRunMode(r)}] ({r.operational_mode}) - Makespan: {r.makespan_sec}s - {r.timestamp.slice(11, 19)}
               </option>
             ))}
           </select>
@@ -229,11 +229,11 @@ export const RunComparisonStudio: React.FC<RunComparisonStudioProps> = ({ onSele
                       borderRadius: '4px',
                       fontSize: '10px',
                       fontWeight: 700,
-                      backgroundColor: r.operational_mode === 'QUANTUM' ? 'rgba(0, 240, 255, 0.15)' : 'rgba(168, 85, 247, 0.15)',
-                      color: r.operational_mode === 'QUANTUM' ? '#00f0ff' : '#a855f7',
+                      backgroundColor: (r.operational_mode === 'QUANTUM' || r.mode === '32Q') ? 'rgba(0, 240, 255, 0.15)' : 'rgba(251, 191, 36, 0.15)',
+                      color: (r.operational_mode === 'QUANTUM' || r.mode === '32Q') ? '#00f0ff' : '#fbbf24',
                     }}
                   >
-                    {r.operational_mode}
+                    {r.operational_mode} [{formatRunMode(r)}]
                   </span>
                 </td>
                 <td style={{ padding: '10px 16px', color: '#f0f4f8' }}>{r.makespan_sec}s</td>
