@@ -294,7 +294,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     warehouseExample: 'Solving an 18-package order wave dispatched across 4 AMRs operating out of 2 home depots with zero SLA violations and 9.4% energy recovery.',
     schemaType: 'dispatch_tiers',
     schemaDescription: 'Unified multi-tier cyber-physical logistics architecture',
-    relatedTermIds: ['benders-decomposition', 'qaoa', 'vrptw', 'kers', 'din-en-iso-3691-4'],
+    relatedTermIds: ['benders-decomposition', 'qaoa', 'vrptw', 'kers', 'din-en-iso-3691-4', 'openapi-spec'],
     appDeepLink: { path: '/investigation', label: 'Open Investigation Studio' },
     tags: ['Acronyms', 'Problem Formulation', 'VRP', 'Quantum', 'Architecture'],
   },
@@ -309,7 +309,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     standardsReference: 'VDI 4400 (Logistics Performance Measurement in ERP/WMS)',
     codebaseModule: 'DispatchEngine/api/ & DispatchEngine/contracts/',
     warehouseExample: 'ERP emits 18 order items with guaranteed delivery deadlines; the Dispatch Engine fulfills 100% within customer SLA windows.',
-    relatedTermIds: ['wms', 'sla', 'batching'],
+    relatedTermIds: ['wms', 'sla', 'batching', 'openapi-spec'],
     tags: ['Logistics', 'ERP', 'WMS', 'Business', 'Integration'],
   },
 
@@ -568,6 +568,23 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     warehouseExample: 'Wave 1 achieved a final makespan of 1045.2s (predicted 1050.0s), beating target deadline by 4.8s.',
     relatedTermIds: ['vrptw', 'md-vrptw', 'sla'],
     tags: ['Calculations', 'Makespan', 'SLA', 'Throughput', 'Metrics'],
+  },
+
+  // O
+  {
+    id: 'openapi-spec',
+    term: 'OpenAPI Specification & REST Architecture',
+    acronym: 'OpenAPI',
+    category: 'standards',
+    letter: 'O',
+    shortDefinition: 'Standardized machine-readable interface description for RESTful web services enabling interactive Swagger UI and automated SDK synthesis.',
+    detailedExplanation: 'The OpenAPI 3.1.0 specification documents all endpoints, parameters, request payloads, response schemas, and error structures of the DispatchEngine REST API. It powers the interactive Swagger UI (/docs), ReDoc 3-panel manual (/redoc), SQLite Web Studio (/sqlite), and automated client SDK synthesis. Endpoints expose multi-depot fleet dispatching, 3D container packing validation, hydrodynamic chute damping calculations, and quantum circuit telemetry.',
+    standardsReference: 'OpenAPI Specification 3.1.0 (Linux Foundation / OpenAPI Initiative)',
+    codebaseModule: 'DispatchEngine/api/openapi_spec.py & DispatchEngine/api/swagger_ui.py',
+    warehouseExample: 'Calling POST /api/v1/dispatch/optimize executes the hybrid Benders decomposition engine and streams back AMR route assignments in under 850ms.',
+    relatedTermIds: ['er-md-vrptw-3d-hri-q', 'wms', 'erp', 'benders-decomposition'],
+    appDeepLink: { path: '/docs', label: 'Open Interactive Swagger UI (/docs)' },
+    tags: ['Standards', 'OpenAPI', 'Swagger', 'REST', 'API', 'Architecture'],
   },
 
   // Q

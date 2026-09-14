@@ -447,6 +447,7 @@ def get_swagger_ui_html(
         <a href="/redoc">ReDoc 3-Panel</a>
         <a href="/openapi.json" target="_blank">OpenAPI JSON</a>
         <a href="/sqlite">SQLite Studio</a>
+        <a href="/glossary">📚 A–Z Glossary</a>
         <a href="/api/v1/database/download">Download DB</a>
         <a href="http://localhost:3000" target="_blank">Web Simulator &rarr;</a>
       </div>
