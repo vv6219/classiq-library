@@ -459,15 +459,57 @@ def get_swagger_ui_html(
   <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js" charset="UTF-8"></script>
   <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
 
-  <!-- KaTeX 0.16.9 Math Engine Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <!-- KaTeX 0.16.21 Math Engine Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/copy-tex.min.js" crossorigin="anonymous"></script>
 
   <script>
-    // Robust KaTeX Rendering Handler for dynamic Swagger UI DOM
+    // Robust KaTeX formula pre-processing and rendering handler
+    function preprocessMathInElement(root) {{
+      if (!root) return;
+      const targets = root.querySelectorAll ? root.querySelectorAll('.renderedMarkdown, .markdown, .info, .opblock-description-wrapper, p, li, td, span') : [root];
+      targets.forEach(node => {{
+        if (node.classList && (node.classList.contains('katex') || node.closest('.katex'))) return;
+        let html = node.innerHTML;
+        if (!html || !html.includes('$')) return;
+
+        let changed = false;
+        // Clean display math $$ ... $$
+        if (html.includes('$$')) {{
+          html = html.replace(/\\$\\$([\\s\\S]*?)\\$\\$/g, (match, inner) => {{
+            changed = true;
+            const cleaned = inner
+              .replace(/<\\/?em>/gi, '_')
+              .replace(/<\\/?strong>/gi, '__')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&amp;/g, '&');
+            return '$$' + cleaned + '$$';
+          }});
+        }}
+        // Clean inline math $ ... $
+        html = html.replace(/\\$([^\\$\\n]+?)\\$/g, (match, inner) => {{
+          changed = true;
+          const cleaned = inner
+            .replace(/<\\/?em>/gi, '_')
+            .replace(/<\\/?strong>/gi, '__')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&');
+          return '$' + cleaned + '$';
+        }});
+
+        if (changed && html !== node.innerHTML) {{
+          node.innerHTML = html;
+        }}
+      }});
+    }}
+
     function renderMathFormulas(rootElement) {{
       if (!window.renderMathInElement || !rootElement) return;
       try {{
+        preprocessMathInElement(rootElement);
         window.renderMathInElement(rootElement, {{
           delimiters: [
             {{ left: "$$", right: "$$", display: true }},
@@ -477,7 +519,8 @@ def get_swagger_ui_html(
           ],
           throwOnError: false,
           errorColor: "#f43f5e",
-          ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+          ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+          ignoredClasses: ["katex", "katex-html", "katex-mathml"]
         }});
       }} catch (err) {{
         console.warn("KaTeX render error:", err);
@@ -506,7 +549,6 @@ def get_swagger_ui_html(
         }}
       }});
 
-      // Debounced MutationObserver to render KaTeX whenever user expands endpoints or models
       let renderTimeout = null;
       function scheduleKaTeXRender() {{
         clearTimeout(renderTimeout);
@@ -515,22 +557,29 @@ def get_swagger_ui_html(
           if (container) {{
             renderMathFormulas(container);
           }}
-        }}, 60);
+        }}, 50);
       }}
 
-      // Initial render pass
-      setTimeout(scheduleKaTeXRender, 300);
-      setTimeout(scheduleKaTeXRender, 1000);
+      // Multi-pass schedule to handle asynchronous Swagger UI mounting
+      setTimeout(scheduleKaTeXRender, 150);
+      setTimeout(scheduleKaTeXRender, 500);
+      setTimeout(scheduleKaTeXRender, 1200);
+      setTimeout(scheduleKaTeXRender, 2500);
 
-      // Observe DOM mutations in Swagger UI container
+      // MutationObserver for dynamic interactions (expanding tags, endpoints, parameters)
       const target = document.getElementById('swagger-ui');
       if (target && window.MutationObserver) {{
         const observer = new MutationObserver((mutations) => {{
           let shouldRender = false;
           for (const m of mutations) {{
             if (m.addedNodes.length > 0) {{
-              shouldRender = true;
-              break;
+              const isKatexNode = Array.from(m.addedNodes).some(n => 
+                n.classList && (n.classList.contains('katex') || n.classList.contains('katex-display'))
+              );
+              if (!isKatexNode) {{
+                shouldRender = true;
+                break;
+              }}
             }}
           }}
           if (shouldRender) {{

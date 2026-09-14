@@ -483,11 +483,8 @@
         <button class="preset-btn" onclick="runPreset('SELECT * FROM scenarios LIMIT 20;')">
           📁 All Scenarios Summary
         </button>
-        <button class="preset-btn" onclick="runPreset('SELECT run_id, scenario_id, mode, operational_mode, total_fleet_makespan_sec, total_distance_km, falsification_ratio_phi FROM execution_runs ORDER BY created_datetime DESC LIMIT 10;')">
-          ⚡ Execution Runs & Metrics (Mode)
-        </button>
-        <button class="preset-btn" onclick="runPreset('SELECT run_id, mode, operational_mode, total_makespan_sec, total_distance_km, falsification_ratio_phi FROM execution_runs WHERE mode = \'CPU/32Q\' ORDER BY created_datetime DESC;')">
-          💻 Runs Filter (CPU/32Q)
+        <button class="preset-btn" onclick="runPreset('SELECT run_id, scenario_id, operational_mode, total_fleet_makespan_sec, total_distance_km, falsification_ratio_phi FROM execution_runs ORDER BY start_time DESC LIMIT 10;')">
+          ⚡ Execution Runs & Metrics
         </button>
         <button class="preset-btn" onclick="runPreset('SELECT * FROM quantum_telemetry WHERE qubits_used > 0 LIMIT 20;')">
           ⚛️ Quantum Telemetry & Circuits

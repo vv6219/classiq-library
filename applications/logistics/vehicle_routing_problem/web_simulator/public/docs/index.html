@@ -7,6 +7,21 @@
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   <link rel="icon" type="image/png" href="https://fastapi.tiangolo.com/img/favicon.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- KaTeX 0.16.21 Math Engine Styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/copy-tex.min.css" crossorigin="anonymous" />
+  <!-- Google Analytics 4 (GA4) Tag -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-F12EXNTLY3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-F12EXNTLY3', {
+      send_page_view: true,
+      app_name: 'DispatchEngine API Docs',
+      team: 'YesAndNo Group'
+    });
+  </script>
   <style>
     * {
       box-sizing: border-box;
@@ -189,6 +204,48 @@
     .swagger-ui section.models h4 {
       color: #f1f5f9;
     }
+
+    /* KaTeX Mathematical Formulas Styling */
+    .katex {
+      font-size: 1.05em !important;
+      color: #f8fafc !important;
+    }
+    .katex .mord, .katex .mbin, .katex .mrel, .katex .mop {
+      color: #f8fafc;
+    }
+    .katex .mop {
+      color: #38bdf8 !important;
+      font-weight: 600;
+    }
+    .katex .mrel {
+      color: #818cf8 !important;
+    }
+    .katex .mbin {
+      color: #38bdf8 !important;
+    }
+    .katex-display {
+      display: block;
+      margin: 16px 0 !important;
+      padding: 14px 20px !important;
+      background: #0b1120 !important;
+      border: 1px solid rgba(56, 189, 248, 0.25) !important;
+      border-left: 4px solid #38bdf8 !important;
+      border-radius: 8px !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .katex-display > .katex {
+      display: inline-block;
+      text-align: left;
+    }
+    .swagger-ui .renderedMarkdown p > .katex,
+    .swagger-ui .renderedMarkdown li > .katex {
+      padding: 2px 6px;
+      background: rgba(56, 189, 248, 0.08);
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
   </style>
 </head>
 <body>
@@ -207,13 +264,87 @@
       <a href="/sqlite" class="nav-btn nav-btn-idle">💾 SQLite Studio</a>
       <a href="/openapi.json" target="_blank" class="nav-btn nav-btn-idle">📄 OpenAPI 3.1.0</a>
       <a href="/dispatchengine.db" download class="nav-btn nav-btn-accent">📥 dispatchengine.db (626 KB)</a>
+      <a href="https://t.me/yesandnoQ" target="_blank" rel="noopener noreferrer" onclick="if(window.gtag) gtag('event', 'telegram_join_click', { channel: 'yesandnoQ', placement: 'Swagger_Nav', event_category: 'Community_Conversion' });" class="nav-btn" style="background: linear-gradient(135deg, #229ED9 0%, #0088cc 100%); color: #ffffff; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 0 10px rgba(34, 158, 217, 0.45); gap: 5px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle;">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+        <span>t.me/yesandnoQ</span>
+      </a>
     </div>
   </nav>
 
   <div id="swagger-ui"></div>
   <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js" charset="UTF-8"></script>
   <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+
+  <!-- KaTeX 0.16.21 Math Engine Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/copy-tex.min.js" crossorigin="anonymous"></script>
+
   <script>
+    // Robust KaTeX formula pre-processing and rendering handler
+    function preprocessMathInElement(root) {
+      if (!root) return;
+      const targets = root.querySelectorAll ? root.querySelectorAll('.renderedMarkdown, .markdown, .info, .opblock-description-wrapper, p, li, td, span') : [root];
+      targets.forEach(node => {
+        if (node.classList && (node.classList.contains('katex') || node.closest('.katex'))) return;
+        let html = node.innerHTML;
+        if (!html || !html.includes('$')) return;
+
+        let changed = false;
+        // Clean display math $$ ... $$
+        if (html.includes('$$')) {
+          html = html.replace(/\$\$([\s\S]*?)\$\$/g, (match, inner) => {
+            changed = true;
+            const cleaned = inner
+              .replace(/<\/?em>/gi, '_')
+              .replace(/<\/?strong>/gi, '__')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&amp;/g, '&');
+            return '$$' + cleaned + '$$';
+          });
+        }
+        // Clean inline math $ ... $
+        html = html.replace(/\$([^\$\n]+?)\$/g, (match, inner) => {
+          changed = true;
+          const cleaned = inner
+            .replace(/<\/?em>/gi, '_')
+            .replace(/<\/?strong>/gi, '__')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&');
+          return '$' + cleaned + '$';
+        });
+
+        if (changed && html !== node.innerHTML) {
+          node.innerHTML = html;
+        }
+      });
+    }
+
+    function renderMathFormulas(rootElement) {
+      if (!window.renderMathInElement || !rootElement) return;
+      try {
+        preprocessMathInElement(rootElement);
+        window.renderMathInElement(rootElement, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true }
+          ],
+          throwOnError: false,
+          errorColor: "#f43f5e",
+          ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+          ignoredClasses: ["katex", "katex-html", "katex-mathml"]
+        });
+      } catch (err) {
+        console.warn("KaTeX render error:", err);
+      }
+    }
+
     window.onload = () => {
       window.ui = SwaggerUIBundle({
         url: '/openapi.json',
@@ -225,10 +356,56 @@
         ],
         layout: "BaseLayout",
         docExpansion: "list",
+        defaultModelsExpandDepth: 2,
+        defaultModelExpandDepth: 2,
         filter: true,
         showRequestDuration: true,
         tryItOutEnabled: true,
+        syntaxHighlight: {
+          activate: true,
+          theme: "agate"
+        }
       });
+
+      let renderTimeout = null;
+      function scheduleKaTeXRender() {
+        clearTimeout(renderTimeout);
+        renderTimeout = setTimeout(() => {
+          const container = document.getElementById('swagger-ui');
+          if (container) {
+            renderMathFormulas(container);
+          }
+        }, 50);
+      }
+
+      // Multi-pass schedule to handle asynchronous Swagger UI mounting
+      setTimeout(scheduleKaTeXRender, 150);
+      setTimeout(scheduleKaTeXRender, 500);
+      setTimeout(scheduleKaTeXRender, 1200);
+      setTimeout(scheduleKaTeXRender, 2500);
+
+      // MutationObserver for dynamic interactions (expanding tags, endpoints, parameters)
+      const target = document.getElementById('swagger-ui');
+      if (target && window.MutationObserver) {
+        const observer = new MutationObserver((mutations) => {
+          let shouldRender = false;
+          for (const m of mutations) {
+            if (m.addedNodes.length > 0) {
+              const isKatexNode = Array.from(m.addedNodes).some(n => 
+                n.classList && (n.classList.contains('katex') || n.classList.contains('katex-display'))
+              );
+              if (!isKatexNode) {
+                shouldRender = true;
+                break;
+              }
+            }
+          }
+          if (shouldRender) {
+            scheduleKaTeXRender();
+          }
+        });
+        observer.observe(target, { childList: true, subtree: true });
+      }
     };
   </script>
 </body>
