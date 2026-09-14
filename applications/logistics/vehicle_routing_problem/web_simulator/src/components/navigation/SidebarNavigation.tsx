@@ -227,6 +227,14 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         e.preventDefault();
         setIsExpanded(!isExpanded);
       }
+      // Ctrl+G: Open A-Z Engineering Glossary Studio
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        onSelectTab('glossary');
+        if (typeof window !== 'undefined' && window.location.pathname !== '/glossary') {
+          window.history.pushState(null, '', '/glossary');
+        }
+      }
       // Alt+E: Expand All
       if (e.altKey && e.key.toLowerCase() === 'e') {
         e.preventDefault();
@@ -2333,7 +2341,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
           </div>
         )}
 
-        {/* Persistent Bottom Runner Card (OpenAPI / Swagger UI :8080) */}
+        {/* Persistent Bottom Runner Card (OpenAPI / Swagger UI :8080 & A-Z Glossary) */}
         {isExpanded ? (
           <div
             style={{
@@ -2341,8 +2349,118 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
               borderTop: '1px solid rgba(0, 240, 255, 0.15)',
               backgroundColor: 'rgba(7, 14, 28, 0.9)',
               flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
             }}
           >
+            {/* Frozen High-Visibility A-Z Engineering Glossary Button */}
+            <div
+              onClick={() => {
+                onSelectTab('glossary');
+                if (typeof window !== 'undefined' && window.location.pathname !== '/glossary') {
+                  window.history.pushState(null, '', '/glossary');
+                }
+                updatePageMetadata({
+                  title: 'A–Z Engineering Glossary & Lexicon',
+                  description: 'Comprehensive A-Z lexicon with full-text search covering quantum algorithms, VRP formulations, cyber-physical invariant gates, ISO standards, and KaTeX mathematical proofs.',
+                  canonicalPath: '/glossary',
+                });
+                trackSidebarNavigation({
+                  routePath: '/glossary',
+                  itemId: 'glossary-studio',
+                  itemLabel: 'A–Z Engineering Glossary',
+                  menuLevel: 1,
+                  pillarId: 'pillar-documentation',
+                  pillarTitle: 'Engineering Documentation & Lexicon',
+                  pageTitle: 'A–Z Engineering Glossary & Lexicon',
+                  entryMethod: 'sidebar_click',
+                });
+                trackButtonClick('Glossary_Bottom_Dock_Click', 'Sidebar_Navigation');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '7px 9px',
+                borderRadius: '6px',
+                backgroundColor: activeTab === 'glossary'
+                  ? 'rgba(0, 240, 255, 0.2)'
+                  : 'rgba(15, 23, 42, 0.7)',
+                border: activeTab === 'glossary'
+                  ? '1px solid #00f0ff'
+                  : '1px solid rgba(0, 240, 255, 0.35)',
+                boxShadow: activeTab === 'glossary'
+                  ? '0 0 14px rgba(0, 240, 255, 0.35)'
+                  : 'none',
+                color: '#ffffff',
+                transition: 'all 0.15s ease',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0, 240, 255, 0.25)';
+                e.currentTarget.style.borderColor = '#00f0ff';
+                e.currentTarget.style.boxShadow = '0 0 14px rgba(0, 240, 255, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = activeTab === 'glossary' ? 'rgba(0, 240, 255, 0.2)' : 'rgba(15, 23, 42, 0.7)';
+                e.currentTarget.style.borderColor = activeTab === 'glossary' ? '#00f0ff' : 'rgba(0, 240, 255, 0.35)';
+                e.currentTarget.style.boxShadow = activeTab === 'glossary' ? '0 0 14px rgba(0, 240, 255, 0.35)' : 'none';
+              }}
+              title="A–Z Engineering Glossary & Lexicon (Ctrl+G)"
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                <div
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '5px',
+                    background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.4), rgba(168, 85, 247, 0.5))',
+                    border: '1px solid #00f0ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <BookOpen size={13} color="#ffffff" />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#ffffff' }}>A–Z Glossary</span>
+                    <span
+                      style={{
+                        fontSize: '8px',
+                        padding: '1px 4px',
+                        borderRadius: '3px',
+                        backgroundColor: 'rgba(0, 240, 255, 0.3)',
+                        color: '#00f0ff',
+                        fontWeight: 800,
+                        fontFamily: 'monospace',
+                      }}
+                    >
+                      50+
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '9px', color: '#94a3b8' }}>Schemas, Math &amp; Standards</span>
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: '8.5px',
+                  color: '#00f0ff',
+                  background: 'rgba(0, 240, 255, 0.15)',
+                  border: '1px solid rgba(0, 240, 255, 0.3)',
+                  padding: '1px 5px',
+                  borderRadius: '3px',
+                  fontWeight: 700,
+                  fontFamily: 'monospace',
+                }}
+              >
+                Ctrl+G
+              </span>
+            </div>
+
             <a
               href="http://127.0.0.1:8080/docs"
               target="_blank"
@@ -2422,6 +2540,82 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
               flexShrink: 0,
             }}
           >
+            {/* Frozen High-Visibility A-Z Engineering Glossary Button (Collapsed) */}
+            <div
+              onClick={() => {
+                onSelectTab('glossary');
+                if (typeof window !== 'undefined' && window.location.pathname !== '/glossary') {
+                  window.history.pushState(null, '', '/glossary');
+                }
+                updatePageMetadata({
+                  title: 'A–Z Engineering Glossary & Lexicon',
+                  description: 'Comprehensive A-Z lexicon with full-text search covering quantum algorithms, VRP formulations, cyber-physical invariant gates, ISO standards, and KaTeX mathematical proofs.',
+                  canonicalPath: '/glossary',
+                });
+                trackSidebarNavigation({
+                  routePath: '/glossary',
+                  itemId: 'glossary-studio',
+                  itemLabel: 'A–Z Engineering Glossary',
+                  menuLevel: 1,
+                  pillarId: 'pillar-documentation',
+                  pillarTitle: 'Engineering Documentation & Lexicon',
+                  pageTitle: 'A–Z Engineering Glossary & Lexicon',
+                  entryMethod: 'sidebar_click',
+                });
+                trackButtonClick('Glossary_Bottom_Dock_Click', 'Sidebar_Navigation');
+              }}
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '8px',
+                background: activeTab === 'glossary'
+                  ? 'rgba(0, 240, 255, 0.25)'
+                  : 'rgba(15, 23, 42, 0.8)',
+                border: activeTab === 'glossary'
+                  ? '1px solid #00f0ff'
+                  : '1px solid rgba(0, 240, 255, 0.4)',
+                boxShadow: activeTab === 'glossary'
+                  ? '0 0 12px rgba(0, 240, 255, 0.4)'
+                  : 'none',
+                color: '#00f0ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                position: 'relative',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0, 240, 255, 0.3)';
+                e.currentTarget.style.borderColor = '#00f0ff';
+                e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 240, 255, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = activeTab === 'glossary' ? 'rgba(0, 240, 255, 0.25)' : 'rgba(15, 23, 42, 0.8)';
+                e.currentTarget.style.borderColor = activeTab === 'glossary' ? '#00f0ff' : 'rgba(0, 240, 255, 0.4)';
+                e.currentTarget.style.boxShadow = activeTab === 'glossary' ? '0 0 12px rgba(0, 240, 255, 0.4)' : 'none';
+              }}
+              title="A–Z Engineering Glossary & Lexicon (Ctrl+G)"
+            >
+              <BookOpen size={16} color="#00f0ff" />
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  fontSize: '7px',
+                  fontWeight: 900,
+                  color: '#020617',
+                  backgroundColor: '#00f0ff',
+                  borderRadius: '2px',
+                  padding: '0 2px',
+                  lineHeight: '1.2',
+                }}
+              >
+                A-Z
+              </span>
+            </div>
+
             <a
               href="http://127.0.0.1:8080/docs"
               target="_blank"

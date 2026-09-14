@@ -10,6 +10,7 @@ import { GraphStudio } from './components/GraphStudio';
 import { RunComparisonStudio } from './components/RunComparisonStudio';
 import { TelemetryConsole } from './components/TelemetryConsole';
 import { InvestigationStudio } from './components/InvestigationStudio';
+import { GlossaryStudio } from './components/GlossaryStudio';
 import { PreRequestConfigDrawer } from './components/PreRequestConfigDrawer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { QuickControlsPanel } from './components/QuickControlsPanel';
@@ -108,6 +109,7 @@ export const App: React.FC = () => {
   const [reportsRepoMode, setReportsRepoMode] = useState<HUDPanelDisplayMode>('minimized');
   const [reportsCount, setReportsCount] = useState<number>(0);
   const [investigationSubTab, setInvestigationSubTab] = useState<'timeline' | 'gates' | 'chutes' | 'quantum' | 'carbon'>('timeline');
+  const [glossaryInitialTermId, setGlossaryInitialTermId] = useState<string>('benders-decomposition');
 
   const [selectedTier, setSelectedTier] = useState<string>('tier1');
   const [selectedGraphId, setSelectedGraphId] = useState<string>('pareto');
@@ -293,7 +295,7 @@ export const App: React.FC = () => {
   // Apply state and metadata corresponding to a matched route definition
   const applyRouteState = (
     route: NavigationRouteDefinition,
-    entryMethod: 'direct_url' | 'browser_history' | 'sidebar_click'
+    entryMethod: 'direct_url' | 'browser_history' | 'sidebar_click' = 'sidebar_click'
   ) => {
     const s = route.state;
     if (s.tab) {
@@ -319,6 +321,9 @@ export const App: React.FC = () => {
     }
     if (s.investigationSubTab) {
       setInvestigationSubTab(s.investigationSubTab);
+    }
+    if (s.glossaryTermId) {
+      setGlossaryInitialTermId(s.glossaryTermId);
     }
     if (s.isQuickDrawerOpen !== undefined) {
       setIsQuickDrawerOpen(s.isQuickDrawerOpen);
@@ -1160,6 +1165,21 @@ export const App: React.FC = () => {
                     pageTitle: subRoute.meta.title,
                     entryMethod: 'quick_action',
                   });
+                }
+              }}
+            />
+          )}
+          {activeTab === 'glossary' && (
+            <GlossaryStudio
+              initialTermId={glossaryInitialTermId}
+              onNavigateRoute={(path) => {
+                const targetRoute = matchNavigationRoute(path);
+                if (targetRoute) {
+                  applyRouteState(targetRoute);
+                } else if (path.startsWith('/investigation')) {
+                  setActiveTab('investigation');
+                } else if (path.startsWith('/3d-sim') || path === '/') {
+                  setActiveTab('3d-sim');
                 }
               }}
             />

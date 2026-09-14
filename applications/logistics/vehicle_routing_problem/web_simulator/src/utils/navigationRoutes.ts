@@ -17,10 +17,12 @@ export type StudioTabId =
   | 'graphs'
   | 'comparison'
   | 'telemetry'
-  | 'investigation';
+  | 'investigation'
+  | 'glossary';
 
 export interface RouteTargetState {
   tab?: StudioTabId;
+  glossaryTermId?: string;
   selectedGraph?: string;
   selectedEntity?: { type: 'AMR' | 'CHUTE' | 'DEPOT' | 'ORDER'; id: string; telemetry?: any } | null;
   cameraPreset?: 'overview' | 'top' | 'isometric' | 'follow' | 'chute-focus';
@@ -1525,6 +1527,27 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
     state: {
       reportsRepoMode: 'expanded',
       pdfProfileToOpen: 'CERTIFICATE',
+    },
+  },
+  {
+    id: 'glossary-studio',
+    path: '/glossary',
+    aliases: ['/lexicon', '/dictionary', '/terms'],
+    label: 'A–Z Engineering Glossary',
+    shortLabel: 'Glossary',
+    pillarId: 'pillar-documentation',
+    pillarTitle: 'Engineering Documentation & Lexicon',
+    menuLevel: 1,
+    targetTab: 'glossary',
+    sitemap: { changefreq: 'weekly', priority: 0.9 },
+    meta: {
+      title: 'A–Z Engineering Glossary & Lexicon',
+      description: 'Comprehensive A-Z lexicon with full-text search covering quantum algorithms, VRP formulations, cyber-physical invariant gates, ISO standards, and KaTeX mathematical proofs.',
+      keywords: ['Glossary', 'Lexicon', 'Quantum Computing', 'VRP', 'QAOA', 'Benders', 'ISO 3691-4', 'WMS'],
+      canonicalPath: '/glossary',
+    },
+    state: {
+      tab: 'glossary',
     },
   },
 ];

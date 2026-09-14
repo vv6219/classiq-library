@@ -59,6 +59,7 @@ const TAB_TITLES: Record<string, string> = {
   'graphs': 'Performance Analytics & Graphs',
   'comparison': 'Multi-Run Comparison Matrix',
   'investigation': 'Incident Investigation & Root-Cause Studio',
+  'glossary': 'A–Z Engineering Glossary & Lexicon',
 };
 
 export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({

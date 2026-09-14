@@ -7,7 +7,8 @@ export type StudioTabId =
   | 'graphs'
   | 'comparison'
   | 'telemetry'
-  | 'investigation';
+  | 'investigation'
+  | 'glossary';
 
 export interface NavigationStep {
   id: string;
