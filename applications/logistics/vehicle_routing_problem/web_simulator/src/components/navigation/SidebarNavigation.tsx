@@ -155,26 +155,13 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Accordion expansion states
-  const [expandedPillars, setExpandedPillars] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem('wms_sidebar_expanded_pillars_v1');
-      if (saved) return new Set(JSON.parse(saved));
-    } catch (e) {
-      // ignore
-    }
-    return new Set(['pillar-1', 'pillar-2']);
-  });
+  // Accordion expansion states: On load, collapse all items so only top level (pillars) show
+  const [expandedPillars, setExpandedPillars] = useState<Set<string>>(() => new Set<string>());
+  const [expandedSubGroups, setExpandedSubGroups] = useState<Set<string>>(() => new Set<string>());
 
-  const [expandedSubGroups, setExpandedSubGroups] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem('wms_sidebar_expanded_subgroups_v1');
-      if (saved) return new Set(JSON.parse(saved));
-    } catch (e) {
-      // ignore
-    }
-    return new Set(['amr-fleet', 'archetypes-group', 'camera-presets']);
-  });
+  // Track initial mount so initial page load keeps all items collapsed
+  const isInitialMountRef = useRef(true);
+  const isInitialEntityRef = useRef(true);
 
   // Dragging splitter state
   const [isDragging, setIsDragging] = useState(false);
@@ -185,7 +172,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   const [hoveredPillar, setHoveredPillar] = useState<PillarCategory | null>(null);
   const flyoutTimeoutRef = useRef<any>(null);
 
-  // Persist expansion states
+  // Persist expansion states during active session
   useEffect(() => {
     localStorage.setItem('wms_sidebar_expanded_pillars_v1', JSON.stringify(Array.from(expandedPillars)));
   }, [expandedPillars]);
@@ -234,8 +221,12 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isExpanded]);
 
-  // Auto-reveal active studio tab in sidebar
+  // Auto-reveal active studio tab in sidebar only when user actively switches tabs after load
   useEffect(() => {
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      return;
+    }
     const tabPillarMap: Record<string, string> = {
       '3d-sim': 'pillar-1',
       '2d-route-map': 'pillar-1',
@@ -252,8 +243,12 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
     }
   }, [activeTab]);
 
-  // Auto-reveal selected entity
+  // Auto-reveal selected entity only when user actively selects an AMR after load
   useEffect(() => {
+    if (isInitialEntityRef.current) {
+      isInitialEntityRef.current = false;
+      return;
+    }
     if (selectedEntity && selectedEntity.type === 'AMR') {
       setExpandedPillars((prev) => new Set([...prev, 'pillar-1']));
       setExpandedSubGroups((prev) => new Set([...prev, 'amr-fleet']));

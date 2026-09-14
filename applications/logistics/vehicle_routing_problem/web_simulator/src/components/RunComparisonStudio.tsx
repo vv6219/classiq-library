@@ -12,6 +12,7 @@ import {
   DatasetDTO,
   RunExplanationDTO,
   VehicleRoute,
+  getRunTotalStops,
 } from '../services/api';
 import {
   GitCompare,
@@ -831,7 +832,7 @@ export const RunComparisonStudio: React.FC<RunComparisonStudioProps> = ({ onSele
                     ) : (
                       filteredRunsA.map((r) => (
                         <option key={r.run_id} value={r.run_id}>
-                          {r.run_id} • [{isCpuRun(r) ? 'CPU Classical' : '32Q Quantum'}] {r.makespan_sec}s • {r.distance_km}km
+                          {r.run_id} • [{isCpuRun(r) ? 'CPU Classical' : '32Q Quantum'}] {r.makespan_sec}s • {r.distance_km}km • {getRunTotalStops(r)} stops
                         </option>
                       ))
                     )}
@@ -938,7 +939,7 @@ export const RunComparisonStudio: React.FC<RunComparisonStudioProps> = ({ onSele
                     ) : (
                       filteredRunsB.map((r) => (
                         <option key={r.run_id} value={r.run_id}>
-                          {r.run_id} • [{isCpuRun(r) ? 'CPU Classical' : '32Q Quantum'}] {r.makespan_sec}s • {r.distance_km}km
+                          {r.run_id} • [{isCpuRun(r) ? 'CPU Classical' : '32Q Quantum'}] {r.makespan_sec}s • {r.distance_km}km • {getRunTotalStops(r)} stops
                         </option>
                       ))
                     )}
@@ -1002,7 +1003,7 @@ export const RunComparisonStudio: React.FC<RunComparisonStudioProps> = ({ onSele
                             color: winnerAnalysis.overallWinner === 'B' ? '#a855f7' : '#00f0ff',
                           }}
                         >
-                          🏆 {winnerAnalysis.overallWinner === 'B' ? comparison.run_b.run_id : comparison.run_a.run_id}
+                          🏆 {winnerAnalysis.overallWinner === 'B' ? comparison.run_b.run_id : comparison.run_a.run_id} ({getRunTotalStops(runs.find((x) => x.run_id === (winnerAnalysis.overallWinner === 'B' ? comparison.run_b.run_id : comparison.run_a.run_id)))} stops)
                         </span>
                       </div>
                       <div style={{ fontSize: '11px', color: '#f0f4f8', marginTop: '2px' }}>
@@ -1062,7 +1063,9 @@ export const RunComparisonStudio: React.FC<RunComparisonStudioProps> = ({ onSele
                     <div style={{ fontSize: '16px', fontWeight: 700, color: comparison.deltas.delta_makespan_sec <= 0 ? '#00e676' : '#ef4444', marginTop: '2px' }}>
                       {comparison.deltas.delta_makespan_sec > 0 ? '+' : ''}{comparison.deltas.delta_makespan_sec}s ({comparison.deltas.delta_makespan_pct}%)
                     </div>
-                    <div style={{ fontSize: '10px', color: '#64748b' }}>A: {comparison.run_a.makespan_sec}s → B: {comparison.run_b.makespan_sec}s</div>
+                    <div style={{ fontSize: '10px', color: '#64748b' }}>
+                      A ({getRunTotalStops(runs.find((x) => x.run_id === comparison.run_a.run_id))} stops): {comparison.run_a.makespan_sec}s → B ({getRunTotalStops(runs.find((x) => x.run_id === comparison.run_b.run_id))} stops): {comparison.run_b.makespan_sec}s
+                    </div>
                   </div>
 
                   {/* Distance */}

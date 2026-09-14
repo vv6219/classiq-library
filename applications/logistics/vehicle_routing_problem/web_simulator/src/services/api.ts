@@ -139,6 +139,39 @@ export interface RunSummaryDTO {
   is_falsified: boolean;
   timestamp: string;
   created_datetime?: string;
+  total_stops?: number;
+}
+
+export const KNOWN_RUN_STOPS: Record<string, number> = {
+  'RUN-00CE0A36': 108,
+  'RUN-24762C2F': 9,
+  'RUN-48A114D5': 158,
+  'RUN-4D578A67': 28,
+  'RUN-5D329AB7': 68,
+  'RUN-73F5EC70': 26,
+  'RUN-7510CBE4': 13,
+  'RUN-7BE4A77D': 33,
+  'RUN-7D42F06D': 68,
+  'RUN-9715C9AB': 28,
+  'RUN-9A551FDE': 12,
+  'RUN-9E30871D': 68,
+  'RUN-B2373512': 28,
+  'RUN-C231F26E': 109,
+  'RUN-DFF68DB1': 23,
+  'RUN-EAA85EB4': 28,
+  'RUN-B3A912F0': 68,
+  'RUN-C841E902': 9,
+  'RUN-E57A09D4': 12,
+  'RUN-F12408BC': 23,
+};
+
+export function getRunTotalStops(r?: RunSummaryDTO | { run_id?: string; total_stops?: number } | null): number {
+  if (!r) return 32;
+  if (r.total_stops && r.total_stops > 0) return r.total_stops;
+  if (r.run_id && KNOWN_RUN_STOPS[r.run_id]) {
+    return KNOWN_RUN_STOPS[r.run_id];
+  }
+  return 32;
 }
 
 export function formatRunMode(r?: { mode?: string; operational_mode?: string } | null): string {

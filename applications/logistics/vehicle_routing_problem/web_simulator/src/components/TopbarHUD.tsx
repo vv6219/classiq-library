@@ -9,7 +9,7 @@ import {
   ListOrdered,
   Activity,
 } from 'lucide-react';
-import { WaveExecutionResponse, RunSummaryDTO, ArchetypeMeta, formatRunMode } from '../services/api';
+import { WaveExecutionResponse, RunSummaryDTO, ArchetypeMeta, formatRunMode, getRunTotalStops } from '../services/api';
 import { CodeLmnBadge } from './CodeLmnBadge';
 import { DispatchProgressState } from './DispatchProgressModal';
 import { PDFProfileId } from '../data/reportsRegistry';
@@ -304,14 +304,17 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
                 fontWeight: 700,
                 cursor: 'pointer',
                 outline: 'none',
-                maxWidth: '175px',
+                maxWidth: '240px',
               }}
             >
-              {effectiveRuns.map((r) => (
-                <option key={r.run_id} value={r.run_id} style={{ background: '#0d1527', color: '#f0f4f8' }}>
-                  {r.run_id} • [{formatRunMode(r)}] {r.makespan_sec ? `${r.makespan_sec.toFixed(0)}s` : ''}
-                </option>
-              ))}
+              {effectiveRuns.map((r) => {
+                const stops = getRunTotalStops(r);
+                return (
+                  <option key={r.run_id} value={r.run_id} style={{ background: '#0d1527', color: '#f0f4f8' }}>
+                    {r.run_id} • [{formatRunMode(r)}] {r.makespan_sec ? `${r.makespan_sec.toFixed(0)}s` : ''} • {stops} stops
+                  </option>
+                );
+              })}
             </select>
           </div>
         )}

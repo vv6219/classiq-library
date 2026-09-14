@@ -13,7 +13,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-11T22:46:06.771228+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "total_stops": 12
     },
     {
       "run_id": "RUN-DFF68DB1",
@@ -28,7 +29,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-11T22:47:16.214768+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "total_stops": 23
     },
     {
       "run_id": "RUN-24762C2F",
@@ -43,7 +45,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-11T23:07:46.357882+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "total_stops": 9
     },
     {
       "run_id": "RUN-7D42F06D",
@@ -58,7 +61,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-11T23:42:26.408334+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "total_stops": 68
     },
     {
       "run_id": "RUN-7BE4A77D",
@@ -73,7 +77,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-12T15:03:03.365731+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "total_stops": 33
     },
     {
       "run_id": "RUN-00CE0A36",
@@ -88,7 +93,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-12T15:12:52.680192+00:00",
-      "created_datetime": "2026-09-12 23:32:41"
+      "created_datetime": "2026-09-12 23:32:41",
+      "total_stops": 108
     },
     {
       "run_id": "RUN-48A114D5",
@@ -103,7 +109,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-12T23:55:55.359516+00:00",
-      "created_datetime": "2026-09-12 23:55:55"
+      "created_datetime": "2026-09-12 23:55:55",
+      "total_stops": 158
     },
     {
       "run_id": "RUN-73F5EC70",
@@ -118,7 +125,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-13 09:34:04.771283",
-      "created_datetime": "2026-09-13 09:34:04.771283"
+      "created_datetime": "2026-09-13 09:34:04.771283",
+      "total_stops": 26
     },
     {
       "run_id": "RUN-B2373512",
@@ -133,7 +141,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-13T16:16:24.240825+00:00",
-      "created_datetime": "2026-09-13 16:16:24"
+      "created_datetime": "2026-09-13 16:16:24",
+      "total_stops": 28
     },
     {
       "run_id": "RUN-9715C9AB",
@@ -148,7 +157,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-13T16:16:41.781553+00:00",
-      "created_datetime": "2026-09-13 16:16:41"
+      "created_datetime": "2026-09-13 16:16:41",
+      "total_stops": 28
     },
     {
       "run_id": "RUN-EAA85EB4",
@@ -163,7 +173,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-13T16:22:50.424350+00:00",
-      "created_datetime": "2026-09-13 16:22:50"
+      "created_datetime": "2026-09-13 16:22:50",
+      "total_stops": 28
     },
     {
       "run_id": "RUN-4D578A67",
@@ -178,7 +189,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-13T17:53:15.699730+00:00",
-      "created_datetime": "2026-09-13 17:53:15"
+      "created_datetime": "2026-09-13 17:53:15",
+      "total_stops": 28
     },
     {
       "run_id": "RUN-5D329AB7",
@@ -193,7 +205,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-13T17:54:51.494463+00:00",
-      "created_datetime": "2026-09-13 17:54:51"
+      "created_datetime": "2026-09-13 17:54:51",
+      "total_stops": 68
     },
     {
       "run_id": "RUN-7510CBE4",
@@ -208,7 +221,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-13T17:56:12.552096+00:00",
-      "created_datetime": "2026-09-13 17:56:12"
+      "created_datetime": "2026-09-13 17:56:12",
+      "total_stops": 13
     },
     {
       "run_id": "RUN-9E30871D",
@@ -223,7 +237,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-13T17:57:40.875542+00:00",
-      "created_datetime": "2026-09-13 17:57:40"
+      "created_datetime": "2026-09-13 17:57:40",
+      "total_stops": 68
     },
     {
       "run_id": "RUN-C231F26E",
@@ -238,7 +253,8 @@
       "falsification_ratio_phi": 0.88,
       "is_falsified": false,
       "timestamp": "2026-09-13T17:58:38.076282+00:00",
-      "created_datetime": "2026-09-13 17:58:38"
+      "created_datetime": "2026-09-13 17:58:38",
+      "total_stops": 109
     }
   ]
 }
