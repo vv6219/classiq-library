@@ -967,7 +967,14 @@ export const App: React.FC = () => {
           )}
           {activeTab === 'quantum' && <QuantumStudio runId={currentRunId} />}
           {activeTab === 'graphs' && <GraphStudio runId={currentRunId} />}
-          {activeTab === 'comparison' && <RunComparisonStudio onSelectRun={handleSelectHistoricalRun} />}
+          {activeTab === 'comparison' && (
+            <RunComparisonStudio
+              onSelectRun={(runId) => {
+                handleSelectHistoricalRun(runId);
+                setActiveTab('3d-sim');
+              }}
+            />
+          )}
           {activeTab === 'telemetry' && <TelemetryConsole runId={currentRunId} />}
         </div>
 
