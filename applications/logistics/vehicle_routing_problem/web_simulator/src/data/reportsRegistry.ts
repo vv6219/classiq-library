@@ -9,7 +9,7 @@ import { getReportPdfUrl, WaveExecutionResponse, SavedReportDTO } from '../servi
 
 export type ReportCategory = 'ALL' | 'PDF' | 'DATA' | 'PLANNED';
 
-export type PDFProfileId = 'EXECUTIVE' | 'COMPREHENSIVE' | 'QUANTUM' | 'CERTIFICATE';
+export type PDFProfileId = 'EXECUTIVE' | 'COMPREHENSIVE' | 'QUANTUM' | 'CERTIFICATE' | 'INVESTIGATION';
 
 export type ReportFormat = 'PDF' | 'JSON' | 'CSV' | 'MODULE';
 
@@ -32,6 +32,22 @@ export interface ReportDefinition {
 }
 
 export const REPORTS_REGISTRY: ReportDefinition[] = [
+  {
+    id: 'investigation_dossier',
+    title: 'Incident & Forensic Root-Cause Investigation (5 Pages)',
+    shortTitle: 'Investigation Dossier',
+    category: 'PDF',
+    categoryLabel: 'Vector PDF Report',
+    format: 'PDF',
+    badge: '5 Pages',
+    badgeColor: '#ef4444',
+    description: 'Deep-dive cyber-physical incident analysis: Invariant Gates 1-4 violation forensics, automated Benders cuts, spatiotemporal chute contention, and quantum noise diagnostics.',
+    pdfProfile: 'INVESTIGATION',
+    status: 'AVAILABLE',
+    actionType: 'VIEW_PDF',
+    standardReference: 'DIN EN ISO 3691-4 & Benders Invariants',
+    highlights: ['Root-Cause Anomaly Attribution', 'Benders Cut Mathematical Formulation', 'Chute Q_c(t) Buffer Contention', 'Quantum QAOA Noise Diagnostics', 'ESG ISO 14064 Carbon Forensics'],
+  },
   {
     id: 'executive_brief',
     title: 'Executive Brief (2 Pages)',

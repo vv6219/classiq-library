@@ -12,6 +12,8 @@ import { ArchetypeMeta, RunSummaryDTO } from '../../services/api';
 import { BreadcrumbNavigation } from './BreadcrumbNavigation';
 import { PDFProfileId } from '../../data/reportsRegistry';
 
+import { StudioTabId } from '../../types/navigationState';
+
 export interface BreadcrumbsBarProps {
   facilityId?: string;
   facilityName?: string;
@@ -27,8 +29,8 @@ export interface BreadcrumbsBarProps {
   operationalMode: 'QUANTUM' | 'CLASSICAL';
   onSelectRun: (runId: string) => void;
   onReRunClick?: () => void;
-  activeTab: '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry';
-  onSelectTab: (tab: '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry') => void;
+  activeTab: StudioTabId;
+  onSelectTab: (tab: StudioTabId) => void;
   selectedEntity: { type: 'AMR' | 'CHUTE' | 'DEPOT' | 'ORDER'; id: string; telemetry?: any } | null;
   onClearEntity: () => void;
   makespan?: number;
@@ -56,6 +58,7 @@ const TAB_TITLES: Record<string, string> = {
   'quantum': 'Classiq Quantum Co-Processor',
   'graphs': 'Performance Analytics & Graphs',
   'comparison': 'Multi-Run Comparison Matrix',
+  'investigation': 'Incident Investigation & Root-Cause Studio',
 };
 
 export const BreadcrumbsBar: React.FC<BreadcrumbsBarProps> = ({

@@ -12,6 +12,7 @@ import {
   BarChart3,
   GitCompare,
   Terminal,
+  Search,
   ChevronRight,
   ChevronDown,
   X,
@@ -26,6 +27,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { ArchetypeMeta, RunSummaryDTO } from '../../services/api';
+import { StudioTabId } from '../../types/navigationState';
 import { trackButtonClick, trackTabChange } from '../../utils/analytics';
 
 export interface BreadcrumbNavigationProps {
@@ -43,8 +45,8 @@ export interface BreadcrumbNavigationProps {
   operationalMode: 'QUANTUM' | 'CLASSICAL';
   onSelectRun: (runId: string) => void;
   onReRunClick?: () => void;
-  activeTab: '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry';
-  onSelectTab: (tab: '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry') => void;
+  activeTab: StudioTabId;
+  onSelectTab: (tab: StudioTabId) => void;
   selectedEntity: { type: 'AMR' | 'CHUTE' | 'DEPOT' | 'ORDER'; id: string; telemetry?: any } | null;
   onClearEntity: () => void;
   onCenterEntity?: (id: string) => void;
@@ -94,7 +96,7 @@ const FACILITIES = [
   },
 ];
 
-const STUDIOS = [
+const STUDIOS: { id: StudioTabId; label: string; pillarId: string; domain: string; icon: React.ReactNode; shortcut: string }[] = [
   { id: '3d-sim', label: '3D Digital Twin', pillarId: 'pillar-1', domain: 'Operations', icon: <Box size={13} />, shortcut: 'Ctrl+1' },
   { id: '2d-route-map', label: '2D Route Map', pillarId: 'pillar-1', domain: 'Operations', icon: <MapPin size={13} />, shortcut: 'Ctrl+2' },
   { id: 'telemetry', label: 'Live Telemetry', pillarId: 'pillar-1', domain: 'Operations', icon: <Terminal size={13} />, shortcut: 'Ctrl+8' },
@@ -103,6 +105,7 @@ const STUDIOS = [
   { id: 'quantum', label: 'Classiq Quantum', pillarId: 'pillar-3', domain: 'Optimization', icon: <Atom size={13} />, shortcut: 'Ctrl+5' },
   { id: 'graphs', label: 'Analytics Graphs', pillarId: 'pillar-4', domain: 'Auditing', icon: <BarChart3 size={13} />, shortcut: 'Ctrl+6' },
   { id: 'comparison', label: 'Run Comparison', pillarId: 'pillar-4', domain: 'Auditing', icon: <GitCompare size={13} />, shortcut: 'Ctrl+7' },
+  { id: 'investigation', label: 'Incident Forensics', pillarId: 'pillar-4', domain: 'Auditing', icon: <Search size={13} />, shortcut: 'Ctrl+9' },
 ] as const;
 
 export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({

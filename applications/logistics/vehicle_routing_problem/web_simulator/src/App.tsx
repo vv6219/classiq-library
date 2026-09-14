@@ -9,6 +9,7 @@ import { QuantumStudio } from './components/QuantumStudio';
 import { GraphStudio } from './components/GraphStudio';
 import { RunComparisonStudio } from './components/RunComparisonStudio';
 import { TelemetryConsole } from './components/TelemetryConsole';
+import { InvestigationStudio } from './components/InvestigationStudio';
 import { PreRequestConfigDrawer } from './components/PreRequestConfigDrawer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { QuickControlsPanel } from './components/QuickControlsPanel';
@@ -65,10 +66,8 @@ import {
 } from 'lucide-react';
 
 export const App: React.FC = () => {
-  // Navigation: 8 Workspace Tabs
-  const [activeTab, setActiveTab] = useState<
-    '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry'
-  >('3d-sim');
+  // Navigation: 8 Workspace Tabs + Incident Investigation Studio
+  const [activeTab, setActiveTab] = useState<StudioTabId>('3d-sim');
 
   // Sidebar & Layout State: Always start on first load with expanded sidebar
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
@@ -108,6 +107,7 @@ export const App: React.FC = () => {
   const [quantumPanelMode, setQuantumPanelMode] = useState<HUDPanelDisplayMode>('expanded');
   const [reportsRepoMode, setReportsRepoMode] = useState<HUDPanelDisplayMode>('minimized');
   const [reportsCount, setReportsCount] = useState<number>(0);
+  const [investigationSubTab, setInvestigationSubTab] = useState<'timeline' | 'gates' | 'chutes' | 'quantum' | 'carbon'>('timeline');
 
   const [selectedTier, setSelectedTier] = useState<string>('tier1');
   const [selectedGraphId, setSelectedGraphId] = useState<string>('pareto');
@@ -316,6 +316,9 @@ export const App: React.FC = () => {
     }
     if (s.comparisonMode) {
       setComparisonMode(s.comparisonMode);
+    }
+    if (s.investigationSubTab) {
+      setInvestigationSubTab(s.investigationSubTab);
     }
     if (s.isQuickDrawerOpen !== undefined) {
       setIsQuickDrawerOpen(s.isQuickDrawerOpen);
@@ -960,6 +963,8 @@ export const App: React.FC = () => {
           onOpenConfig={() => setIsConfigDrawerOpen(true)}
           onOpenQuickDrawer={() => setIsQuickDrawerOpen(!isQuickDrawerOpen)}
           onOpenPDF={handleOpenPDF}
+          selectedInvestigationSubTab={investigationSubTab}
+          onSelectInvestigationSubTab={setInvestigationSubTab}
           onToggleExplainer={() => setIsExplainerOpen(!isExplainerOpen)}
           isExplainerOpen={isExplainerOpen}
           onToggleQuantumPanel={() => setIsQuantumPanelOpen(!isQuantumPanelOpen)}
@@ -1127,6 +1132,38 @@ export const App: React.FC = () => {
             />
           )}
           {activeTab === 'telemetry' && <TelemetryConsole runId={currentRunId} />}
+          {activeTab === 'investigation' && (
+            <InvestigationStudio
+              runId={currentRunId}
+              lastWave={lastWave}
+              archetypeKey={selectedArchetype}
+              onOpenPDF={handleOpenPDF}
+              onSelectRun={handleSelectHistoricalRun}
+              activeSubTab={investigationSubTab}
+              onSubTabChange={(subTab) => {
+                setInvestigationSubTab(subTab);
+                const subRoute = NAVIGATION_ROUTES.find(
+                  (r) => r.state.tab === 'investigation' && r.state.investigationSubTab === subTab
+                );
+                if (subRoute) {
+                  if (typeof window !== 'undefined' && window.location.pathname !== subRoute.path) {
+                    window.history.pushState(null, '', subRoute.path);
+                  }
+                  updatePageMetadata(subRoute.meta);
+                  trackSidebarNavigation({
+                    routePath: subRoute.path,
+                    itemId: subRoute.id,
+                    itemLabel: subRoute.label,
+                    menuLevel: subRoute.menuLevel,
+                    pillarId: subRoute.pillarId,
+                    pillarTitle: subRoute.pillarTitle,
+                    pageTitle: subRoute.meta.title,
+                    entryMethod: 'quick_action',
+                  });
+                }
+              }}
+            />
+          )}
         </div>
 
         {/* Quick Controls & Mission Dossier Sidebar */}

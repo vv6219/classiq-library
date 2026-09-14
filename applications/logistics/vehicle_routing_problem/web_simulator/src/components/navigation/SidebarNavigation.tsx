@@ -43,12 +43,13 @@ import {
 } from 'lucide-react';
 import { trackButtonClick, trackTabChange, trackSidebarNavigation } from '../../utils/analytics';
 import { PDFProfileId } from '../../data/reportsRegistry';
+import { StudioTabId } from '../../types/navigationState';
 import { findRouteByItemId, matchNavigationRoute, NAVIGATION_ROUTES } from '../../utils/navigationRoutes';
 import { updatePageMetadata } from '../../utils/headMetadata';
 
 export interface SidebarNavigationProps {
-  activeTab: '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry';
-  onSelectTab: (tab: '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry') => void;
+  activeTab: StudioTabId;
+  onSelectTab: (tab: StudioTabId) => void;
   selectedEntity: { type: 'AMR' | 'CHUTE' | 'DEPOT' | 'ORDER'; id: string; telemetry?: any } | null;
   onSelectEntity: (entity: { type: 'AMR' | 'CHUTE' | 'DEPOT' | 'ORDER'; id: string; telemetry?: any }) => void;
   onClearEntity: () => void;
@@ -83,6 +84,8 @@ export interface SidebarNavigationProps {
   onSelectGraph?: (graphId: string) => void;
   selectedComparisonMode?: 'DELTA_AUDIT' | 'ALL' | 'GRID_FOCUS' | 'COMPARISON_FOCUS';
   onSelectComparisonMode?: (mode: 'DELTA_AUDIT' | 'ALL' | 'GRID_FOCUS' | 'COMPARISON_FOCUS') => void;
+  selectedInvestigationSubTab?: 'timeline' | 'gates' | 'chutes' | 'quantum' | 'carbon';
+  onSelectInvestigationSubTab?: (subTab: 'timeline' | 'gates' | 'chutes' | 'quantum' | 'carbon') => void;
 }
 
 export type MenuItemType = 'tab' | 'action' | 'command' | 'external' | 'group';
@@ -93,7 +96,7 @@ export interface SubMenuItem {
   shortLabel?: string;
   icon?: React.ReactNode;
   type: MenuItemType;
-  targetTab?: '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry';
+  targetTab?: StudioTabId;
   badge?: string | number;
   badgeColor?: string;
   shortcut?: string;
@@ -153,6 +156,8 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   onSelectGraph,
   selectedComparisonMode,
   onSelectComparisonMode,
+  selectedInvestigationSubTab,
+  onSelectInvestigationSubTab,
 }) => {
   // Helper to normalize entity IDs for robust match (AMR_001, AMR-01, amr_1)
   const normalizeEntityId = (id?: string | null) => {
@@ -263,6 +268,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
       'quantum': 'pillar-3',
       'graphs': 'pillar-4',
       'comparison': 'pillar-4',
+      'investigation': 'pillar-4',
     };
     const targetPillar = tabPillarMap[activeTab];
     if (targetPillar && !expandedPillars.has(targetPillar)) {
@@ -916,6 +922,117 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                 onExecute: () => {
                   onSelectTab('comparison');
                   onSelectComparisonMode?.('GRID_FOCUS');
+                },
+              },
+            ],
+          },
+          {
+            id: 'menu-investigation',
+            label: 'Incident Root-Cause Investigation',
+            shortLabel: 'Investigation',
+            icon: <Search size={14} />,
+            type: 'tab',
+            targetTab: 'investigation',
+            badge: 'Root Cause',
+            badgeColor: '#f43f5e',
+            shortcut: 'Ctrl+9',
+            onExecute: () => {
+              onSelectTab('investigation');
+            },
+            children: [
+              {
+                id: 'sub-investigation-timeline',
+                label: 'Timeline Micro-Scrubber (t=0..T)',
+                shortLabel: 'Timeline Scrubber',
+                type: 'tab',
+                targetTab: 'investigation',
+                badge: 't=0..T',
+                badgeColor: '#38bdf8',
+                tooltip: 'Second-by-second AMR trajectory scrubber, kinematic velocity v(t), and ISO 3691-4 deceleration clamping forensics.',
+                onExecute: () => {
+                  onSelectTab('investigation');
+                  onSelectInvestigationSubTab?.('timeline');
+                  trackButtonClick('SubMenu_Investigation_Timeline', 'Sidebar_Navigation', {
+                    sub_tab: 'timeline',
+                    target_route: '/investigation/timeline',
+                  });
+                  trackTabChange('investigation', 'timeline', { source: 'sidebar_sub_item' });
+                },
+              },
+              {
+                id: 'sub-investigation-gates',
+                label: 'Invariant Gates 1-4 & Benders Cuts',
+                shortLabel: 'Invariant Gates',
+                type: 'tab',
+                targetTab: 'investigation',
+                badge: '4 Gates',
+                badgeColor: '#10b981',
+                tooltip: 'Rigorous KaTeX mathematical proofs for batching, 3D LIFO, SoC discharge, and automated Benders decomposition cuts.',
+                onExecute: () => {
+                  onSelectTab('investigation');
+                  onSelectInvestigationSubTab?.('gates');
+                  trackButtonClick('SubMenu_Investigation_Gates', 'Sidebar_Navigation', {
+                    sub_tab: 'gates',
+                    target_route: '/investigation/gates',
+                  });
+                  trackTabChange('investigation', 'gates', { source: 'sidebar_sub_item' });
+                },
+              },
+              {
+                id: 'sub-investigation-chutes',
+                label: 'Spatiotemporal Chute Dynamics & Chokes',
+                shortLabel: 'Chute Dynamics',
+                type: 'tab',
+                targetTab: 'investigation',
+                badge: 'Q_c(t)',
+                badgeColor: '#f59e0b',
+                tooltip: 'Hydrodynamic buffer accumulation dynamics dQ/dt, 85% surge backpressure regulation, and corridor stall analytics.',
+                onExecute: () => {
+                  onSelectTab('investigation');
+                  onSelectInvestigationSubTab?.('chutes');
+                  trackButtonClick('SubMenu_Investigation_Chutes', 'Sidebar_Navigation', {
+                    sub_tab: 'chutes',
+                    target_route: '/investigation/chutes',
+                  });
+                  trackTabChange('investigation', 'chutes', { source: 'sidebar_sub_item' });
+                },
+              },
+              {
+                id: 'sub-investigation-quantum',
+                label: 'Quantum Co-Processor Diagnostics',
+                shortLabel: 'Quantum Diagnostics',
+                type: 'tab',
+                targetTab: 'investigation',
+                badge: 'QAOA Lens',
+                badgeColor: '#a855f7',
+                tooltip: 'Classiq QAOA variational trajectory (γ, β), transpilation depth, shot-noise variance decay, and quantum crossover frontier.',
+                onExecute: () => {
+                  onSelectTab('investigation');
+                  onSelectInvestigationSubTab?.('quantum');
+                  trackButtonClick('SubMenu_Investigation_Quantum', 'Sidebar_Navigation', {
+                    sub_tab: 'quantum',
+                    target_route: '/investigation/quantum-lens',
+                  });
+                  trackTabChange('investigation', 'quantum', { source: 'sidebar_sub_item' });
+                },
+              },
+              {
+                id: 'sub-investigation-carbon',
+                label: 'Fleet Energy & ISO 14064 Carbon',
+                shortLabel: 'Energy & Carbon',
+                type: 'tab',
+                targetTab: 'investigation',
+                badge: 'ISO 14064',
+                badgeColor: '#00f0ff',
+                tooltip: 'Dynamic battery SoC kinetics, regenerative braking recovery (KERS), and ESG greenhouse gas emissions scorecard.',
+                onExecute: () => {
+                  onSelectTab('investigation');
+                  onSelectInvestigationSubTab?.('carbon');
+                  trackButtonClick('SubMenu_Investigation_Carbon', 'Sidebar_Navigation', {
+                    sub_tab: 'carbon',
+                    target_route: '/investigation/carbon-forensics',
+                  });
+                  trackTabChange('investigation', 'carbon', { source: 'sidebar_sub_item' });
                 },
               },
             ],
@@ -1856,6 +1973,13 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                                     (activeTab === 'comparison' && (
                                       (child.id === 'sub-delta-audit' && (selectedComparisonMode === 'DELTA_AUDIT' || !selectedComparisonMode)) ||
                                       (child.id === 'sub-regression-table' && selectedComparisonMode === 'GRID_FOCUS')
+                                    )) ||
+                                    (activeTab === 'investigation' && (
+                                      (child.id === 'sub-investigation-timeline' && (selectedInvestigationSubTab === 'timeline' || !selectedInvestigationSubTab)) ||
+                                      (child.id === 'sub-investigation-gates' && selectedInvestigationSubTab === 'gates') ||
+                                      (child.id === 'sub-investigation-chutes' && selectedInvestigationSubTab === 'chutes') ||
+                                      (child.id === 'sub-investigation-quantum' && selectedInvestigationSubTab === 'quantum') ||
+                                      (child.id === 'sub-investigation-carbon' && selectedInvestigationSubTab === 'carbon')
                                     ));
                                   const hasSubSubChildren = child.children && child.children.length > 0;
                                   const isSubSubExpanded = expandedSubGroups.has(child.id);

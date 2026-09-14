@@ -16,7 +16,8 @@ export type StudioTabId =
   | 'quantum'
   | 'graphs'
   | 'comparison'
-  | 'telemetry';
+  | 'telemetry'
+  | 'investigation';
 
 export interface RouteTargetState {
   tab?: StudioTabId;
@@ -37,6 +38,7 @@ export interface RouteTargetState {
   panelAction?: 'minimize' | 'restore';
   externalUrl?: string;
   comparisonMode?: 'DELTA_AUDIT' | 'ALL' | 'GRID_FOCUS' | 'COMPARISON_FOCUS';
+  investigationSubTab?: 'timeline' | 'gates' | 'chutes' | 'quantum' | 'carbon';
 }
 
 export interface NavigationRouteDefinition {
@@ -1169,6 +1171,133 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
     state: {
       tab: 'comparison',
       comparisonMode: 'GRID_FOCUS',
+    },
+  },
+  {
+    id: 'menu-investigation',
+    path: '/investigation',
+    aliases: ['/forensics', '/root-cause', '/incident', '/investigate'],
+    label: 'Incident Root-Cause Investigation Studio',
+    shortLabel: 'Investigation',
+    pillarId: 'pillar-4',
+    pillarTitle: 'Analytics, Graphs & Benchmarking',
+    menuLevel: 2,
+    targetTab: 'investigation',
+    sitemap: { changefreq: 'daily', priority: 0.9 },
+    meta: {
+      title: 'Incident & Forensic Root-Cause Investigation Studio',
+      description: 'Interactive cyber-physical incident diagnostics: Invariant Gates 1-4 violation forensics, automated Benders cuts recourse, chute buffer contention, and quantum co-processor noise analysis.',
+      keywords: ['Incident Forensics', 'Root Cause', 'Benders Cuts', 'Gate Invariants', 'Chute Contention', 'Quantum Noise'],
+      canonicalPath: '/investigation',
+    },
+    state: {
+      tab: 'investigation',
+      investigationSubTab: 'timeline',
+    },
+  },
+  {
+    id: 'sub-investigation-timeline',
+    path: '/investigation/timeline',
+    label: 'Micro-Scrubber Incident Timeline',
+    shortLabel: 'Timeline Scrubber',
+    pillarId: 'pillar-4',
+    pillarTitle: 'Analytics, Graphs & Benchmarking',
+    menuLevel: 3,
+    targetTab: 'investigation',
+    sitemap: { changefreq: 'daily', priority: 0.85 },
+    meta: {
+      title: 'Micro-Scrubber Incident Timeline (t=0..T)',
+      description: 'Second-by-second playback of AMR trajectory speeds, safety clamping events, and chute inflow surges.',
+      keywords: ['Timeline Scrubber', 'AMR Telemetry', 'ISO 3691-4 Clamping'],
+      canonicalPath: '/investigation/timeline',
+    },
+    state: {
+      tab: 'investigation',
+      investigationSubTab: 'timeline',
+    },
+  },
+  {
+    id: 'sub-investigation-gates',
+    path: '/investigation/gates',
+    label: 'Invariant Gates 1-4 & Benders Cuts',
+    shortLabel: 'Invariant Gates',
+    pillarId: 'pillar-4',
+    pillarTitle: 'Analytics, Graphs & Benchmarking',
+    menuLevel: 3,
+    targetTab: 'investigation',
+    sitemap: { changefreq: 'daily', priority: 0.85 },
+    meta: {
+      title: 'Invariant Gates 1-4 & Automated Benders Cuts Recourse',
+      description: 'Mathematical proof and dual variable decomposition for batching, 3D LIFO, time-windows, and dynamic HRI collision invariants.',
+      keywords: ['Invariant Gates', 'Benders Cuts', '3D LIFO DAG', 'HRI Safety'],
+      canonicalPath: '/investigation/gates',
+    },
+    state: {
+      tab: 'investigation',
+      investigationSubTab: 'gates',
+    },
+  },
+  {
+    id: 'sub-investigation-chutes',
+    path: '/investigation/chutes',
+    label: 'Spatiotemporal Chute Dynamics & Chokes',
+    shortLabel: 'Chute Dynamics',
+    pillarId: 'pillar-4',
+    pillarTitle: 'Analytics, Graphs & Benchmarking',
+    menuLevel: 3,
+    targetTab: 'investigation',
+    sitemap: { changefreq: 'daily', priority: 0.85 },
+    meta: {
+      title: 'Spatiotemporal Chute Dynamics & Corridor Choke-Points',
+      description: 'Buffer volume time-series Qc(t) vs peak threshold Qmax=3.5m3 and AMR pick-face stall analysis.',
+      keywords: ['Chute Dynamics', 'Buffer Contention', 'Corridor Bottlenecks'],
+      canonicalPath: '/investigation/chutes',
+    },
+    state: {
+      tab: 'investigation',
+      investigationSubTab: 'chutes',
+    },
+  },
+  {
+    id: 'sub-investigation-quantum',
+    path: '/investigation/quantum-lens',
+    label: 'Quantum Co-Processor Diagnostic Lens',
+    shortLabel: 'Quantum Lens',
+    pillarId: 'pillar-4',
+    pillarTitle: 'Analytics, Graphs & Benchmarking',
+    menuLevel: 3,
+    targetTab: 'investigation',
+    sitemap: { changefreq: 'daily', priority: 0.85 },
+    meta: {
+      title: 'Quantum Co-Processor Diagnostic Lens & Noise Variance',
+      description: 'QAOA variational parameter trajectories, circuit depth scaling, shot-noise variance decay, and classical crossover thresholds.',
+      keywords: ['Quantum Lens', 'QAOA Diagnostics', 'Shot Noise', 'Variational Energy'],
+      canonicalPath: '/investigation/quantum-lens',
+    },
+    state: {
+      tab: 'investigation',
+      investigationSubTab: 'quantum',
+    },
+  },
+  {
+    id: 'sub-investigation-carbon',
+    path: '/investigation/carbon-forensics',
+    label: 'Fleet Energy & ISO 14064 Carbon Forensics',
+    shortLabel: 'Energy & Carbon',
+    pillarId: 'pillar-4',
+    pillarTitle: 'Analytics, Graphs & Benchmarking',
+    menuLevel: 3,
+    targetTab: 'investigation',
+    sitemap: { changefreq: 'daily', priority: 0.85 },
+    meta: {
+      title: 'AMR Fleet Energy Discharge & ISO 14064 Carbon Forensics',
+      description: 'Dynamic battery SoC consumption curves, regenerative recovery, and GHG footprint audit.',
+      keywords: ['ISO 14064', 'Battery SoC', 'Carbon Footprint', 'Energy Forensics'],
+      canonicalPath: '/investigation/carbon-forensics',
+    },
+    state: {
+      tab: 'investigation',
+      investigationSubTab: 'carbon',
     },
   },
 

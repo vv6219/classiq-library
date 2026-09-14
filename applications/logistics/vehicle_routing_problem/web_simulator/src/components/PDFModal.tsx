@@ -4,11 +4,13 @@ import { FileText, Download, X, Award, Atom, Layers, CheckCircle2 } from 'lucide
 import { CodeLmnBadge } from './CodeLmnBadge';
 import { trackTelegramClick } from '../utils/analytics';
 
+import { PDFProfileId } from '../data/reportsRegistry';
+
 interface PDFModalProps {
   runId: string;
   isOpen: boolean;
   onClose: () => void;
-  initialProfile?: 'EXECUTIVE' | 'COMPREHENSIVE' | 'QUANTUM' | 'CERTIFICATE';
+  initialProfile?: PDFProfileId;
 }
 
 export const PDFModal: React.FC<PDFModalProps> = ({
@@ -17,7 +19,7 @@ export const PDFModal: React.FC<PDFModalProps> = ({
   onClose,
   initialProfile = 'EXECUTIVE',
 }) => {
-  const [profile, setProfile] = useState<'EXECUTIVE' | 'COMPREHENSIVE' | 'QUANTUM' | 'CERTIFICATE'>(initialProfile);
+  const [profile, setProfile] = useState<PDFProfileId>(initialProfile);
 
   React.useEffect(() => {
     if (isOpen && initialProfile) {
@@ -29,7 +31,13 @@ export const PDFModal: React.FC<PDFModalProps> = ({
 
   const pdfUrl = getReportPdfUrl(runId, profile);
 
-  const profiles = [
+  const profiles: { id: PDFProfileId; title: string; icon: React.ReactNode; desc: string }[] = [
+    {
+      id: 'INVESTIGATION',
+      title: 'Incident & Forensic Investigation (5 Pages)',
+      icon: <FileText size={16} />,
+      desc: 'Deep-dive cyber-physical incident analysis: Invariant Gates 1-4 forensics, automated Benders cuts, spatiotemporal chute contention, and quantum noise diagnostics.',
+    },
     {
       id: 'EXECUTIVE',
       title: 'Executive Brief (2 Pages)',

@@ -19,6 +19,8 @@ import {
   trackTelegramClick,
 } from '../utils/analytics';
 
+import { StudioTabId } from '../types/navigationState';
+
 export interface TopbarHUDProps {
   lastWave: WaveExecutionResponse | null;
   operationalMode: string;
@@ -40,8 +42,8 @@ export interface TopbarHUDProps {
   numOrders: number;
   numVehicles: number;
   seed: number;
-  activeTab: '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry';
-  onSelectTab: (tab: '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry') => void;
+  activeTab: StudioTabId;
+  onSelectTab: (tab: StudioTabId) => void;
   selectedEntity: { type: 'AMR' | 'CHUTE' | 'DEPOT' | 'ORDER'; id: string; telemetry?: any } | null;
   onClearEntity: () => void;
   onOpenConfig?: () => void;
