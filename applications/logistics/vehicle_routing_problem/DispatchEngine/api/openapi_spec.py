@@ -6,10 +6,83 @@ exhaustive parameter descriptions, concrete request body examples, and full resp
 
 from __future__ import annotations
 import json
-from typing import Dict, Any
+import socket
+from typing import Dict, Any, List, Optional
 
 
-def generate_openapi_spec() -> Dict[str, Any]:
+def get_detected_ip_addresses() -> List[str]:
+    """Detects available network IPv4 addresses on the host machine, prioritizing standard LAN IPs."""
+    detected: List[str] = []
+    try:
+        hostname = socket.gethostname()
+        _, _, ip_list = socket.gethostbyname_ex(hostname)
+        for ip in ip_list:
+            if ip and not ip.startswith("127.") and ip not in detected:
+                detected.append(ip)
+    except Exception:
+        pass
+
+    def ip_priority(ip: str) -> int:
+        if ip.startswith("192.168."):
+            return 0
+        if ip.startswith("10."):
+            return 1
+        if ip.startswith("100."):
+            return 2
+        return 3
+
+    detected.sort(key=ip_priority)
+    return detected
+
+
+def get_servers_list(current_host: Optional[str] = None, port: int = 8080) -> List[Dict[str, str]]:
+    """Builds the OpenAPI servers list prioritizing the current machine published IP."""
+    servers: List[Dict[str, str]] = []
+    seen_urls = set()
+
+    def add_server(url: str, desc: str):
+        normalized = url if url == "/" else url.rstrip("/")
+        if normalized not in seen_urls:
+            seen_urls.add(normalized)
+            servers.append({"url": normalized, "description": desc})
+
+    detected_ips = get_detected_ip_addresses()
+    primary_ip = detected_ips[0] if detected_ips else "192.168.102.85"
+
+    # 1. Primary Published Server: Current machine LAN IP (shown and selected by default in Swagger UI)
+    add_server(
+        f"http://{primary_ip}:{port}",
+        f"Published Standalone DispatchEngine Server (Current IP: {primary_ip})"
+    )
+
+    # 2. If client connected via explicit host or domain differing from primary and loopback
+    if current_host:
+        clean_host = current_host.strip()
+        host_no_port = clean_host.split(":")[0].lower()
+        if host_no_port not in ("127.0.0.1", "localhost", primary_ip.lower()):
+            req_url = clean_host if clean_host.startswith("http") else f"http://{clean_host}"
+            add_server(req_url, f"Published DispatchEngine Server (Request Host: {clean_host})")
+
+    # 3. Other detected network interfaces (VPN, Hyper-V, WSL)
+    for ip in detected_ips:
+        if ip != primary_ip:
+            if ip.startswith("100."):
+                add_server(f"http://{ip}:{port}", f"DispatchEngine Server (WARP / VPN: {ip})")
+            elif ip.startswith("172."):
+                add_server(f"http://{ip}:{port}", f"DispatchEngine Server (Virtual Switch / WSL: {ip})")
+            else:
+                add_server(f"http://{ip}:{port}", f"DispatchEngine Server (Interface: {ip})")
+
+    # 4. Local loopback and localhost
+    add_server(f"http://127.0.0.1:{port}", f"Local Standalone DispatchEngine Server (127.0.0.1:{port})")
+    add_server(f"http://localhost:{port}", f"Localhost Standalone DispatchEngine Server (localhost:{port})")
+    add_server("http://localhost:8000", "FastAPI ASGI Server (Port 8000)")
+    add_server("/", "Relative Current Origin (Browser Host)")
+
+    return servers
+
+
+def generate_openapi_spec(current_host: Optional[str] = None, port: int = 8080) -> Dict[str, Any]:
     """Builds a 100% compliant, fully annotated OpenAPI 3.1.0 specification document."""
     return {
         "openapi": "3.1.0",
@@ -45,10 +118,7 @@ def generate_openapi_spec() -> Dict[str, Any]:
                 "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
             },
         },
-        "servers": [
-            {"url": "http://127.0.0.1:8080", "description": "Local Standalone DispatchEngine Server (Port 8080)"},
-            {"url": "http://localhost:8000", "description": "FastAPI ASGI Server (Port 8000)"},
-        ],
+        "servers": get_servers_list(current_host=current_host, port=port),
         "tags": [
             {
                 "name": "Scenarios & Mock Data Engine",
@@ -2287,6 +2357,6 @@ def generate_openapi_spec() -> Dict[str, Any]:
     }
 
 
-def export_openapi_json(indent: int = 2) -> str:
+def export_openapi_json(indent: int = 2, current_host: Optional[str] = None, port: int = 8080) -> str:
     """Returns formatted JSON string of the complete OpenAPI 3.1.0 specification."""
-    return json.dumps(generate_openapi_spec(), indent=indent)
+    return json.dumps(generate_openapi_spec(current_host=current_host, port=port), indent=indent)

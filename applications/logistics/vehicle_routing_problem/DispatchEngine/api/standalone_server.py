@@ -110,7 +110,8 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
             self._send_html(200, get_redoc_html())
             return
         elif path in ("/openapi.json", "/openapi"):
-            spec_str = export_openapi_json()
+            req_host = self.headers.get("Host")
+            spec_str = export_openapi_json(current_host=req_host)
             body = spec_str.encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -1515,14 +1516,20 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
         }
 
 
-def run_standalone_server(port: int = 8080, host: str = "127.0.0.1"):
+def run_standalone_server(port: int = 8080, host: str = "0.0.0.0"):
     server_address = (host, port)
     httpd = ThreadedHTTPServer(server_address, DispatchAPIRequestHandler)
+    from DispatchEngine.api.openapi_spec import get_detected_ip_addresses
+    detected_ips = get_detected_ip_addresses()
+    primary_ip = detected_ips[0] if detected_ips else "192.168.102.85"
+    display_host = primary_ip if host in ("0.0.0.0", "") else host
+
     print(f"================================================================================")
     print(f"  DispatchEngine REST API & Interactive Swagger UI Server Active")
-    print(f"  Interactive Swagger UI: http://{host}:{port}/docs")
-    print(f"  Interactive ReDoc Docs: http://{host}:{port}/redoc")
-    print(f"  OpenAPI 3.1.0 Spec:     http://{host}:{port}/openapi.json")
+    print(f"  Published Server (Current IP): http://{display_host}:{port}/docs")
+    print(f"  Local Loopback:                http://127.0.0.1:{port}/docs")
+    print(f"  Interactive ReDoc Docs:        http://{display_host}:{port}/redoc")
+    print(f"  OpenAPI 3.1.0 Spec:            http://{display_host}:{port}/openapi.json")
     print(f"================================================================================")
     httpd.serve_forever()
 

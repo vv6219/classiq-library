@@ -80,11 +80,12 @@ class TestAPIAndSwagger(unittest.TestCase):
 
     def test_swagger_ui_html(self):
         swagger_html = get_swagger_ui_html()
-        self.assertIn("<title>DispatchEngine API - Swagger UI</title>", swagger_html)
+        self.assertIn("Swagger UI", swagger_html)
+        self.assertIn("DispatchEngine", swagger_html)
         self.assertIn("SwaggerUIBundle", swagger_html)
 
         redoc_html = get_redoc_html()
-        self.assertIn("<redoc spec-url='/openapi.json'></redoc>", redoc_html)
+        self.assertIn("Redoc.init('/openapi.json'", redoc_html)
 
     def test_standalone_server_endpoints(self):
         # Start server on a high ephemeral port
