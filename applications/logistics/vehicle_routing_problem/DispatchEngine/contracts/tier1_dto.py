@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 from typing import Tuple, Dict, Optional
-from pydantic import Field
-from DispatchEngine.contracts.base import StrictImmutableDTO
+from DispatchEngine.contracts.base import StrictImmutableDTO, Field
 
 
 class OrderLineDTO(StrictImmutableDTO):

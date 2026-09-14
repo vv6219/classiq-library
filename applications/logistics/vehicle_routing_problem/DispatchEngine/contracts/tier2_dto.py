@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 from typing import Tuple, Dict
-from pydantic import Field
-from DispatchEngine.contracts.base import StrictImmutableDTO
+from DispatchEngine.contracts.base import StrictImmutableDTO, Field
 
 
 class ItemPlacementDTO(StrictImmutableDTO):

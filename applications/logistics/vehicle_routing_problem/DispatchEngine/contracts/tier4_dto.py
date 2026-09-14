@@ -1,9 +1,8 @@
 """Tier 4 Kinematic Deconfliction & Continuous HRI DTOs."""
 
 from __future__ import annotations
-from typing import Tuple, Dict, List
-from pydantic import Field
-from DispatchEngine.contracts.base import StrictImmutableDTO
+from typing import Tuple, Dict, List, Optional
+from DispatchEngine.contracts.base import StrictImmutableDTO, Field
 
 
 class SplineWaypointDTO(StrictImmutableDTO):

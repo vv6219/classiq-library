@@ -79,6 +79,10 @@ export interface SidebarNavigationProps {
   onSelectTier?: (tierKey: string) => void;
   onNavigate?: (item: SubMenuItem, pillar?: PillarCategory, parentGroup?: SubMenuItem) => void;
   isExplainerOpen?: boolean;
+  selectedGraphId?: string;
+  onSelectGraph?: (graphId: string) => void;
+  selectedComparisonMode?: 'DELTA_AUDIT' | 'ALL' | 'GRID_FOCUS' | 'COMPARISON_FOCUS';
+  onSelectComparisonMode?: (mode: 'DELTA_AUDIT' | 'ALL' | 'GRID_FOCUS' | 'COMPARISON_FOCUS') => void;
 }
 
 export type MenuItemType = 'tab' | 'action' | 'command' | 'external' | 'group';
@@ -145,6 +149,10 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   onSelectTier,
   onNavigate,
   isExplainerOpen = false,
+  selectedGraphId,
+  onSelectGraph,
+  selectedComparisonMode,
+  onSelectComparisonMode,
 }) => {
   // Helper to normalize entity IDs for robust match (AMR_001, AMR-01, amr_1)
   const normalizeEntityId = (id?: string | null) => {
@@ -849,20 +857,35 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
               {
                 id: 'sub-pareto',
                 label: 'Fleet Makespan & Distance Pareto Front',
-                type: 'command',
-                onExecute: () => onSelectTab('graphs'),
+                shortLabel: 'Pareto Front',
+                type: 'tab',
+                targetTab: 'graphs',
+                onExecute: () => {
+                  onSelectTab('graphs');
+                  if (onSelectGraph) onSelectGraph('pareto');
+                },
               },
               {
                 id: 'sub-benchmarks',
                 label: '4-Way Solver Latency Benchmark',
-                type: 'command',
-                onExecute: () => onSelectTab('graphs'),
+                shortLabel: 'Solver Benchmarks',
+                type: 'tab',
+                targetTab: 'graphs',
+                onExecute: () => {
+                  onSelectTab('graphs');
+                  if (onSelectGraph) onSelectGraph('benders');
+                },
               },
               {
                 id: 'sub-heatmaps',
                 label: 'Chute Balance Variance Heatmaps',
-                type: 'command',
-                onExecute: () => onSelectTab('graphs'),
+                shortLabel: 'Chute Heatmaps',
+                type: 'tab',
+                targetTab: 'graphs',
+                onExecute: () => {
+                  onSelectTab('graphs');
+                  if (onSelectGraph) onSelectGraph('spatiotemporal_heatmap');
+                },
               },
             ],
           },
@@ -878,14 +901,22 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
               {
                 id: 'sub-delta-audit',
                 label: 'Quantum vs Classical Delta Audit',
-                type: 'command',
-                onExecute: () => onSelectTab('comparison'),
+                type: 'tab',
+                targetTab: 'comparison',
+                onExecute: () => {
+                  onSelectTab('comparison');
+                  onSelectComparisonMode?.('DELTA_AUDIT');
+                },
               },
               {
                 id: 'sub-regression-table',
                 label: 'Historical Regression Table',
-                type: 'command',
-                onExecute: () => onSelectTab('comparison'),
+                type: 'tab',
+                targetTab: 'comparison',
+                onExecute: () => {
+                  onSelectTab('comparison');
+                  onSelectComparisonMode?.('GRID_FOCUS');
+                },
               },
             ],
           },
@@ -1285,9 +1316,10 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
     if (onNavigate) {
       onNavigate(item, pillar, parentGroup);
     }
-    if (item.type === 'tab' && item.targetTab) {
+    if (item.targetTab) {
       onSelectTab(item.targetTab);
-    } else if (item.onExecute) {
+    }
+    if (item.onExecute) {
       item.onExecute();
     } else if (item.externalUrl) {
       window.open(item.externalUrl, '_blank', 'noopener,noreferrer');
@@ -1815,6 +1847,15 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                                       (child.id === 'sub-tier-2' && selectedTier === 'tier2') ||
                                       (child.id === 'sub-tier-3' && selectedTier === 'tier3') ||
                                       (child.id === 'sub-tier-4' && selectedTier === 'tier4')
+                                    )) ||
+                                    (activeTab === 'graphs' && (
+                                      (child.id === 'sub-pareto' && (selectedGraphId === 'pareto' || !selectedGraphId)) ||
+                                      (child.id === 'sub-benchmarks' && (selectedGraphId === 'benders' || selectedGraphId === 'velocity')) ||
+                                      (child.id === 'sub-heatmaps' && (selectedGraphId === 'spatiotemporal_heatmap' || selectedGraphId === 'chutes'))
+                                    )) ||
+                                    (activeTab === 'comparison' && (
+                                      (child.id === 'sub-delta-audit' && (selectedComparisonMode === 'DELTA_AUDIT' || !selectedComparisonMode)) ||
+                                      (child.id === 'sub-regression-table' && selectedComparisonMode === 'GRID_FOCUS')
                                     ));
                                   const hasSubSubChildren = child.children && child.children.length > 0;
                                   const isSubSubExpanded = expandedSubGroups.has(child.id);

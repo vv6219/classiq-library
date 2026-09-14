@@ -110,6 +110,7 @@ export const App: React.FC = () => {
   const [reportsCount, setReportsCount] = useState<number>(0);
 
   const [selectedTier, setSelectedTier] = useState<string>('tier1');
+  const [selectedGraphId, setSelectedGraphId] = useState<string>('pareto');
   const [generatorInitialParam, setGeneratorInitialParam] = useState<string>('num_orders');
   const [isZeroOrdersModalOpen, setIsZeroOrdersModalOpen] = useState(false);
   const [zeroOrdersToastMessage, setZeroOrdersToastMessage] = useState<string | null>(null);
@@ -134,6 +135,7 @@ export const App: React.FC = () => {
   const [numOrders, setNumOrders] = useState(20);
   const [numVehicles, setNumVehicles] = useState(4);
   const [seed, setSeed] = useState(42);
+  const [comparisonMode, setComparisonMode] = useState<'DELTA_AUDIT' | 'ALL' | 'GRID_FOCUS' | 'COMPARISON_FOCUS'>('DELTA_AUDIT');
 
   // Active Tier Algorithms & Parameters
   const [activeTiers, setActiveTiers] = useState<Record<string, string>>({
@@ -308,6 +310,12 @@ export const App: React.FC = () => {
     }
     if (s.selectedTier) {
       setSelectedTier(s.selectedTier);
+    }
+    if (s.selectedGraph) {
+      setSelectedGraphId(s.selectedGraph);
+    }
+    if (s.comparisonMode) {
+      setComparisonMode(s.comparisonMode);
     }
     if (s.isQuickDrawerOpen !== undefined) {
       setIsQuickDrawerOpen(s.isQuickDrawerOpen);
@@ -990,10 +998,25 @@ export const App: React.FC = () => {
             setQuantumPanelMode('expanded');
             setReportsRepoMode('expanded');
           }}
+          selectedGraphId={selectedGraphId}
+          onSelectGraph={setSelectedGraphId}
+          selectedComparisonMode={comparisonMode}
+          onSelectComparisonMode={setComparisonMode}
           onNavigate={(item) => {
             if (item.targetTab) {
               trackTabChange(activeTab, item.targetTab);
               setActiveTab(item.targetTab);
+            }
+            if (item.id === 'sub-pareto') {
+              setSelectedGraphId('pareto');
+            } else if (item.id === 'sub-benchmarks') {
+              setSelectedGraphId('benders');
+            } else if (item.id === 'sub-heatmaps') {
+              setSelectedGraphId('spatiotemporal_heatmap');
+            } else if (item.id === 'sub-delta-audit') {
+              setComparisonMode('DELTA_AUDIT');
+            } else if (item.id === 'sub-regression-table') {
+              setComparisonMode('GRID_FOCUS');
             }
           }}
         />
@@ -1086,9 +1109,17 @@ export const App: React.FC = () => {
             />
           )}
           {activeTab === 'quantum' && <QuantumStudio runId={currentRunId} />}
-          {activeTab === 'graphs' && <GraphStudio runId={currentRunId} />}
+          {activeTab === 'graphs' && (
+            <GraphStudio
+              runId={currentRunId}
+              activeGraphId={selectedGraphId}
+              onSelectGraph={setSelectedGraphId}
+            />
+          )}
           {activeTab === 'comparison' && (
             <RunComparisonStudio
+              initialMode={comparisonMode}
+              onModeChange={setComparisonMode}
               onSelectRun={(runId) => {
                 handleSelectHistoricalRun(runId);
                 setActiveTab('3d-sim');

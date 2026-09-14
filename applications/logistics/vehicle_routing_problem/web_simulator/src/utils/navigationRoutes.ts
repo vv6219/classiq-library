@@ -20,6 +20,7 @@ export type StudioTabId =
 
 export interface RouteTargetState {
   tab?: StudioTabId;
+  selectedGraph?: string;
   selectedEntity?: { type: 'AMR' | 'CHUTE' | 'DEPOT' | 'ORDER'; id: string; telemetry?: any } | null;
   cameraPreset?: 'overview' | 'top' | 'isometric' | 'follow' | 'chute-focus';
   selectedArchetype?: string;
@@ -35,6 +36,7 @@ export interface RouteTargetState {
   generatorParamKey?: string;
   panelAction?: 'minimize' | 'restore';
   externalUrl?: string;
+  comparisonMode?: 'DELTA_AUDIT' | 'ALL' | 'GRID_FOCUS' | 'COMPARISON_FOCUS';
 }
 
 export interface NavigationRouteDefinition {
@@ -1061,6 +1063,7 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
     },
     state: {
       tab: 'graphs',
+      selectedGraph: 'pareto',
     },
   },
   {
@@ -1081,6 +1084,7 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
     },
     state: {
       tab: 'graphs',
+      selectedGraph: 'benders',
     },
   },
   {
@@ -1101,6 +1105,7 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
     },
     state: {
       tab: 'graphs',
+      selectedGraph: 'spatiotemporal_heatmap',
     },
   },
   {
@@ -1142,6 +1147,7 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
     },
     state: {
       tab: 'comparison',
+      comparisonMode: 'DELTA_AUDIT',
     },
   },
   {
@@ -1162,6 +1168,7 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
     },
     state: {
       tab: 'comparison',
+      comparisonMode: 'GRID_FOCUS',
     },
   },
 

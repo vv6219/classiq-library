@@ -1,9 +1,8 @@
 """Tier 3 Route Sequencing Under Open Windows DTOs."""
 
 from __future__ import annotations
-from typing import Tuple, Dict, List
-from pydantic import Field
-from DispatchEngine.contracts.base import StrictImmutableDTO
+from typing import Tuple, Dict, Optional
+from DispatchEngine.contracts.base import StrictImmutableDTO, Field
 
 
 class RouteStopDTO(StrictImmutableDTO):

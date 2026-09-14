@@ -7,6 +7,7 @@ import {
   cloneScenario,
   generateScenario,
   registerCustomDataset,
+  generateDeterministicDataset,
   CONFIG_LIMITS,
   ParameterLimitSpec,
   DatasetDTO,
@@ -591,14 +592,19 @@ export const DatasetStudio: React.FC<DatasetStudioProps> = ({
     setIsLoading(true);
     try {
       const data = await fetchDataset(targetId);
-      if (data && data.orders) {
+      if (data && data.orders && data.orders.length > 0) {
         setDataset(data);
         if (targetId !== scenarioId) {
           onSelectScenario(targetId);
         }
+      } else {
+        const fallback = generateDeterministicDataset(targetId);
+        setDataset(fallback);
       }
     } catch (err) {
       console.error('Failed to load dataset:', err);
+      const fallback = generateDeterministicDataset(targetId);
+      setDataset(fallback);
     } finally {
       setIsLoading(false);
     }
@@ -1010,8 +1016,33 @@ export const DatasetStudio: React.FC<DatasetStudioProps> = ({
             <div style={{ fontSize: '14px', fontWeight: 600, color: '#f0f4f8' }}>No Orders Found</div>
             <div style={{ fontSize: '12px', marginTop: '6px', color: '#64748b' }}>
               {searchTerm || hazardFilter !== 'ALL'
-                ? 'Try clearing the search query or hazard filter.'
-                : 'Select another scenario from the dropdown or click "Generate Random Dataset".'}
+                ? 'Active search filter or hazard filter returned 0 results.'
+                : 'This scenario currently has no orders loaded.'}
+            </div>
+            <div style={{ marginTop: '16px', display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              {(searchTerm || hazardFilter !== 'ALL') && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setHazardFilter('ALL');
+                  }}
+                  className="btn-glass"
+                  style={{ fontSize: '12px', padding: '6px 14px' }}
+                >
+                  Clear Filters
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  const restored = generateDeterministicDataset(scenarioId || 'SCEN-7D42F06D');
+                  setDataset(restored);
+                }}
+                className="btn-glass"
+                style={{ fontSize: '12px', padding: '6px 14px', borderColor: '#00f0ff', color: '#00f0ff' }}
+              >
+                <Sparkles size={13} style={{ marginRight: '6px', display: 'inline' }} />
+                Populate 25 Benchmark Orders
+              </button>
             </div>
           </div>
         ) : (

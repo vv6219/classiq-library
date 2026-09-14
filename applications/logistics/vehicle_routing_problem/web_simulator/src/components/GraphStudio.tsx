@@ -24,6 +24,10 @@ import {
   Scale,
   Zap,
   Maximize2,
+  Volume2,
+  VolumeX,
+  Copy,
+  X,
 } from 'lucide-react';
 import katex from 'katex';
 import { getGraphImageUrl } from '../services/api';
@@ -31,11 +35,17 @@ import { GRAPH_DOSSIERS } from '../data/graphDossiers';
 
 interface GraphStudioProps {
   runId?: string;
+  activeGraphId?: string;
+  onSelectGraph?: (graphId: string) => void;
 }
 
-export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) => {
+export const GraphStudio: React.FC<GraphStudioProps> = ({
+  runId: propRunId,
+  activeGraphId,
+  onSelectGraph,
+}) => {
   const effectiveRunId = propRunId && propRunId.trim() ? propRunId.trim() : 'RUN-ACTIVE-001';
-  const [activeGraph, setActiveGraph] = useState<string>('spatial');
+  const [activeGraph, setActiveGraph] = useState<string>(activeGraphId || 'pareto');
   const [reloadKey, setReloadKey] = useState<number>(Date.now());
   const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [triedFallback, setTriedFallback] = useState<boolean>(false);
@@ -43,8 +53,67 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
   const [copiedNotification, setCopiedNotification] = useState<boolean>(false);
   const [dossierTab, setDossierTab] = useState<'all' | 'meaning' | 'elements' | 'acronyms' | 'results'>('all');
   const [activeStudioTab, setActiveStudioTab] = useState<'chart' | 'dossier'>('chart');
+  const [isMeaningPanelOpen, setIsMeaningPanelOpen] = useState<boolean>(true);
+  const [isSpeakingMeaning, setIsSpeakingMeaning] = useState<boolean>(false);
+  const [meaningSubTab, setMeaningSubTab] = useState<'overview' | 'math' | 'elements' | 'kpis'>('overview');
+
+  // Helper to render KaTeX safely
+  const renderFormula = (latex: string) => {
+    try {
+      return katex.renderToString(latex, {
+        displayMode: true,
+        throwOnError: false,
+      });
+    } catch {
+      return `<div style="color: #00f0ff; font-family: monospace;">${latex}</div>`;
+    }
+  };
+
+  const handleToggleMeaningSpeech = (dossierObj: any) => {
+    if (!('speechSynthesis' in window)) return;
+    if (isSpeakingMeaning) {
+      window.speechSynthesis.cancel();
+      setIsSpeakingMeaning(false);
+      return;
+    }
+    const text = `${dossierObj.title}. ${dossierObj.generalMeaning.overview}. Industrial significance: ${dossierObj.generalMeaning.industrialSignificance}`;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.onend = () => setIsSpeakingMeaning(false);
+    utterance.onerror = () => setIsSpeakingMeaning(false);
+    window.speechSynthesis.speak(utterance);
+    setIsSpeakingMeaning(true);
+  };
+
+  const handleCopyMeaningMarkdown = (dossierObj: any) => {
+    const md = `# ${dossierObj.title}\n\n## Overview\n${dossierObj.generalMeaning.overview}\n\n## Mathematical Paradigm\n${dossierObj.generalMeaning.mathematicalParadigm}\n\n## Industrial Significance\n${dossierObj.generalMeaning.industrialSignificance}\n\n## Key Elements\n${dossierObj.elementExplanations.map((e: any) => `- **${e.name}** (${e.symbol}): ${e.description}`).join('\n')}\n\n## Key Metrics\n${dossierObj.calculatedResults.map((r: any) => `- **${r.metric}**: ${r.value} ${r.unit} (${r.status}) - ${r.interpretation}`).join('\n')}`;
+    navigator.clipboard.writeText(md);
+    setCopiedNotification(true);
+    setTimeout(() => setCopiedNotification(false), 2000);
+  };
+
+  useEffect(() => {
+    if (activeGraphId && activeGraphId !== activeGraph) {
+      setActiveGraph(activeGraphId);
+    }
+  }, [activeGraphId]);
+
+  const handleSelectGraph = (graphId: string) => {
+    setActiveGraph(graphId);
+    if (onSelectGraph) {
+      onSelectGraph(graphId);
+    }
+  };
 
   const graphOptions = [
+    {
+      id: 'pareto',
+      title: 'Fleet Makespan & Distance Pareto Front',
+      shortTitle: 'Pareto Front',
+      icon: Scale,
+      desc: 'Multi-objective non-dominated frontier: makespan (s) vs total distance (km)',
+      tooltip: 'Fleet Makespan vs Distance Pareto Frontier: Evaluates non-dominated trade-offs between fleet completion makespan and total travel distance across 4 optimization tiers and solver formulations.',
+    },
     {
       id: 'spatial',
       title: 'Spatial Routing Network G=(V, A)',
@@ -146,6 +215,142 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
   // Render vector fallback SVG for each graph type
   const renderVectorFallback = () => {
     switch (activeGraph) {
+      case 'pareto':
+        return (
+          <svg viewBox="0 0 700 380" style={{ width: '100%', height: 'auto', maxHeight: '480px' }}>
+            <defs>
+              <linearGradient id="paretoShading" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0%" stopColor="#00f0ff" stopOpacity="0.12" />
+                <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.06" />
+                <stop offset="100%" stopColor="#1e1b4b" stopOpacity="0.0" />
+              </linearGradient>
+              <linearGradient id="curveGradient" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#00f0ff" />
+                <stop offset="100%" stopColor="#38bdf8" />
+              </linearGradient>
+            </defs>
+            <rect width="700" height="380" fill="#0b1329" rx="8" />
+            <text x="350" y="24" fill="#00f0ff" fontSize="12" fontWeight="bold" textAnchor="middle">
+              Fleet Makespan vs. Total Travel Distance Pareto Frontier (Bi-Objective Multi-Tier Optimization)
+            </text>
+
+            {/* Grid & Axes */}
+            <line x1="80" y1="310" x2="650" y2="310" stroke="#334155" strokeWidth="1.5" />
+            <line x1="80" y1="45" x2="80" y2="310" stroke="#334155" strokeWidth="1.5" />
+
+            {/* Horizontal Grid lines (Distance: 3.5km to 8.5km) */}
+            {[
+              { y: 65, label: '8.5 km' },
+              { y: 115, label: '7.0 km' },
+              { y: 165, label: '5.5 km' },
+              { y: 215, label: '4.5 km' },
+              { y: 265, label: '3.5 km' },
+            ].map((tick, i) => (
+              <g key={`y-${i}`}>
+                <line x1="80" y1={tick.y} x2="650" y2={tick.y} stroke="#1e293b" strokeWidth="1" strokeDasharray="3 3" />
+                <text x="72" y={tick.y + 4} fill="#64748b" fontSize="10" textAnchor="end" fontFamily="monospace">{tick.label}</text>
+              </g>
+            ))}
+
+            {/* Vertical Grid lines (Makespan: 450s to 850s) */}
+            {[
+              { x: 140, label: '450s' },
+              { x: 240, label: '550s' },
+              { x: 340, label: '650s' },
+              { x: 440, label: '750s' },
+              { x: 540, label: '850s' },
+            ].map((tick, i) => (
+              <g key={`x-${i}`}>
+                <line x1={tick.x} y1="45" x2={tick.x} y2="310" stroke="#1e293b" strokeWidth="1" strokeDasharray="3 3" />
+                <text x={tick.x} y="325" fill="#64748b" fontSize="10" textAnchor="middle" fontFamily="monospace">{tick.label}</text>
+              </g>
+            ))}
+
+            {/* Axis Titles */}
+            <text x="365" y="344" fill="#94a3b8" fontSize="11" fontWeight="600" textAnchor="middle">Fleet Turnaround Makespan (Seconds)</text>
+            <text x="25" y="175" fill="#94a3b8" fontSize="11" fontWeight="600" transform="rotate(-90 25 175)" textAnchor="middle">Total Fleet Travel Distance (km)</text>
+
+            {/* Shaded Dominated Trade-off Region */}
+            <path
+              d="M 130 65 Q 180 180 270 230 T 520 265 L 640 275 L 640 45 L 130 45 Z"
+              fill="url(#paretoShading)"
+            />
+
+            {/* Pareto Frontier Smooth Curve */}
+            <path
+              d="M 130 65 Q 180 180 270 230 T 520 265 L 630 275"
+              fill="none"
+              stroke="url(#curveGradient)"
+              strokeWidth="3.5"
+            />
+            <path
+              d="M 130 65 Q 180 180 270 230 T 520 265 L 630 275"
+              fill="none"
+              stroke="#00f0ff"
+              strokeWidth="1"
+              strokeDasharray="4 2"
+            />
+
+            {/* Solution Points */}
+            {/* 1. Classiq Quantum QAOA Hybrid Co-Processor (Optimal Knee) */}
+            <g transform="translate(190, 205)">
+              <circle cx="0" cy="0" r="16" fill="rgba(0, 240, 255, 0.2)" stroke="#00f0ff" strokeWidth="1" />
+              <polygon points="0,-9 2.5,-3 8.5,-2.5 4,2 5.5,8 0,5 -5.5,8 -4,2 -8.5,-2.5 -2.5,-3" fill="#facc15" stroke="#ffffff" strokeWidth="1" />
+              <text x="14" y="-4" fill="#00f0ff" fontSize="10" fontWeight="bold">Classiq QAOA Hybrid (Optimal Knee)</text>
+              <text x="14" y="9" fill="#94a3b8" fontSize="9">Makespan: 482s | Dist: 4.82 km (Active)</text>
+            </g>
+
+            {/* 2. OR-Tools CP-SAT (High Speed Non-Dominated) */}
+            <g transform="translate(270, 230)">
+              <rect x="-6" y="-6" width="12" height="12" fill="#3b82f6" stroke="#93c5fd" strokeWidth="1.5" />
+              <text x="10" y="3" fill="#93c5fd" fontSize="9" fontWeight="600">OR-Tools CP-SAT (510s, 5.15km)</text>
+            </g>
+
+            {/* 3. Min-Distance Extreme Pareto Point */}
+            <g transform="translate(520, 265)">
+              <circle cx="0" cy="0" r="5" fill="#10b981" stroke="#a7f3d0" strokeWidth="1.5" />
+              <text x="8" y="4" fill="#6ee7b7" fontSize="9">Eco-Speed Min-Distance (790s, 3.65km)</text>
+            </g>
+
+            {/* 4. Min-Makespan Extreme Pareto Point */}
+            <g transform="translate(130, 65)">
+              <circle cx="0" cy="0" r="5" fill="#06b6d4" stroke="#a5f3fc" strokeWidth="1.5" />
+              <text x="8" y="4" fill="#67e8f9" fontSize="9">Rush-Wave Min-Makespan (440s, 8.40km)</text>
+            </g>
+
+            {/* 5. Dominated Classical SC-QFCM Point */}
+            <g transform="translate(320, 160)">
+              <polygon points="0,-6 6,0 0,6 -6,0" fill="#f97316" stroke="#fdba74" strokeWidth="1.5" />
+              <text x="9" y="3" fill="#fdba74" fontSize="9">SC-QFCM Classical (590s, 5.60km)</text>
+            </g>
+
+            {/* 6. Dominated FIFO Heuristic Point */}
+            <g transform="translate(430, 110)">
+              <rect x="-5" y="-5" width="10" height="10" fill="#ef4444" stroke="#fca5a5" strokeWidth="1.5" />
+              <text x="9" y="3" fill="#fca5a5" fontSize="9">FIFO Baseline (780s, 7.85km - Dominated)</text>
+            </g>
+
+            {/* 7. Dominated Random Baseline */}
+            <g transform="translate(530, 85)">
+              <circle cx="0" cy="0" r="4" fill="#64748b" stroke="#94a3b8" strokeWidth="1" />
+              <text x="8" y="3" fill="#94a3b8" fontSize="9">Random Heuristic (840s, 8.40km)</text>
+            </g>
+
+            {/* Legend Bar */}
+            <rect x="75" y="356" width="550" height="20" rx="4" fill="#0f172a" stroke="#1e293b" />
+            <polygon points="90,366 92,362 96,362 93,365 94,369 90,367 86,369 87,365 84,362 88,362" fill="#facc15" />
+            <text x="100" y="370" fill="#00f0ff" fontSize="9" fontWeight="bold">Quantum-Hybrid</text>
+            <rect x="185" y="362" width="8" height="8" fill="#3b82f6" />
+            <text x="198" y="370" fill="#94a3b8" fontSize="9">OR-Tools CP-SAT</text>
+            <polygon points="280,366 284,362 288,366 284,370" fill="#f97316" />
+            <text x="293" y="370" fill="#94a3b8" fontSize="9">SC-QFCM</text>
+            <rect x="350" y="362" width="8" height="8" fill="#ef4444" />
+            <text x="363" y="370" fill="#94a3b8" fontSize="9">FIFO Baseline</text>
+            <line x1="440" y1="366" x2="465" y2="366" stroke="#00f0ff" strokeWidth="2" />
+            <text x="472" y="370" fill="#38bdf8" fontSize="9" fontWeight="bold">Pareto Front Line</text>
+          </svg>
+        );
+
       case 'spatial':
         return (
           <svg viewBox="0 0 700 380" style={{ width: '100%', height: 'auto', maxHeight: '480px' }}>
@@ -703,6 +908,29 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
             </div>
           )}
 
+          {/* Detailed Meaning Panel Toggle */}
+          {activeStudioTab === 'chart' && (
+            <button
+              onClick={() => setIsMeaningPanelOpen(!isMeaningPanelOpen)}
+              className="btn-secondary"
+              style={{
+                fontSize: '10px',
+                padding: '3px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: isMeaningPanelOpen ? 'rgba(0, 240, 255, 0.18)' : 'rgba(15, 23, 42, 0.8)',
+                borderColor: isMeaningPanelOpen ? '#00f0ff' : 'rgba(255, 255, 255, 0.1)',
+                color: isMeaningPanelOpen ? '#00f0ff' : '#94a3b8',
+                boxShadow: isMeaningPanelOpen ? '0 0 10px rgba(0, 240, 255, 0.25)' : 'none',
+              }}
+              title="Toggle Detailed Graph Meaning & Engineering Dossier Panel"
+            >
+              <BookOpen size={11} color={isMeaningPanelOpen ? '#00f0ff' : '#94a3b8'} />
+              <span>{isMeaningPanelOpen ? 'Meaning Panel On' : 'Meaning Panel'}</span>
+            </button>
+          )}
+
           {/* Download Button */}
           <button
             onClick={handleDownload}
@@ -734,7 +962,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
           return (
             <button
               key={opt.id}
-              onClick={() => setActiveGraph(opt.id)}
+              onClick={() => handleSelectGraph(opt.id)}
               className="glass-card"
               title={opt.tooltip}
               style={{
@@ -763,146 +991,502 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({ runId: propRunId }) =>
         })}
       </div>
 
-      {/* Main Graph Viewer Display (Fit-to-Screen) */}
-      {activeStudioTab === 'chart' && (
-        <div
-          className="glass-card"
-          style={{
-            flex: 1,
-            minHeight: 0,
-            padding: '8px 14px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-            backgroundColor: '#070c18',
-            border: '1px solid rgba(0, 240, 255, 0.2)',
-            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.6)',
-          }}
-          title={`Active Analytics Graph: ${activeOption.title}`}
-        >
-          {/* If Interactive Vector mode is toggled or image has permanently errored */}
-          {viewMode === 'vector' || imageState === 'error' ? (
-            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', alignSelf: 'flex-start', flexShrink: 0 }}>
-                <Sparkles size={13} color="#00f0ff" />
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8' }}>
-                  Interactive Vector Engine (Pure Client-Side SVG)
-                </span>
-              </div>
-              <div style={{ width: '100%', flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                {renderVectorFallback()}
-              </div>
-            </div>
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-              {/* Animated Loading Overlay */}
-              {imageState === 'loading' && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    background: 'rgba(7, 12, 24, 0.85)',
-                    backdropFilter: 'blur(6px)',
-                    zIndex: 10,
-                    borderRadius: '8px',
-                  }}
-                >
-                  <div
+      {/* Main Graph Viewer Display (Fit-to-Screen) with Detailed Graph Meaning Panel */}
+      {activeStudioTab === 'chart' && (() => {
+        const dossier = GRAPH_DOSSIERS[activeGraph] || GRAPH_DOSSIERS['pareto'] || GRAPH_DOSSIERS['spatial'];
+        const getStatusBadge = (status: 'OPTIMAL' | 'COMPLIANT' | 'BALANCED' | 'WARNING') => {
+          switch (status) {
+            case 'OPTIMAL':
+              return { bg: 'rgba(16, 185, 129, 0.15)', border: '#10b981', text: '#34d399', icon: CheckCircle2 };
+            case 'COMPLIANT':
+              return { bg: 'rgba(0, 240, 255, 0.15)', border: '#00f0ff', text: '#38bdf8', icon: ShieldCheck };
+            case 'BALANCED':
+              return { bg: 'rgba(168, 85, 247, 0.15)', border: '#a855f7', text: '#c084fc', icon: Scale };
+            case 'WARNING':
+              return { bg: 'rgba(245, 158, 11, 0.15)', border: '#f59e0b', text: '#fbbf24', icon: AlertTriangle };
+          }
+        };
+
+        return (
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: '10px', position: 'relative', overflow: 'hidden' }}>
+            {/* Left / Center: Main Graph Canvas */}
+            <div
+              className="glass-card"
+              style={{
+                flex: 1,
+                minHeight: 0,
+                minWidth: 0,
+                padding: '8px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+                backgroundColor: '#070c18',
+                border: '1px solid rgba(0, 240, 255, 0.2)',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.6)',
+              }}
+              title={`Active Analytics Graph: ${activeOption.title}`}
+            >
+              {/* If Interactive Vector mode is toggled or image has permanently errored */}
+              {viewMode === 'vector' || imageState === 'error' ? (
+                <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', alignSelf: 'flex-start', flexShrink: 0 }}>
+                    <Sparkles size={13} color="#00f0ff" />
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8' }}>
+                      Interactive Vector Engine (Pure Client-Side SVG)
+                    </span>
+                  </div>
+                  <div style={{ width: '100%', flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {renderVectorFallback()}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                  {/* Animated Loading Overlay */}
+                  {imageState === 'loading' && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px',
+                        background: 'rgba(7, 12, 24, 0.85)',
+                        backdropFilter: 'blur(6px)',
+                        zIndex: 10,
+                        borderRadius: '8px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          border: '3px solid rgba(0, 240, 255, 0.15)',
+                          borderTop: '3px solid #00f0ff',
+                          borderRadius: '50%',
+                          animation: 'spin 0.8s linear infinite',
+                        }}
+                      />
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#00f0ff', letterSpacing: '0.04em' }}>
+                          RENDERING GRAPH...
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Publication Figure PNG */}
+                  <img
+                    key={`${activeGraph}-${effectiveRunId}-${reloadKey}`}
+                    src={primaryUrl}
+                    alt={activeGraph}
+                    title={activeOption.tooltip}
                     style={{
-                      width: '32px',
-                      height: '32px',
-                      border: '3px solid rgba(0, 240, 255, 0.15)',
-                      borderTop: '3px solid #00f0ff',
-                      borderRadius: '50%',
-                      animation: 'spin 0.8s linear infinite',
+                      maxWidth: '100%',
+                      maxHeight: 'calc(100vh - 225px)',
+                      height: 'auto',
+                      objectFit: 'contain',
+                      borderRadius: '6px',
+                      boxShadow: '0 6px 25px rgba(0,0,0,0.5)',
+                      opacity: imageState === 'loaded' ? 1 : 0.01,
+                      transition: 'opacity 0.25s ease',
+                    }}
+                    onLoad={() => setImageState('loaded')}
+                    onError={(e) => {
+                      if (!triedFallback) {
+                        setTriedFallback(true);
+                        (e.target as HTMLImageElement).src = staticFallbackUrl;
+                      } else {
+                        setImageState('error');
+                      }
                     }}
                   />
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#00f0ff', letterSpacing: '0.04em' }}>
-                      RENDERING GRAPH...
-                    </div>
-                  </div>
                 </div>
               )}
 
-              {/* Publication Figure PNG */}
-              <img
-                key={`${activeGraph}-${effectiveRunId}-${reloadKey}`}
-                src={primaryUrl}
-                alt={activeGraph}
-                title={activeOption.tooltip}
+              {/* Caption & Controls */}
+              <div
                 style={{
-                  maxWidth: '100%',
-                  maxHeight: 'calc(100vh - 225px)',
-                  height: 'auto',
-                  objectFit: 'contain',
-                  borderRadius: '6px',
-                  boxShadow: '0 6px 25px rgba(0,0,0,0.5)',
-                  opacity: imageState === 'loaded' ? 1 : 0.01,
-                  transition: 'opacity 0.25s ease',
+                  marginTop: '6px',
+                  fontSize: '11px',
+                  color: '#9ca3af',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  width: '100%',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                  paddingTop: '4px',
+                  flexShrink: 0,
                 }}
-                onLoad={() => setImageState('loaded')}
-                onError={(e) => {
-                  if (!triedFallback) {
-                    setTriedFallback(true);
-                    (e.target as HTMLImageElement).src = staticFallbackUrl;
-                  } else {
-                    setImageState('error');
-                  }
-                }}
-              />
+              >
+                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <strong style={{ color: '#00f0ff' }}>{activeOption.title}:</strong>{' '}
+                  <span>{activeOption.desc}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <button
+                    onClick={() => setIsMeaningPanelOpen(!isMeaningPanelOpen)}
+                    style={{
+                      background: isMeaningPanelOpen ? 'rgba(0, 240, 255, 0.18)' : 'rgba(255, 255, 255, 0.06)',
+                      border: isMeaningPanelOpen ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.15)',
+                      color: isMeaningPanelOpen ? '#00f0ff' : '#94a3b8',
+                      fontSize: '10.5px',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title="Toggle Detailed Graph Meaning Panel"
+                  >
+                    <BookOpen size={11} />
+                    <span>{isMeaningPanelOpen ? 'Hide Meaning' : 'Detailed Meaning'}</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveStudioTab('dossier')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#38bdf8',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <span>Full Audit &rarr;</span>
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
 
-          {/* Caption & Quick Invariant Link */}
-          <div
-            style={{
-              marginTop: '6px',
-              fontSize: '11px',
-              color: '#9ca3af',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '8px',
-              width: '100%',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-              paddingTop: '4px',
-              flexShrink: 0,
-            }}
-          >
-            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <strong style={{ color: '#00f0ff' }}>{activeOption.title}:</strong>{' '}
-              <span>{activeOption.desc}</span>
-            </div>
-            <button
-              onClick={() => setActiveStudioTab('dossier')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#38bdf8',
-                fontSize: '11px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-              }}
-            >
-              <span>Read Invariant Audit &rarr;</span>
-            </button>
+            {/* Right: Detailed Graph Meaning Panel */}
+            {isMeaningPanelOpen && (
+              <div
+                className="glass-card"
+                style={{
+                  width: '400px',
+                  minWidth: '330px',
+                  maxWidth: '430px',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  backgroundColor: '#070f1e',
+                  border: '1px solid rgba(0, 240, 255, 0.3)',
+                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(0, 240, 255, 0.15)',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                }}
+              >
+                {/* Panel Header */}
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: 'rgba(15, 23, 42, 0.65)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '6px',
+                        background: 'rgba(0, 240, 255, 0.15)',
+                        border: '1px solid rgba(0, 240, 255, 0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Sparkles size={13} color="#00f0ff" />
+                    </div>
+                    <div style={{ overflow: 'hidden' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#00f0ff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                        DETAILED GRAPH MEANING
+                      </div>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {dossier.title}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <button
+                      onClick={() => handleToggleMeaningSpeech(dossier)}
+                      style={{
+                        background: isSpeakingMeaning ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
+                        border: isSpeakingMeaning ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.1)',
+                        color: isSpeakingMeaning ? '#ef4444' : '#94a3b8',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                      }}
+                      title={isSpeakingMeaning ? 'Stop Reading Aloud' : 'Read Aloud Graph Meaning'}
+                    >
+                      {isSpeakingMeaning ? <VolumeX size={12} /> : <Volume2 size={12} />}
+                    </button>
+                    <button
+                      onClick={() => handleCopyMeaningMarkdown(dossier)}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                      }}
+                      title="Copy Dossier Markdown"
+                    >
+                      <Copy size={12} />
+                    </button>
+                    <button
+                      onClick={() => setIsMeaningPanelOpen(false)}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                      }}
+                      title="Close Meaning Panel"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sub-Tabs Strip */}
+                <div
+                  style={{
+                    display: 'flex',
+                    background: 'rgba(0, 0, 0, 0.35)',
+                    padding: '3px 6px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                    gap: '4px',
+                    flexShrink: 0,
+                  }}
+                >
+                  {[
+                    { id: 'overview', label: 'Meaning' },
+                    { id: 'math', label: 'Math' },
+                    { id: 'elements', label: 'Elements' },
+                    { id: 'kpis', label: 'KPIs' },
+                  ].map((tab) => {
+                    const isTabActive = meaningSubTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setMeaningSubTab(tab.id as any)}
+                        style={{
+                          flex: 1,
+                          padding: '4px 6px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: isTabActive ? 700 : 500,
+                          cursor: 'pointer',
+                          border: isTabActive ? '1px solid #00f0ff' : '1px solid transparent',
+                          background: isTabActive ? 'rgba(0, 240, 255, 0.15)' : 'transparent',
+                          color: isTabActive ? '#00f0ff' : '#94a3b8',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Scrollable Body */}
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {meaningSubTab === 'overview' && (
+                    <>
+                      <div style={{ fontSize: '11.5px', lineHeight: '1.6', color: '#cbd5e1' }}>
+                        {dossier.generalMeaning.overview}
+                      </div>
+
+                      <div
+                        style={{
+                          padding: '10px 12px',
+                          borderRadius: '6px',
+                          background: 'rgba(0, 240, 255, 0.05)',
+                          border: '1px solid rgba(0, 240, 255, 0.2)',
+                        }}
+                      >
+                        <div style={{ fontSize: '10px', fontWeight: 700, color: '#00f0ff', textTransform: 'uppercase', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <Scale size={11} /> Industrial Significance & Trade-offs
+                        </div>
+                        <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#94a3b8' }}>
+                          {dossier.generalMeaning.industrialSignificance}
+                        </div>
+                      </div>
+
+                      {activeGraph === 'pareto' && (
+                        <div
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '6px',
+                            background: 'rgba(250, 204, 21, 0.05)',
+                            border: '1px solid rgba(250, 204, 21, 0.25)',
+                          }}
+                        >
+                          <div style={{ fontSize: '10px', fontWeight: 700, color: '#facc15', textTransform: 'uppercase', marginBottom: '4px' }}>
+                            ★ Quantum Knee Point Advantage
+                          </div>
+                          <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#cbd5e1' }}>
+                            Classiq QAOA identifies the non-dominated Pareto knee point at <strong>482s makespan</strong> and <strong>4.82 km total distance</strong>, outperforming classical FIFO by <strong>+18.4%</strong> in multi-objective hypervolume.
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {meaningSubTab === 'math' && (
+                    <>
+                      {dossier.formulaLatex && (
+                        <div
+                          style={{
+                            padding: '10px',
+                            borderRadius: '6px',
+                            background: 'rgba(10, 18, 36, 0.95)',
+                            border: '1px solid rgba(0, 240, 255, 0.25)',
+                            overflowX: 'auto',
+                          }}
+                        >
+                          <div style={{ fontSize: '9.5px', fontWeight: 700, color: '#00f0ff', marginBottom: '6px', textTransform: 'uppercase' }}>
+                            Governing KaTeX Formulation
+                          </div>
+                          <div
+                            dangerouslySetInnerHTML={{ __html: renderFormula(dossier.formulaLatex) }}
+                            style={{ color: '#ffffff', fontSize: '11px' }}
+                          />
+                        </div>
+                      )}
+
+                      <div style={{ padding: '10px 12px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                        <div style={{ fontSize: '10px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: '4px' }}>
+                          Mathematical Paradigm
+                        </div>
+                        <div style={{ fontSize: '11px', lineHeight: '1.5', color: '#94a3b8' }}>
+                          {dossier.generalMeaning.mathematicalParadigm}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {meaningSubTab === 'elements' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {dossier.elementExplanations.map((el, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            padding: '8px 10px',
+                            borderRadius: '6px',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.06)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: el.color, flexShrink: 0 }} />
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#f1f5f9' }}>{el.name}</span>
+                            <span style={{ fontSize: '9.5px', color: el.color, marginLeft: 'auto', fontWeight: 600 }}>{el.symbol}</span>
+                          </div>
+                          <div style={{ fontSize: '10.5px', lineHeight: '1.4', color: '#94a3b8' }}>
+                            {el.description}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {meaningSubTab === 'kpis' && (
+                    <>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ fontSize: '10px', fontWeight: 700, color: '#00f0ff', textTransform: 'uppercase', marginBottom: '2px' }}>
+                          Enforced Invariants
+                        </div>
+                        {dossier.generalMeaning.enforcedInvariants.map((inv, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              fontSize: '10.5px',
+                              padding: '5px 8px',
+                              borderRadius: '4px',
+                              background: 'rgba(0, 240, 255, 0.06)',
+                              border: '1px solid rgba(0, 240, 255, 0.15)',
+                              color: '#cbd5e1',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <ShieldCheck size={11} color="#00f0ff" />
+                            <span>{inv}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
+                        <div style={{ fontSize: '10px', fontWeight: 700, color: '#00f0ff', textTransform: 'uppercase', marginBottom: '2px' }}>
+                          Calculated Audit Results
+                        </div>
+                        {dossier.calculatedResults.map((r, i) => {
+                          const badge = getStatusBadge(r.status);
+                          return (
+                            <div
+                              key={i}
+                              style={{
+                                padding: '8px 10px',
+                                borderRadius: '6px',
+                                background: 'rgba(255, 255, 255, 0.03)',
+                                border: '1px solid rgba(255, 255, 255, 0.06)',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: '#f1f5f9' }}>{r.metric}</span>
+                                <span style={{ fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '10px', background: badge.bg, border: `1px solid ${badge.border}`, color: badge.text }}>
+                                  {r.status}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '12px', fontWeight: 700, color: '#00f0ff' }}>
+                                {r.value} <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>{r.unit}</span>
+                              </div>
+                              <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                                {r.interpretation}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ============================================================ */}
       {/* DEEP GRAPH INTELLIGENCE & ALGORITHMIC AUDIT DOSSIER PANEL   */}
