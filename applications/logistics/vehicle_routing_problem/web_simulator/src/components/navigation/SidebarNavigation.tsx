@@ -41,8 +41,10 @@ import {
   SlidersHorizontal,
   Gauge,
 } from 'lucide-react';
-import { trackButtonClick, trackTabChange } from '../../utils/analytics';
+import { trackButtonClick, trackTabChange, trackSidebarNavigation } from '../../utils/analytics';
 import { PDFProfileId } from '../../data/reportsRegistry';
+import { findRouteByItemId, matchNavigationRoute, NAVIGATION_ROUTES } from '../../utils/navigationRoutes';
+import { updatePageMetadata } from '../../utils/headMetadata';
 
 export interface SidebarNavigationProps {
   activeTab: '3d-sim' | '2d-route-map' | 'dataset' | 'tiers' | 'quantum' | 'graphs' | 'comparison' | 'telemetry';
@@ -180,6 +182,23 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   useEffect(() => {
     localStorage.setItem('wms_sidebar_expanded_subgroups_v1', JSON.stringify(Array.from(expandedSubGroups)));
   }, [expandedSubGroups]);
+
+  // Deep-link initial route auto-expand: If user loaded a specific sub-route (e.g. /tiers/tier3 or /simulation/amr/AMR_001), reveal the pillar and sub-group
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const initialRoute = matchNavigationRoute(window.location.pathname || window.location.hash);
+      if (initialRoute && initialRoute.path !== '/') {
+        setExpandedPillars((prev) => new Set([...prev, initialRoute.pillarId]));
+        if (initialRoute.id.startsWith('AMR_') || initialRoute.path.includes('/amr/')) {
+          setExpandedSubGroups((prev) => new Set([...prev, 'amr-fleet']));
+        } else if (initialRoute.id.startsWith('arch-') || initialRoute.path.includes('/archetype/')) {
+          setExpandedSubGroups((prev) => new Set([...prev, 'archetypes-group']));
+        } else if (initialRoute.id.startsWith('cam-') || initialRoute.path.includes('/camera/')) {
+          setExpandedSubGroups((prev) => new Set([...prev, 'camera-presets']));
+        }
+      }
+    }
+  }, []);
 
   // Global Keyboard shortcuts
   useEffect(() => {
@@ -1239,6 +1258,30 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 
   // Execute an item action
   const handleExecuteItem = (item: SubMenuItem, pillar?: PillarCategory, parentGroup?: SubMenuItem) => {
+    // 1. Resolve canonical route for this sidebar entry point
+    const route =
+      findRouteByItemId(item.id) ||
+      (item.targetTab
+        ? NAVIGATION_ROUTES.find((r) => r.targetTab === item.targetTab && r.menuLevel === 2)
+        : undefined);
+
+    if (route) {
+      if (typeof window !== 'undefined' && window.location.pathname !== route.path) {
+        window.history.pushState(null, '', route.path);
+      }
+      updatePageMetadata(route.meta);
+      trackSidebarNavigation({
+        routePath: route.path,
+        itemId: route.id,
+        itemLabel: route.label,
+        menuLevel: route.menuLevel,
+        pillarId: pillar?.id || route.pillarId,
+        pillarTitle: pillar?.title || route.pillarTitle,
+        pageTitle: route.meta.title,
+        entryMethod: 'sidebar_click',
+      });
+    }
+
     if (onNavigate) {
       onNavigate(item, pillar, parentGroup);
     }
@@ -1586,6 +1629,23 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                   {/* Pillar Header Accordion */}
                   <div
                     onClick={() => {
+                      const route = findRouteByItemId(pillar.id);
+                      if (route) {
+                        if (typeof window !== 'undefined' && window.location.pathname !== route.path) {
+                          window.history.pushState(null, '', route.path);
+                        }
+                        updatePageMetadata(route.meta);
+                        trackSidebarNavigation({
+                          routePath: route.path,
+                          itemId: route.id,
+                          itemLabel: route.label,
+                          menuLevel: 1,
+                          pillarId: pillar.id,
+                          pillarTitle: pillar.title,
+                          pageTitle: route.meta.title,
+                          entryMethod: 'sidebar_click',
+                        });
+                      }
                       if (pillar.onExecute) {
                         pillar.onExecute();
                       }

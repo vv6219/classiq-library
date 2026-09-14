@@ -9,6 +9,7 @@ Allow: /redoc.html
 Allow: /sqlite.html
 Allow: /openapi.json
 Allow: /llms.txt
+Allow: /llm-map.json
 
 # LLM Crawlers & AI Agents (Open Access for Search & Citations)
 User-agent: GPTBot

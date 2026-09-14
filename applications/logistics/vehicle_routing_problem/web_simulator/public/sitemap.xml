@@ -1,31 +1,414 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Main 3D Simulator HUD -->
+  <!-- ======================================================== -->
+  <!-- PRIMARY PILLARS & CORE STUDIOS                          -->
+  <!-- ======================================================== -->
   <url>
     <loc>https://acoustic-architect-3cgfo.web.app/</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-09-14</lastmod>
     <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+    <priority>1.00</priority>
   </url>
-  <!-- Swagger API Documentation -->
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/2d-route-map</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/telemetry</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/orders-depots</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/dataset</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/tiers</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/quantum-studio</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/graphs</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/comparison</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/reports</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+
+  <!-- ======================================================== -->
+  <!-- PILLAR 1: DIGITAL TWIN & FLEET OPERATIONS SUB-MENUS       -->
+  <!-- ======================================================== -->
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/overview</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/fleet</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/amr/AMR_001</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/amr/AMR_002</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/amr/AMR_003</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/amr/AMR_004</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/camera/top</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/camera/isometric</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/camera/follow</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/camera/chutes</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/panels/minimize</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/simulation/panels/restore</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.60</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/2d-route-map/trajectories</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/2d-route-map/chutes</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/telemetry/kinematics</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/telemetry/spans</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- ======================================================== -->
+  <!-- PILLAR 2: WORKLOAD, SCENARIOS & SOLVERS SUB-MENUS        -->
+  <!-- ======================================================== -->
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/orders-depots/num-orders</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/orders-depots/depots</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/orders-depots/fleet-size</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/orders-depots/chutes</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/workload/quick-drawer</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/workload/specs</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/dataset/archetype/mega-fulfillment</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/dataset/archetype/automotive-jis</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/dataset/archetype/cold-chain</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/dataset/archetype/micro-fulfillment</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/dataset/archetype/heavy-industrial</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/tiers/tier1</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/tiers/tier2</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/tiers/tier3</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/tiers/tier4</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+
+  <!-- ======================================================== -->
+  <!-- PILLAR 3: CLASSIQ QUANTUM CO-PROCESSOR SUB-MENUS          -->
+  <!-- ======================================================== -->
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/quantum-studio/energy-surface</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/quantum-studio/bitstrings</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/quantum-studio/qmod</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/quantum/profiling</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/quantum/monograph</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- ======================================================== -->
+  <!-- PILLAR 4: ANALYTICS, AUDITING & REPORTS SUB-MENUS        -->
+  <!-- ======================================================== -->
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/graphs/pareto</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/graphs/benchmarks</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/graphs/heatmaps</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/comparison/delta</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/comparison/regression</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/reports/executive</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/reports/comprehensive</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/reports/certificate</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- ======================================================== -->
+  <!-- PILLAR 5: THEORY, EXPLAINER & DEVELOPER TOOLS            -->
+  <!-- ======================================================== -->
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/theory/math</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/theory/equations</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/theory/iso-3691-4</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/theory/falsification</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/pipeline-steps</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/explainer</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://acoustic-architect-3cgfo.web.app/sqlite</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- ======================================================== -->
+  <!-- STANDALONE DEVELOPER APIS & REPOSITORIES                 -->
+  <!-- ======================================================== -->
   <url>
     <loc>https://acoustic-architect-3cgfo.web.app/docs.html</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-09-14</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.80</priority>
   </url>
-  <!-- ReDoc API Reference -->
   <url>
     <loc>https://acoustic-architect-3cgfo.web.app/redoc.html</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-09-14</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.80</priority>
   </url>
-  <!-- SQLite Studio & Telemetry Console -->
   <url>
     <loc>https://acoustic-architect-3cgfo.web.app/sqlite.html</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-09-14</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.70</priority>
   </url>
 </urlset>

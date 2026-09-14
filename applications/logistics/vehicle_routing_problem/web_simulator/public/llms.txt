@@ -1,30 +1,117 @@
-# WMS Quantum Digital Twin 3D Simulator
+# WMS Quantum Digital Twin 3D Simulator — LLM Manifest & Navigation Map
 
 > Industrial Multi-Tier Cyber-Physical Warehouse Optimization & 3D Digital Twin Simulator with Classiq Quantum Acceleration.
 
 - **Legal Owner / Publisher**: YesAndNo Group
 - **Official Telegram Channel**: https://t.me/yesandnoQ
-- **Production URL**: https://acoustic-architect-3cgfo.web.app/
-- **API Documentation**: https://acoustic-architect-3cgfo.web.app/docs.html
-- **API Reference (ReDoc)**: https://acoustic-architect-3cgfo.web.app/redoc.html
-- **Database Studio**: https://acoustic-architect-3cgfo.web.app/sqlite.html
+- **Production Base URL**: https://acoustic-architect-3cgfo.web.app/
+- **Sitemap XML**: https://acoustic-architect-3cgfo.web.app/sitemap.xml
+- **Structured Machine Map (JSON-LD)**: https://acoustic-architect-3cgfo.web.app/llm-map.json
+- **FastAPI OpenAPI Swagger Documentation**: https://acoustic-architect-3cgfo.web.app/docs.html
+- **FastAPI ReDoc Reference**: https://acoustic-architect-3cgfo.web.app/redoc.html
+- **In-Browser SQLite WASM Studio**: https://acoustic-architect-3cgfo.web.app/sqlite.html
 
-## Overview
+---
+
+## Overview for AI Agents & LLMs
+
 The WMS Quantum Digital Twin 3D Simulator is an industrial logistics optimization platform created by **YesAndNo Group**. It couples a real-time Three.js cyber-physical warehouse digital twin with Classiq quantum synthesis and hybrid classical-quantum solvers (QAOA and VQE) to solve complex Vehicle Routing Problems (VRP), Capacity-Constrained VRP (CVRP), and dynamic intra-facility dispatching.
 
-## Key Capabilities
-1. **Interactive 3D Digital Twin**: Multi-tier warehouse floor with automated guided vehicles (AGVs), dynamic congestion zones, charging bays, and real-time path telemetry.
-2. **Quantum Routing Acceleration**: Formulates vehicle routing constraints as Quadratic Unconstrained Binary Optimization (QUBO) models, synthesizing optimal quantum circuits using the Classiq Python SDK and native Qmod.
-3. **Hardware-Aware Quantum Synthesis**: Evaluates circuit width, two-qubit gate depth, and transpilation fidelity across quantum hardware backends (IBM Quantum Eagle/Heron, IonQ Forte, Rigetti Aspen).
-4. **Real-Time Telemetry & REST API**: Full FastAPI / SQLite engine running in dual-mode (mock streaming for browser deployments and live bidirectional RPC with local Python compute kernels).
-5. **Analytics & Diagnostics**: Built-in Google Analytics 4 telemetry, execution comparison, energy landscape plots, and PDF engineering report generation.
+Every route listed below is directly accessible via canonical URL deep-linking, supports HTML5 History (`pushState` / `popstate`), dynamically updates HTML head metadata (`<title>`, `<meta name="description">`, OpenGraph), and is instrumented with dedicated Google Analytics 4 telemetry (`sidebar_entry_point_click` and virtual `page_view`).
 
-## Technical Stack
-- **Quantum Platform**: Classiq Engine & Qmod
-- **Frontend & 3D Visualization**: React 18, TypeScript, Three.js, Canvas HUD, Vite
-- **Backend & Database**: Python 3.11, FastAPI, Uvicorn, SQLite3, NetworkX, NumPy, SciPy
-- **Hosting & Infrastructure**: Firebase Hosting (Google Cloud Platform)
+---
+
+## Canonical Application Entry Points & Deep Routes
+
+### Pillar 1: Digital Twin & Fleet Operations (`/twin`)
+- `https://acoustic-architect-3cgfo.web.app/` — Main 3D Warehouse Digital Twin (Facility Overview, AMR fleet, and real-time canvas).
+- `https://acoustic-architect-3cgfo.web.app/simulation/overview` — Reset camera to macro warehouse envelope bounds (150m×100m).
+- `https://acoustic-architect-3cgfo.web.app/simulation/fleet` — AMR fleet status overview (battery SoC, velocity, active dispatch paths).
+- `https://acoustic-architect-3cgfo.web.app/simulation/amr/AMR_001` — AMR-01 Heavy Payload Transporter (88% SoC, 1.38 m/s, follow-cam).
+- `https://acoustic-architect-3cgfo.web.app/simulation/amr/AMR_002` — AMR-02 Standard Toter Carrier (92% SoC, 1.45 m/s, follow-cam).
+- `https://acoustic-architect-3cgfo.web.app/simulation/amr/AMR_003` — AMR-03 Narrow Aisle Navigator (76% SoC, 1.20 m/s, follow-cam).
+- `https://acoustic-architect-3cgfo.web.app/simulation/amr/AMR_004` — AMR-04 High-Velocity Sprint Vehicle (84% SoC, 1.62 m/s, follow-cam).
+- `https://acoustic-architect-3cgfo.web.app/simulation/camera/top` — Top-down 2D/3D orthographic camera view.
+- `https://acoustic-architect-3cgfo.web.app/simulation/camera/isometric` — Axonometric 45° cyber-perspective.
+- `https://acoustic-architect-3cgfo.web.app/simulation/camera/follow` — Ground-level chase camera (cab ride).
+- `https://acoustic-architect-3cgfo.web.app/simulation/camera/chutes` — Camera focused on outbound sorting chutes C1–C4.
+- `https://acoustic-architect-3cgfo.web.app/simulation/panels/minimize` — Full-screen 3D view with floating HUD panels minimized.
+- `https://acoustic-architect-3cgfo.web.app/simulation/panels/restore` — Restores HUD telemetry docks.
+- `https://acoustic-architect-3cgfo.web.app/2d-route-map` — High-precision 2D floor grid routing and waypoint trajectories.
+- `https://acoustic-architect-3cgfo.web.app/2d-route-map/trajectories` — AMR kinematic trajectory arcs and continuous Bezier S-curves.
+- `https://acoustic-architect-3cgfo.web.app/2d-route-map/chutes` — Chute contention analysis and queue buffer zones.
+- `https://acoustic-architect-3cgfo.web.app/telemetry` — Real-time telemetry console and RPC latency monitor.
+- `https://acoustic-architect-3cgfo.web.app/telemetry/kinematics` — Sub-millisecond AMR kinematics stream (x, y, θ, v).
+- `https://acoustic-architect-3cgfo.web.app/telemetry/spans` — OpenTelemetry distributed waterfall traces across solver tiers.
+
+### Pillar 2: Workload, Scenarios & Solvers (`/workload`)
+- `https://acoustic-architect-3cgfo.web.app/orders-depots` — Dispatch orders & depot parameters configuration.
+- `https://acoustic-architect-3cgfo.web.app/orders-depots/num-orders` — Dispatch batch size tuning (5 to 150 orders).
+- `https://acoustic-architect-3cgfo.web.app/orders-depots/depots` — Multi-depot coordinates and staging zones (1 to 6 depots).
+- `https://acoustic-architect-3cgfo.web.app/orders-depots/fleet-size` — AMR fleet pool sizing and payload capacity limits (1 to 16 vehicles).
+- `https://acoustic-architect-3cgfo.web.app/orders-depots/chutes` — Discharge sorting chute terminals (1 to 8 chutes).
+- `https://acoustic-architect-3cgfo.web.app/workload/quick-drawer` — Slide-out drawer for quick seed, orders, and vehicle tuning.
+- `https://acoustic-architect-3cgfo.web.app/workload/specs` — 36 Engineering Parameters, KaTeX formulas, and safety bounds drawer.
+- `https://acoustic-architect-3cgfo.web.app/dataset` — Warehouse dataset and scenario matrix studio.
+- `https://acoustic-architect-3cgfo.web.app/dataset/archetype/mega-fulfillment` — Mega-Fulfillment E-Commerce scenario (150m×100m, 80 orders).
+- `https://acoustic-architect-3cgfo.web.app/dataset/archetype/automotive-jis` — Automotive Just-In-Sequence (JIS) line-feeding scenario.
+- `https://acoustic-architect-3cgfo.web.app/dataset/archetype/cold-chain` — Pharmaceutical Cold-Chain temperature-constrained scenario.
+- `https://acoustic-architect-3cgfo.web.app/dataset/archetype/micro-fulfillment` — Urban Micro-Fulfillment dark store scenario.
+- `https://acoustic-architect-3cgfo.web.app/dataset/archetype/heavy-industrial` — Heavy Industrial machinery and foundry transport scenario.
+- `https://acoustic-architect-3cgfo.web.app/tiers` — 4-Tier Hybrid Quantum-Classical optimization pipeline.
+- `https://acoustic-architect-3cgfo.web.app/tiers/tier1` — Tier 1: Quantum Fuzzy C-Means (FCM) Order Clustering.
+- `https://acoustic-architect-3cgfo.web.app/tiers/tier2` — Tier 2: CP-SAT MISOCP 3D Bin Packing & LIFO DAG constraint.
+- `https://acoustic-architect-3cgfo.web.app/tiers/tier3` — Tier 3: Classiq QAOA Subtour Elimination Quantum Routing.
+- `https://acoustic-architect-3cgfo.web.app/tiers/tier4` — Tier 4: Priority-Based Search (PBS) + Continuous SIPP MAPF.
+
+### Pillar 3: Classiq Quantum Co-Processor (`/quantum`)
+- `https://acoustic-architect-3cgfo.web.app/quantum-studio` — Quantum circuit synthesis and evaluation studio.
+- `https://acoustic-architect-3cgfo.web.app/quantum-studio/energy-surface` — 3D QAOA variational cost surface ⟨H_C⟩(γ, β).
+- `https://acoustic-architect-3cgfo.web.app/quantum-studio/bitstrings` — Sampled quantum bitstrings and optimal ground-state cuts.
+- `https://acoustic-architect-3cgfo.web.app/quantum-studio/qmod` — Native Classiq Qmod functional circuit models.
+- `https://acoustic-architect-3cgfo.web.app/quantum/profiling` — Qubit register allocation and Shannon entropy modal.
+- `https://acoustic-architect-3cgfo.web.app/quantum/monograph` — 3-Page formal scientific monograph PDF dossier.
+
+### Pillar 4: Analytics, Auditing & Reports (`/analytics`)
+- `https://acoustic-architect-3cgfo.web.app/graphs` — 10-chart performance analytics and Pareto frontier studio.
+- `https://acoustic-architect-3cgfo.web.app/graphs/pareto` — Fleet makespan vs electric travel distance Pareto frontier.
+- `https://acoustic-architect-3cgfo.web.app/graphs/benchmarks` — 4-Way solver execution latency benchmarks.
+- `https://acoustic-architect-3cgfo.web.app/graphs/heatmaps` — Chute load balance and arrival variance heatmaps.
+- `https://acoustic-architect-3cgfo.web.app/comparison` — Side-by-side run comparative studio with Winner Trophy banner and KPI deltas.
+- `https://acoustic-architect-3cgfo.web.app/comparison/delta` — Quantum vs Classical mathematical delta audit.
+- `https://acoustic-architect-3cgfo.web.app/comparison/regression` — Historical execution run regression log table.
+
+### Pillar 5: Knowledge, Theory & Developer Tools (`/theory`)
+- `https://acoustic-architect-3cgfo.web.app/theory/math` — Theoretical dossier with 473 scientific equations.
+- `https://acoustic-architect-3cgfo.web.app/theory/equations` — Formal ER-MD-VRPTW-3D-HRI LaTeX formulations.
+- `https://acoustic-architect-3cgfo.web.app/theory/iso-3691-4` — DIN EN ISO 3691-4 AGV industrial safety compliance checklist.
+- `https://acoustic-architect-3cgfo.web.app/theory/falsification` — Popperian empirical falsification proof (Φ = 0.880).
+- `https://acoustic-architect-3cgfo.web.app/pipeline-steps` — 7-Step DispatchEngine pipeline latency breakdown modal.
+- `https://acoustic-architect-3cgfo.web.app/explainer` — Mission & Quantum Co-Processor Architecture drawer.
+- `https://acoustic-architect-3cgfo.web.app/sqlite` — In-browser SQL Query Console querying `dispatchengine.db`.
+- `https://acoustic-architect-3cgfo.web.app/reports` — Reports Manager Studio and compliance artifact repository.
+- `https://acoustic-architect-3cgfo.web.app/reports/executive` — 2-Page Executive Brief PDF report.
+- `https://acoustic-architect-3cgfo.web.app/reports/comprehensive` — 7-Page Comprehensive Technical Audit Dossier PDF.
+- `https://acoustic-architect-3cgfo.web.app/reports/certificate` — 1-Page DIN EN ISO 3691-4 Safety Audit Certificate PDF.
+
+---
+
+## Telemetry & Google Analytics 4 Specification
+Each URL transition dispatches:
+1. `sidebar_entry_point_click`:
+   - `route_path`: Canonical path matching this sitemap
+   - `item_id`: Unique identifier
+   - `item_label`: Human-readable label
+   - `menu_level`: 1 (Pillar), 2 (Studio Tab), or 3 (Sub-Menu / Entity Leaf)
+   - `entry_method`: `'direct_url'` | `'sidebar_click'` | `'browser_history'`
+2. `page_view`:
+   - `page_title`: Dynamic HTML document title
+   - `page_path`: Exact canonical path
+   - `page_location`: Full HTTPS URL
+
+---
 
 ## Copyright & Attribution
 © 2026 YesAndNo Group. All rights reserved.
 Developed by the YesAndNo Quantum Team for industrial logistics and cyber-physical systems optimization.
+Official Telegram: https://t.me/yesandnoQ

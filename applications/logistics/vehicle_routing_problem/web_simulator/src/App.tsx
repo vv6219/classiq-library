@@ -45,7 +45,9 @@ import {
 } from './components/DispatchProgressModal';
 import { SidebarNavigation } from './components/navigation/SidebarNavigation';
 import { BreadcrumbsBar } from './components/navigation/BreadcrumbsBar';
-import { trackTabChange, trackButtonClick } from './utils/analytics';
+import { trackTabChange, trackButtonClick, trackSidebarNavigation } from './utils/analytics';
+import { matchNavigationRoute, NavigationRouteDefinition, NAVIGATION_ROUTES } from './utils/navigationRoutes';
+import { updatePageMetadata } from './utils/headMetadata';
 import {
   Box,
   MapPin,
@@ -286,20 +288,138 @@ export const App: React.FC = () => {
     loadHistoricalRuns();
   }, []);
 
-  // Synchronize document.title with Active Studio Tab for SEO & Navigation Clarity
+  // Apply state and metadata corresponding to a matched route definition
+  const applyRouteState = (
+    route: NavigationRouteDefinition,
+    entryMethod: 'direct_url' | 'browser_history' | 'sidebar_click'
+  ) => {
+    const s = route.state;
+    if (s.tab) {
+      setActiveTab(s.tab);
+    }
+    if (s.selectedEntity !== undefined) {
+      setSelectedEntity(s.selectedEntity);
+    }
+    if (s.cameraPreset) {
+      setCameraPreset(s.cameraPreset);
+    }
+    if (s.selectedArchetype) {
+      setSelectedArchetype(s.selectedArchetype);
+    }
+    if (s.selectedTier) {
+      setSelectedTier(s.selectedTier);
+    }
+    if (s.isQuickDrawerOpen !== undefined) {
+      setIsQuickDrawerOpen(s.isQuickDrawerOpen);
+    }
+    if (s.isConfigDrawerOpen !== undefined) {
+      setIsConfigDrawerOpen(s.isConfigDrawerOpen);
+    }
+    if (s.isExplainerOpen !== undefined) {
+      setIsExplainerOpen(s.isExplainerOpen);
+    }
+    if (s.isQuantumPanelOpen !== undefined) {
+      setIsQuantumPanelOpen(s.isQuantumPanelOpen);
+    }
+    if (s.isConceptModalOpen !== undefined) {
+      setIsConceptModalOpen(s.isConceptModalOpen);
+    }
+    if (s.isStepsModalOpen !== undefined) {
+      setIsProgressModalOpen(s.isStepsModalOpen);
+    }
+    if (s.reportsRepoMode) {
+      setReportsRepoMode(s.reportsRepoMode);
+    }
+    if (s.pdfProfileToOpen) {
+      handleOpenPDF(s.pdfProfileToOpen);
+    }
+    if (s.generatorParamKey) {
+      handleOpenOrdersDepotGenerator(s.generatorParamKey);
+    }
+    if (s.panelAction === 'minimize') {
+      setQuantumPanelMode('minimized');
+      setReportsRepoMode('minimized');
+    } else if (s.panelAction === 'restore') {
+      setQuantumPanelMode('expanded');
+      setReportsRepoMode('expanded');
+    }
+    if (s.externalUrl && entryMethod === 'direct_url') {
+      if (typeof window !== 'undefined' && window.location.pathname !== s.externalUrl) {
+        window.location.href = s.externalUrl;
+      }
+    }
+
+    // Dynamic Head Tags & SEO
+    updatePageMetadata(route.meta);
+
+    // Dedicated Google Analytics 4 Counter & Virtual Page View
+    trackSidebarNavigation({
+      routePath: route.path,
+      itemId: route.id,
+      itemLabel: route.label,
+      menuLevel: route.menuLevel,
+      pillarId: route.pillarId,
+      pillarTitle: route.pillarTitle,
+      pageTitle: route.meta.title,
+      entryMethod,
+    });
+  };
+
+  // Direct URL Deep-Linking & Browser History (Back/Forward) Management
   useEffect(() => {
-    const tabTitles: Record<string, string> = {
-      '3d-sim': '3D Warehouse Twin',
-      '2d-route-map': '2D Route Map & Details',
-      'dataset': 'Dataset & Mock Data CRUD',
-      'tiers': 'Calculations Tiers & Algos',
-      'quantum': 'Classiq Quantum Studio',
-      'graphs': 'Analytics & Graphs',
-      'comparison': 'Run Comparisons & Diffing',
-      'telemetry': 'Live Progress & Telemetry',
+    if (typeof window === 'undefined') return;
+
+    const initialRaw = window.location.pathname || window.location.hash;
+    const initialMatched = matchNavigationRoute(initialRaw);
+
+    if (initialMatched && initialMatched.path !== '/') {
+      applyRouteState(initialMatched, 'direct_url');
+    } else if (initialMatched) {
+      updatePageMetadata(initialMatched.meta);
+      trackSidebarNavigation({
+        routePath: initialMatched.path,
+        itemId: initialMatched.id,
+        itemLabel: initialMatched.label,
+        menuLevel: initialMatched.menuLevel,
+        pillarId: initialMatched.pillarId,
+        pillarTitle: initialMatched.pillarTitle,
+        pageTitle: initialMatched.meta.title,
+        entryMethod: 'direct_url',
+      });
+    }
+
+    // Browser Back / Forward Popstate Navigation
+    const handlePopState = () => {
+      const currentRaw = window.location.pathname || window.location.hash;
+      const popMatched = matchNavigationRoute(currentRaw);
+      if (popMatched) {
+        applyRouteState(popMatched, 'browser_history');
+      }
     };
-    const currentTabName = tabTitles[activeTab] || '3D Digital Twin';
-    document.title = `${currentTabName} | Quantum WMS Optimizer | YesAndNo Group`;
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Synchronize URL & Head Metadata when switching studio tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const currentPath = window.location.pathname;
+    const currentRoute = matchNavigationRoute(currentPath);
+
+    // If already on a specialized sub-route belonging to this tab, keep it
+    if (currentRoute && currentRoute.targetTab === activeTab && currentRoute.path !== '/') {
+      return;
+    }
+
+    // Otherwise, synchronize with canonical tab route
+    const tabRoute = NAVIGATION_ROUTES.find((r) => r.targetTab === activeTab && r.menuLevel <= 2);
+    if (tabRoute) {
+      if (window.location.pathname !== tabRoute.path) {
+        window.history.pushState(null, '', tabRoute.path);
+      }
+      updatePageMetadata(tabRoute.meta);
+    }
   }, [activeTab]);
 
   const handleModeChange = (newMode: string) => {

@@ -158,3 +158,78 @@ export function trackModalOpen(
     event_category: category,
   });
 }
+
+/**
+ * In-memory telemetry counter for sidebar entry points visited in current session
+ */
+const sidebarEntryCounts: Record<string, number> = {};
+
+/**
+ * Returns a snapshot of sidebar entry point navigation statistics
+ */
+export function getSidebarEntryStats(): Record<string, number> {
+  return { ...sidebarEntryCounts };
+}
+
+export interface TrackSidebarNavigationParams {
+  routePath: string;
+  itemId: string;
+  itemLabel: string;
+  menuLevel: 1 | 2 | 3;
+  pillarId?: string;
+  pillarTitle?: string;
+  pageTitle?: string;
+  entryMethod?: 'sidebar_click' | 'direct_url' | 'browser_history' | 'quick_action' | 'sitemap_link' | 'llm_entry';
+  extraParams?: Record<string, any>;
+}
+
+/**
+ * Dedicated Google Analytics 4 counter for each sidebar menu & sub-menu entry point.
+ * Dispatches both a specialized 'sidebar_entry_point_click' event and a standard 'page_view'
+ * to ensure complete analytics attribution in Google Analytics 4 dashboards.
+ */
+export function trackSidebarNavigation(params: TrackSidebarNavigationParams): void {
+  const {
+    routePath,
+    itemId,
+    itemLabel,
+    menuLevel,
+    pillarId = 'general',
+    pillarTitle = 'Navigation',
+    pageTitle = itemLabel,
+    entryMethod = 'sidebar_click',
+    extraParams = {},
+  } = params;
+
+  // 1. Increment in-memory counter
+  sidebarEntryCounts[itemId] = (sidebarEntryCounts[itemId] || 0) + 1;
+  const visitCount = sidebarEntryCounts[itemId];
+
+  // 2. Dispatch dedicated entry point counter event
+  trackEvent('sidebar_entry_point_click', {
+    route_path: routePath,
+    item_id: itemId,
+    item_label: itemLabel,
+    menu_level: menuLevel,
+    pillar_id: pillarId,
+    pillar_title: pillarTitle,
+    entry_method: entryMethod,
+    session_item_visit_count: visitCount,
+    event_category: 'Sidebar_Navigation_Hierarchy',
+    event_label: `[L${menuLevel}] ${itemLabel} (${routePath})`,
+    ...extraParams,
+  });
+
+  // 3. Dispatch standard virtual page_view / screen_view to GA4 for page performance tracking
+  if (typeof window !== 'undefined') {
+    const canonicalUrl = `${window.location.origin}${routePath}`;
+    trackEvent('page_view', {
+      page_title: pageTitle,
+      page_location: canonicalUrl,
+      page_path: routePath,
+      screen_name: itemLabel,
+      entry_method: entryMethod,
+      event_category: 'Virtual_Page_View',
+    });
+  }
+}
