@@ -274,12 +274,64 @@ class DatabaseManager:
                 tier_number INTEGER NOT NULL,
                 algorithm_rank TEXT NOT NULL,
                 latency_ms REAL NOT NULL,
+                setup_time_ms REAL DEFAULT 0.0,
+                solve_time_ms REAL DEFAULT 0.0,
+                validation_time_ms REAL DEFAULT 0.0,
+                cpu_time_ms REAL DEFAULT 0.0,
+                qpu_execution_ms REAL DEFAULT 0.0,
+                memory_peak_mb REAL DEFAULT 0.0,
+                optimality_gap_pct REAL DEFAULT 0.0,
                 iterations_count INTEGER DEFAULT 1,
                 status TEXT NOT NULL,
                 benders_cuts_generated TEXT,
                 output_summary TEXT NOT NULL,
                 created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (run_id) REFERENCES execution_runs(run_id) ON DELETE CASCADE
+            );
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS run_input_parameters (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id TEXT NOT NULL,
+                scenario_id TEXT NOT NULL,
+                param_scope TEXT NOT NULL,
+                param_key TEXT NOT NULL,
+                display_name TEXT NOT NULL,
+                param_value TEXT NOT NULL,
+                param_type TEXT NOT NULL,
+                unit TEXT DEFAULT '',
+                description TEXT NOT NULL,
+                latex_symbol TEXT DEFAULT '',
+                min_bound REAL,
+                max_bound REAL,
+                compliance_standard TEXT DEFAULT '',
+                is_overridden INTEGER DEFAULT 0,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (run_id) REFERENCES execution_runs(run_id)
+            );
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS algorithm_benchmarks_log (
+                benchmark_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL,
+                scenario_id TEXT NOT NULL,
+                tier_number INTEGER NOT NULL,
+                algorithm_key TEXT NOT NULL,
+                algorithm_name TEXT NOT NULL,
+                wall_clock_ms REAL NOT NULL,
+                setup_time_ms REAL DEFAULT 0.0,
+                solve_time_ms REAL DEFAULT 0.0,
+                cpu_time_ms REAL DEFAULT 0.0,
+                qpu_time_ms REAL DEFAULT 0.0,
+                iterations_count INTEGER DEFAULT 1,
+                objective_cost REAL NOT NULL,
+                speedup_vs_baseline REAL DEFAULT 1.0,
+                is_winner_in_tier INTEGER DEFAULT 0,
+                metadata_json TEXT,
+                created_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (run_id) REFERENCES execution_runs(run_id)
             );
         """)
 
@@ -326,7 +378,8 @@ class DatabaseManager:
             "scenarios", "orders", "execution_runs", "vehicle_routes", "route_stops",
             "container_placements", "lifo_dependencies", "gate_validations",
             "telemetry_events", "chute_flow_dynamics", "algorithm_benchmarks",
-            "tier_executions", "quantum_telemetry", "produced_reports"
+            "tier_executions", "quantum_telemetry", "produced_reports",
+            "run_input_parameters", "algorithm_benchmarks_log"
         ]:
             cursor.execute(f"""
                 CREATE TRIGGER IF NOT EXISTS trg_{tbl}_auto_created_datetime
@@ -349,8 +402,13 @@ class DatabaseManager:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_telemetry_trace ON telemetry_events(trace_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_telemetry_level ON telemetry_events(log_level);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_chutes_run ON chute_flow_dynamics(run_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_tier_exec_run ON tier_executions(run_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_input_params_run ON run_input_parameters(run_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_input_params_scope ON run_input_parameters(param_scope);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_algo_bench_run ON algorithm_benchmarks_log(run_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_algo_bench_tier ON algorithm_benchmarks_log(tier_number);")
 
-        # Ensure mode column in execution_runs for backward compatibility
+        # Safe ALTER TABLE migrations for existing databases
         try:
             cursor.execute("SELECT mode FROM execution_runs LIMIT 1;")
         except Exception:
@@ -358,6 +416,33 @@ class DatabaseManager:
                 cursor.execute("ALTER TABLE execution_runs ADD COLUMN mode TEXT NOT NULL DEFAULT '32Q';")
             except Exception:
                 pass
+
+        try:
+            cursor.execute("SELECT provenance_hash FROM execution_runs LIMIT 1;")
+        except Exception:
+            try:
+                cursor.execute("ALTER TABLE execution_runs ADD COLUMN provenance_hash TEXT DEFAULT '';")
+            except Exception:
+                pass
+
+        # Migrate tier_executions columns if table was created in earlier versions
+        tier_cols = [
+            ("setup_time_ms", "REAL DEFAULT 0.0"),
+            ("solve_time_ms", "REAL DEFAULT 0.0"),
+            ("validation_time_ms", "REAL DEFAULT 0.0"),
+            ("cpu_time_ms", "REAL DEFAULT 0.0"),
+            ("qpu_execution_ms", "REAL DEFAULT 0.0"),
+            ("memory_peak_mb", "REAL DEFAULT 0.0"),
+            ("optimality_gap_pct", "REAL DEFAULT 0.0"),
+        ]
+        for col_name, col_type in tier_cols:
+            try:
+                cursor.execute(f"SELECT {col_name} FROM tier_executions LIMIT 1;")
+            except Exception:
+                try:
+                    cursor.execute(f"ALTER TABLE tier_executions ADD COLUMN {col_name} {col_type};")
+                except Exception:
+                    pass
 
         conn.commit()
         conn.close()

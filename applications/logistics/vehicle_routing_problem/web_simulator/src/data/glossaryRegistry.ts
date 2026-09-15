@@ -569,6 +569,25 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     relatedTermIds: ['vrptw', 'md-vrptw', 'sla'],
     tags: ['Calculations', 'Makespan', 'SLA', 'Throughput', 'Metrics'],
   },
+  {
+    id: 'multi-tier-micro-benchmarking',
+    term: 'Multi-Tier Micro-Benchmarking & Latency Profiling',
+    acronym: 'MTB',
+    category: 'algorithms',
+    letter: 'M',
+    shortDefinition: 'Deterministic micro-benchmarking decomposing mission duration into setup, pure kernel solve, validation, CPU time, and QPU execution time across Tiers 1–4.',
+    detailedExplanation: 'Deconstructs end-to-end execution time into setup, mathematical solver kernel, and invariant safety checks for Tier 1 (Macro-Clustering), Tier 2 (3D Box Packing), Tier 3 (Multi-Depot Routing), and Tier 4 (Kinematics & SIPP). Guarantees sub-second reaction times while attributing quantum vs classical resource expenditures.',
+    latexFormula: 'T_{\\text{total}} = \\sum_{m=1}^4 \\left( T_{\\text{setup}}^{(m)} + T_{\\text{solve}}^{(m)} + T_{\\text{val}}^{(m)} \\right) = T_{\\text{CPU}} + T_{\\text{QPU}}',
+    calculationMeaning: 'Precision wall-clock and process CPU/QPU timer decomposition ensuring full attribution across algorithmic optimization stages.',
+    standardsReference: 'IEEE 1588 Precision Timing & Real-Time Logistics Control Benchmarks',
+    codebaseModule: 'DispatchEngine/orchestrator.py & DispatchEngine/benchmarking/comparator.py',
+    warehouseExample: 'Tier 1 executed in 12.8ms, Tier 2 in 38.5ms, Tier 3 in 54.2ms, and Tier 4 in 29.5ms, total mission solve latency 135.0ms.',
+    schemaType: 'dispatch_tiers',
+    schemaDescription: '4-Tier stacked timing breakdown and hardware execution telemetry',
+    relatedTermIds: ['md-vrptw', 'qaoa', 'sipp', 'wms'],
+    appDeepLink: { path: '/analytics', label: 'View 4-Way Latency Micro-Benchmarks' },
+    tags: ['Benchmarking', 'Latency', 'Profiling', 'Micro-Timing', 'Tiers'],
+  },
 
   // O
   {
@@ -585,6 +604,27 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     relatedTermIds: ['er-md-vrptw-3d-hri-q', 'wms', 'erp', 'benders-decomposition'],
     appDeepLink: { path: '/docs', label: 'Open Interactive Swagger UI (/docs)' },
     tags: ['Standards', 'OpenAPI', 'Swagger', 'REST', 'API', 'Architecture'],
+  },
+
+  // P
+  {
+    id: 'parameter-provenance-ledger',
+    term: 'Parameter Provenance Ledger & SHA-256 Seal',
+    acronym: 'PPL',
+    category: 'calculations',
+    letter: 'P',
+    shortDefinition: 'Immutable cryptographic ledger preserving all 40+ engineering calculation inputs with SI units, KaTeX symbols, bounds, and SHA-256 fingerprint.',
+    detailedExplanation: 'Eliminates silent parameter drift by capturing a frozen snapshot of every configuration input (fleet sizes, velocity bounds, friction coefficients, QAOA layers, battery floors) bound to the execution result via a cryptographic SHA-256 hash. Historical records are preserved forever in an append-only database.',
+    latexFormula: '\\mathcal{H}_{\\text{prov}} = \\text{SHA-256}\\left(\\text{WaveID} \\,\\|\\, \\text{ScenID} \\,\\|\\, C_{\\max} \\,\\|\\, D_{\\text{fleet}} \\,\\|\\, T_{\\text{solve}} \\,\\|\\, \\bigotimes_{p \\in \\mathcal{P}} \\nu_p\\right)',
+    calculationMeaning: 'Cryptographic digital fingerprint sealing the wave state, results, and exact input parameter configuration against tampering or silent mutation.',
+    standardsReference: 'DIN EN ISO 3691-4, VDI 2700, IEC 62619, ISO 14064',
+    codebaseModule: 'DispatchEngine/storage/parameter_catalog.py & DispatchEngine/storage/repository.py',
+    warehouseExample: 'Run RUN-7D42F06D sealed with SHA-256 hash verified against 42 audited parameters across 7 operational scopes.',
+    schemaType: 'dispatch_tiers',
+    schemaDescription: 'Cryptographic parameter snapshot and digital fingerprint seal',
+    relatedTermIds: ['wms', 'multi-tier-micro-benchmarking', 'iso-3691-4'],
+    appDeepLink: { path: '/analytics', label: 'View Parameter Specification Ledger' },
+    tags: ['Ledger', 'Provenance', 'SHA-256', 'Parameters', 'Audit', 'Immutability'],
   },
 
   // Q

@@ -30,6 +30,13 @@ else:
     class StrictImmutableDTO:
         """Lightweight fallback implementing serialization and immutability without external deps."""
         def __init__(self, **kwargs):
+            for cls in reversed(self.__class__.__mro__):
+                for k, v in getattr(cls, "__dict__", {}).items():
+                    if isinstance(v, dataclasses.Field):
+                        if v.default is not dataclasses.MISSING:
+                            object.__setattr__(self, k, v.default)
+                        elif v.default_factory is not dataclasses.MISSING:
+                            object.__setattr__(self, k, v.default_factory())
             for k, v in kwargs.items():
                 object.__setattr__(self, k, v)
 

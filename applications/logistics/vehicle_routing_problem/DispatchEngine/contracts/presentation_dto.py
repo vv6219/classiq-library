@@ -67,3 +67,4 @@ class AlgorithmBenchmarkComparisonDTO(StrictImmutableDTO):
     latency_by_algo: Dict[str, float]
     improvement_makespan_percent: float
     improvement_distance_percent: float
+    tier_latencies_by_algo: Optional[Dict[str, Dict[str, float]]] = None

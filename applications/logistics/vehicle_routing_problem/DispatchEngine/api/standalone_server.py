@@ -24,6 +24,7 @@ from DispatchEngine.storage.database import DatabaseManager
 from DispatchEngine.storage.repository import WarehouseRepository
 from DispatchEngine.orchestrator import DispatchOrchestrator
 from DispatchEngine.benchmarking.comparator import BenchmarkComparator
+from DispatchEngine.storage.parameter_catalog import PARAMETER_DEFINITIONS
 from DispatchEngine.quantum.kernels import calculate_swap_test_fidelity
 from DispatchEngine.quantum.qaoa_circuits import solve_qaoa_subtour
 from DispatchEngine.common_types import OperationalMode
@@ -390,6 +391,43 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"run_id": run_id, "chute_flows": flows})
             finally:
                 conn.close()
+            return
+
+        elif path == "/api/v1/parameters/catalog":
+            self._send_json(200, {
+                "catalog_count": len(PARAMETER_DEFINITIONS),
+                "parameters": PARAMETER_DEFINITIONS,
+            })
+            return
+
+        elif path.startswith("/api/v1/dispatch/runs/") and path.endswith("/parameters"):
+            run_id = path.split("/")[5]
+            session = DatabaseManager.get_session()
+            try:
+                repo = WarehouseRepository(session)
+                params = repo.get_run_input_parameters(run_id)
+                self._send_json(200, {
+                    "run_id": run_id,
+                    "parameters_count": len(params),
+                    "parameters": params,
+                })
+            finally:
+                DatabaseManager.close_session(session)
+            return
+
+        elif path.startswith("/api/v1/dispatch/runs/") and path.endswith("/benchmarks/tiers"):
+            run_id = path.split("/")[5]
+            session = DatabaseManager.get_session()
+            try:
+                repo = WarehouseRepository(session)
+                tier_benchmarks = repo.get_tier_benchmark_breakdown(run_id)
+                self._send_json(200, {
+                    "run_id": run_id,
+                    "tier_count": len(tier_benchmarks),
+                    "tier_benchmarks": tier_benchmarks,
+                })
+            finally:
+                DatabaseManager.close_session(session)
             return
 
         elif path.startswith("/api/v1/dispatch/runs/") and len(path.split("/")) == 6:
@@ -976,6 +1014,7 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
                 "latency_by_algo": b_res.latency_by_algo,
                 "improvement_makespan_percent": b_res.improvement_makespan_percent,
                 "improvement_distance_percent": b_res.improvement_distance_percent,
+                "tier_latencies_by_algo": getattr(b_res, "tier_latencies_by_algo", None),
             })
             return
 

@@ -110,6 +110,7 @@ class WarehouseRepository:
         quantum_res: Optional[QAOAResultsDTO] = None,
         run_id: Optional[str] = None,
         run_mode: Optional[str] = None,
+        provenance_hash: Optional[str] = None,
     ) -> str:
         if not run_id:
             run_id = f"RUN-{wave_id.split('-')[-1]}"
@@ -123,8 +124,9 @@ class WarehouseRepository:
             exec_mode = "CPU"
 
         op_mode_str = "CLASSICAL" if (exec_mode == "CPU" or "CLASSIC" in str(mode).upper()) else "QUANTUM"
+        provenance = provenance_hash or ""
 
-        # Ensure run_id uniqueness across multiple dispatches
+        # Ensure run_id uniqueness across multiple dispatches - NEVER overwrite existing runs
         if self.is_sqlalchemy:
             from DispatchEngine.storage.models import ExecutionRunRecord
             if self.handle.query(ExecutionRunRecord).filter_by(run_id=run_id).first():
@@ -152,6 +154,7 @@ class WarehouseRepository:
                 total_solve_latency_sec=solve_latency,
                 falsification_ratio_phi=phi,
                 is_falsified=is_falsified,
+                provenance_hash=provenance,
             )
             self.handle.add(run_rec)
             for t_info in tier_summaries:
@@ -160,6 +163,13 @@ class WarehouseRepository:
                     tier_number=t_info.get("tier_number", 1),
                     algorithm_rank=t_info.get("algorithm_rank", "UNKNOWN"),
                     latency_ms=t_info.get("latency_ms", 0.0),
+                    setup_time_ms=t_info.get("setup_time_ms", 0.0),
+                    solve_time_ms=t_info.get("solve_time_ms", 0.0),
+                    validation_time_ms=t_info.get("validation_time_ms", 0.0),
+                    cpu_time_ms=t_info.get("cpu_time_ms", 0.0),
+                    qpu_execution_ms=t_info.get("qpu_execution_ms", 0.0),
+                    memory_peak_mb=t_info.get("memory_peak_mb", 0.0),
+                    optimality_gap_pct=t_info.get("optimality_gap_pct", 0.0),
                     iterations_count=t_info.get("iterations_count", 1),
                     status=t_info.get("status", "SUCCESS"),
                     benders_cuts_generated=t_info.get("benders_cuts"),
@@ -185,21 +195,37 @@ class WarehouseRepository:
             cursor = self.handle.cursor()
             cursor.execute(
                 """
-                INSERT INTO execution_runs (run_id, scenario_id, wave_id, timestamp, operational_mode, mode, algorithm_ranks_used, total_makespan_sec, total_distance_km, chute_variance, total_solve_latency_sec, falsification_ratio_phi, is_falsified)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO execution_runs (run_id, scenario_id, wave_id, timestamp, operational_mode, mode, algorithm_ranks_used, total_makespan_sec, total_distance_km, chute_variance, total_solve_latency_sec, falsification_ratio_phi, is_falsified, provenance_hash)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (run_id, scenario_id, wave_id, now_str, op_mode_str, exec_mode, json.dumps(algo_ranks), makespan, distance, chute_var, solve_latency, phi, 1 if is_falsified else 0),
+                (run_id, scenario_id, wave_id, now_str, op_mode_str, exec_mode, json.dumps(algo_ranks), makespan, distance, chute_var, solve_latency, phi, 1 if is_falsified else 0, provenance),
             )
             for t_info in tier_summaries:
                 cursor.execute(
                     """
-                    INSERT INTO tier_executions (run_id, tier_number, algorithm_rank, latency_ms, iterations_count, status, benders_cuts_generated, output_summary)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO tier_executions (
+                        run_id, tier_number, algorithm_rank, latency_ms,
+                        setup_time_ms, solve_time_ms, validation_time_ms,
+                        cpu_time_ms, qpu_execution_ms, memory_peak_mb, optimality_gap_pct,
+                        iterations_count, status, benders_cuts_generated, output_summary
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
-                        run_id, t_info.get("tier_number", 1), t_info.get("algorithm_rank", "UNKNOWN"),
-                        t_info.get("latency_ms", 0.0), t_info.get("iterations_count", 1),
-                        t_info.get("status", "SUCCESS"), json.dumps(t_info.get("benders_cuts")),
+                        run_id,
+                        t_info.get("tier_number", 1),
+                        t_info.get("algorithm_rank", "UNKNOWN"),
+                        t_info.get("latency_ms", 0.0),
+                        t_info.get("setup_time_ms", 0.0),
+                        t_info.get("solve_time_ms", 0.0),
+                        t_info.get("validation_time_ms", 0.0),
+                        t_info.get("cpu_time_ms", 0.0),
+                        t_info.get("qpu_execution_ms", 0.0),
+                        t_info.get("memory_peak_mb", 0.0),
+                        t_info.get("optimality_gap_pct", 0.0),
+                        t_info.get("iterations_count", 1),
+                        t_info.get("status", "SUCCESS"),
+                        json.dumps(t_info.get("benders_cuts")),
                         json.dumps(t_info.get("summary", {})),
                     ),
                 )
@@ -240,10 +266,12 @@ class WarehouseRepository:
                         mass_kg=r.mass_kg,
                         dimensions_m=(0.2, 0.2, 0.1),
                         volume_m3=r.volume_m3,
+                        slot_requirement=getattr(r, "slot_requirement", 1) or 1,
                         open_window_start=r.open_window_start,
                         drop_deadline=r.drop_deadline,
                         is_atomic=r.is_atomic,
                         hazard_class=r.hazard_class or "NONE",
+                        sla_priority=float(getattr(r, "sla_priority", 1.0) or 1.0),
                         created_datetime=str(getattr(r, "created_datetime", "")),
                     )
                 )
@@ -267,10 +295,12 @@ class WarehouseRepository:
                         mass_kg=r["mass_kg"],
                         dimensions_m=(0.2, 0.2, 0.1),
                         volume_m3=r["volume_m3"],
+                        slot_requirement=r["slot_requirement"] if "slot_requirement" in r.keys() else 1,
                         open_window_start=r["open_window_start"],
                         drop_deadline=r["drop_deadline"],
                         is_atomic=bool(r["is_atomic"]),
                         hazard_class=r["hazard_class"] or "NONE",
+                        sla_priority=float(r["sla_priority"]) if "sla_priority" in r.keys() else 1.0,
                         created_datetime=str(r["created_datetime"]) if "created_datetime" in r.keys() else None,
                     )
                 )
@@ -830,7 +860,7 @@ class WarehouseRepository:
         cursor.execute("""
             SELECT run_id, scenario_id, wave_id, operational_mode, mode, total_makespan_sec,
                    total_distance_km, chute_variance, sla_violations_count, total_solve_latency_sec,
-                   falsification_ratio_phi, is_falsified, verification_code, created_datetime, timestamp
+                   falsification_ratio_phi, is_falsified, verification_code, provenance_hash, created_datetime, timestamp
             FROM execution_runs
             WHERE run_id = ?
         """, (run_id,))
@@ -851,6 +881,7 @@ class WarehouseRepository:
             "falsification_ratio_phi": r["falsification_ratio_phi"],
             "is_falsified": bool(r["is_falsified"]),
             "verification_code": r["verification_code"],
+            "provenance_hash": r["provenance_hash"] if "provenance_hash" in r.keys() else None,
             "created_datetime": r["created_datetime"],
             "timestamp": r["timestamp"],
         }
@@ -978,4 +1009,286 @@ class WarehouseRepository:
                 "delta_chute_variance": round(var_b - var_a, 3),
                 "delta_phi": round(row_b["falsification_ratio_phi"] - row_a["falsification_ratio_phi"], 4),
             }
+        }
+
+    def save_run_input_parameters(self, run_id: str, scenario_id_or_params: Any, parameters: Optional[List[Dict[str, Any]]] = None) -> int:
+        """Persist structured input parameters with human-readable descriptions, units, and safety bounds."""
+        if isinstance(scenario_id_or_params, list):
+            params_list = scenario_id_or_params
+            scenario_id = ""
+        else:
+            scenario_id = str(scenario_id_or_params or "")
+            params_list = parameters or []
+
+        if not params_list:
+            return 0
+
+        saved_count = 0
+        if self.is_sqlalchemy:
+            from DispatchEngine.storage.models import RunInputParameterRecord
+            for p in params_list:
+                rec = RunInputParameterRecord(
+                    run_id=run_id,
+                    scenario_id=scenario_id,
+                    param_scope=p.get("param_scope", "SYSTEM"),
+                    param_key=p["param_key"],
+                    display_name=p.get("display_name", p["param_key"]),
+                    param_value=str(p["param_value"]),
+                    param_type=p.get("param_type", "STRING"),
+                    unit=p.get("unit", ""),
+                    description=p.get("description", ""),
+                    latex_symbol=p.get("latex_symbol", ""),
+                    min_bound=p.get("min_bound"),
+                    max_bound=p.get("max_bound"),
+                    compliance_standard=p.get("compliance_standard", ""),
+                    is_overridden=p.get("is_overridden", 0),
+                )
+                self.handle.add(rec)
+                saved_count += 1
+            self.handle.commit()
+        else:
+            cursor = self.handle.cursor()
+            for p in params_list:
+                cursor.execute(
+                    """
+                    INSERT INTO run_input_parameters (
+                        run_id, scenario_id, param_scope, param_key, display_name,
+                        param_value, param_type, unit, description, latex_symbol,
+                        min_bound, max_bound, compliance_standard, is_overridden
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        run_id,
+                        scenario_id,
+                        p.get("param_scope", "SYSTEM"),
+                        p["param_key"],
+                        p.get("display_name", p["param_key"]),
+                        str(p["param_value"]),
+                        p.get("param_type", "STRING"),
+                        p.get("unit", ""),
+                        p.get("description", ""),
+                        p.get("latex_symbol", ""),
+                        p.get("min_bound"),
+                        p.get("max_bound"),
+                        p.get("compliance_standard", ""),
+                        p.get("is_overridden", 0),
+                    ),
+                )
+                saved_count += 1
+            self.handle.commit()
+        return saved_count
+
+    def get_run_input_parameters(self, run_id: str, scope: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Retrieve all calculation input parameters and their engineering descriptions for a given run."""
+        results = []
+        if self.is_sqlalchemy:
+            from DispatchEngine.storage.models import RunInputParameterRecord
+            query = self.handle.query(RunInputParameterRecord).filter_by(run_id=run_id)
+            if scope:
+                query = query.filter_by(param_scope=scope.upper())
+            for r in query.order_by(RunInputParameterRecord.param_scope, RunInputParameterRecord.param_key).all():
+                results.append({
+                    "param_scope": r.param_scope,
+                    "param_key": r.param_key,
+                    "display_name": r.display_name,
+                    "param_value": r.param_value,
+                    "param_type": r.param_type,
+                    "unit": r.unit,
+                    "description": r.description,
+                    "latex_symbol": r.latex_symbol,
+                    "min_bound": r.min_bound,
+                    "max_bound": r.max_bound,
+                    "compliance_standard": r.compliance_standard,
+                    "is_overridden": bool(r.is_overridden),
+                    "created_datetime": str(r.created_datetime),
+                })
+        else:
+            cursor = self.handle.cursor()
+            if scope:
+                cursor.execute(
+                    "SELECT * FROM run_input_parameters WHERE run_id = ? AND param_scope = ? ORDER BY param_scope, param_key",
+                    (run_id, scope.upper()),
+                )
+            else:
+                cursor.execute(
+                    "SELECT * FROM run_input_parameters WHERE run_id = ? ORDER BY param_scope, param_key",
+                    (run_id,),
+                )
+            for row in cursor.fetchall():
+                results.append({
+                    "param_scope": row["param_scope"],
+                    "param_key": row["param_key"],
+                    "display_name": row["display_name"],
+                    "param_value": row["param_value"],
+                    "param_type": row["param_type"],
+                    "unit": row["unit"],
+                    "description": row["description"],
+                    "latex_symbol": row["latex_symbol"],
+                    "min_bound": row["min_bound"],
+                    "max_bound": row["max_bound"],
+                    "compliance_standard": row["compliance_standard"],
+                    "is_overridden": bool(row["is_overridden"]),
+                    "created_datetime": str(row["created_datetime"]),
+                })
+        return results
+
+    def save_algorithm_benchmarks_log(self, benchmarks: List[Dict[str, Any]]) -> int:
+        """Persist independent multi-tier algorithm benchmark comparison measurements."""
+        if not benchmarks:
+            return 0
+
+        saved = 0
+        if self.is_sqlalchemy:
+            from DispatchEngine.storage.models import AlgorithmBenchmarkLogRecord
+            for b in benchmarks:
+                tier_num = b.get("tier_number") if "tier_number" in b else b.get("tier_index", 1)
+                algo_key = b.get("algorithm_key") if "algorithm_key" in b else b.get("algorithm_used", "UNKNOWN")
+                wall_clock = b.get("wall_clock_ms") if "wall_clock_ms" in b else b.get("latency_ms", 0.0)
+                rec = AlgorithmBenchmarkLogRecord(
+                    benchmark_id=b.get("benchmark_id", f"BM-{uuid.uuid4().hex[:8]}"),
+                    run_id=b["run_id"],
+                    scenario_id=b.get("scenario_id", ""),
+                    tier_number=tier_num,
+                    algorithm_key=algo_key,
+                    algorithm_name=b.get("algorithm_name", algo_key),
+                    wall_clock_ms=wall_clock,
+                    setup_time_ms=b.get("setup_time_ms", 0.0),
+                    solve_time_ms=b.get("solve_time_ms", 0.0),
+                    cpu_time_ms=b.get("cpu_time_ms", 0.0),
+                    qpu_time_ms=b.get("qpu_time_ms", 0.0),
+                    iterations_count=b.get("iterations_count", 1),
+                    objective_cost=b.get("objective_cost", 0.0),
+                    speedup_vs_baseline=b.get("speedup_vs_baseline", 1.0),
+                    is_winner_in_tier=b.get("is_winner_in_tier", 0),
+                    metadata_json=b.get("metadata", {}),
+                )
+                self.handle.add(rec)
+                saved += 1
+            self.handle.commit()
+        else:
+            cursor = self.handle.cursor()
+            for b in benchmarks:
+                b_id = b.get("benchmark_id", f"BM-{uuid.uuid4().hex[:8]}")
+                tier_num = b.get("tier_number") if "tier_number" in b else b.get("tier_index", 1)
+                algo_key = b.get("algorithm_key") if "algorithm_key" in b else b.get("algorithm_used", "UNKNOWN")
+                wall_clock = b.get("wall_clock_ms") if "wall_clock_ms" in b else b.get("latency_ms", 0.0)
+                cursor.execute(
+                    """
+                    INSERT INTO algorithm_benchmarks_log (
+                        benchmark_id, run_id, scenario_id, tier_number, algorithm_key,
+                        algorithm_name, wall_clock_ms, setup_time_ms, solve_time_ms,
+                        cpu_time_ms, qpu_time_ms, iterations_count, objective_cost,
+                        speedup_vs_baseline, is_winner_in_tier, metadata_json
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        b_id,
+                        b["run_id"],
+                        b.get("scenario_id", ""),
+                        tier_num,
+                        algo_key,
+                        b.get("algorithm_name", algo_key),
+                        wall_clock,
+                        b.get("setup_time_ms", 0.0),
+                        b.get("solve_time_ms", 0.0),
+                        b.get("cpu_time_ms", 0.0),
+                        b.get("qpu_time_ms", 0.0),
+                        b.get("iterations_count", 1),
+                        b.get("objective_cost", 0.0),
+                        b.get("speedup_vs_baseline", 1.0),
+                        b.get("is_winner_in_tier", 0),
+                        json.dumps(b.get("metrics_json", b.get("metadata", {}))),
+                    ),
+                )
+                saved += 1
+            self.handle.commit()
+        return saved
+
+    def get_tier_benchmark_breakdown(self, run_id: str) -> Dict[str, Any]:
+        """Fetch granular benchmark timing breakdown by tier and candidate algorithms for a given run."""
+        tier_execs = []
+        algo_logs = []
+
+        if self.is_sqlalchemy:
+            from DispatchEngine.storage.models import TierExecutionRecord, AlgorithmBenchmarkLogRecord
+            t_records = self.handle.query(TierExecutionRecord).filter_by(run_id=run_id).order_by(TierExecutionRecord.tier_number).all()
+            for t in t_records:
+                tier_execs.append({
+                    "tier_number": t.tier_number,
+                    "algorithm_rank": t.algorithm_rank,
+                    "latency_ms": t.latency_ms,
+                    "setup_time_ms": getattr(t, "setup_time_ms", 0.0) or 0.0,
+                    "solve_time_ms": getattr(t, "solve_time_ms", 0.0) or 0.0,
+                    "validation_time_ms": getattr(t, "validation_time_ms", 0.0) or 0.0,
+                    "cpu_time_ms": getattr(t, "cpu_time_ms", 0.0) or 0.0,
+                    "qpu_execution_ms": getattr(t, "qpu_execution_ms", 0.0) or 0.0,
+                    "memory_peak_mb": getattr(t, "memory_peak_mb", 0.0) or 0.0,
+                    "optimality_gap_pct": getattr(t, "optimality_gap_pct", 0.0) or 0.0,
+                    "status": t.status,
+                    "output_summary": t.output_summary,
+                })
+
+            b_records = self.handle.query(AlgorithmBenchmarkLogRecord).filter_by(run_id=run_id).order_by(AlgorithmBenchmarkLogRecord.tier_number).all()
+            for b in b_records:
+                algo_logs.append({
+                    "benchmark_id": b.benchmark_id,
+                    "tier_number": b.tier_number,
+                    "algorithm_key": b.algorithm_key,
+                    "algorithm_name": b.algorithm_name,
+                    "wall_clock_ms": b.wall_clock_ms,
+                    "setup_time_ms": b.setup_time_ms,
+                    "solve_time_ms": b.solve_time_ms,
+                    "cpu_time_ms": b.cpu_time_ms,
+                    "qpu_time_ms": b.qpu_time_ms,
+                    "iterations_count": b.iterations_count,
+                    "objective_cost": b.objective_cost,
+                    "speedup_vs_baseline": b.speedup_vs_baseline,
+                    "is_winner": bool(b.is_winner_in_tier),
+                })
+        else:
+            cursor = self.handle.cursor()
+            cursor.execute("SELECT * FROM tier_executions WHERE run_id = ? ORDER BY tier_number", (run_id,))
+            for row in cursor.fetchall():
+                tier_execs.append({
+                    "tier_number": row["tier_number"],
+                    "algorithm_rank": row["algorithm_rank"],
+                    "latency_ms": row["latency_ms"],
+                    "setup_time_ms": row["setup_time_ms"] if "setup_time_ms" in row.keys() else 0.0,
+                    "solve_time_ms": row["solve_time_ms"] if "solve_time_ms" in row.keys() else 0.0,
+                    "validation_time_ms": row["validation_time_ms"] if "validation_time_ms" in row.keys() else 0.0,
+                    "cpu_time_ms": row["cpu_time_ms"] if "cpu_time_ms" in row.keys() else 0.0,
+                    "qpu_execution_ms": row["qpu_execution_ms"] if "qpu_execution_ms" in row.keys() else 0.0,
+                    "memory_peak_mb": row["memory_peak_mb"] if "memory_peak_mb" in row.keys() else 0.0,
+                    "optimality_gap_pct": row["optimality_gap_pct"] if "optimality_gap_pct" in row.keys() else 0.0,
+                    "status": row["status"],
+                    "output_summary": json.loads(row["output_summary"]) if isinstance(row["output_summary"], str) else row["output_summary"],
+                })
+
+            cursor.execute("SELECT * FROM algorithm_benchmarks_log WHERE run_id = ? ORDER BY tier_number, wall_clock_ms", (run_id,))
+            for row in cursor.fetchall():
+                algo_logs.append({
+                    "benchmark_id": row["benchmark_id"],
+                    "tier_number": row["tier_number"],
+                    "algorithm_key": row["algorithm_key"],
+                    "algorithm_name": row["algorithm_name"],
+                    "wall_clock_ms": row["wall_clock_ms"],
+                    "setup_time_ms": row["setup_time_ms"],
+                    "solve_time_ms": row["solve_time_ms"],
+                    "cpu_time_ms": row["cpu_time_ms"],
+                    "qpu_time_ms": row["qpu_time_ms"],
+                    "iterations_count": row["iterations_count"],
+                    "objective_cost": row["objective_cost"],
+                    "speedup_vs_baseline": row["speedup_vs_baseline"],
+                    "is_winner": bool(row["is_winner_in_tier"]),
+                })
+
+        return {
+            "run_id": run_id,
+            "tier_executions": tier_execs,
+            "algorithm_benchmarks": algo_logs,
+            "total_wall_clock_ms": sum(t["latency_ms"] for t in tier_execs),
+            "total_cpu_time_ms": sum(t["cpu_time_ms"] for t in tier_execs),
+            "total_qpu_time_ms": sum(t["qpu_execution_ms"] for t in tier_execs),
         }

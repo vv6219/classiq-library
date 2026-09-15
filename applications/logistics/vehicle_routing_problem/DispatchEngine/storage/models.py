@@ -85,6 +85,7 @@ try:
         falsification_ratio_phi = Column(Float, nullable=False)
         is_falsified = Column(Boolean, default=False)
         verification_code = Column(String(32), default="lmn", nullable=False)
+        provenance_hash = Column(String(64), default="", nullable=False)
         created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         scenario = relationship("ScenarioRecord", back_populates="runs")
@@ -96,6 +97,8 @@ try:
         gate_validations = relationship("GateValidationRecord", back_populates="run", cascade="all, delete-orphan")
         chute_flows = relationship("ChuteFlowRecord", back_populates="run", cascade="all, delete-orphan")
         produced_reports = relationship("ProducedReportRecord", back_populates="run", cascade="all, delete-orphan")
+        parameters = relationship("RunInputParameterRecord", back_populates="run", cascade="all, delete-orphan")
+        algorithm_benchmarks = relationship("AlgorithmBenchmarkLogRecord", back_populates="run", cascade="all, delete-orphan")
 
     class VehicleRouteRecord(Base):
         __tablename__ = "vehicle_routes"
@@ -242,6 +245,13 @@ try:
         tier_number = Column(Integer, nullable=False)
         algorithm_rank = Column(String(64), nullable=False)
         latency_ms = Column(Float, nullable=False)
+        setup_time_ms = Column(Float, default=0.0)
+        solve_time_ms = Column(Float, default=0.0)
+        validation_time_ms = Column(Float, default=0.0)
+        cpu_time_ms = Column(Float, default=0.0)
+        qpu_execution_ms = Column(Float, default=0.0)
+        memory_peak_mb = Column(Float, default=0.0)
+        optimality_gap_pct = Column(Float, default=0.0)
         iterations_count = Column(Integer, default=1)
         status = Column(String(32), nullable=False)
         benders_cuts_generated = Column(JSON, nullable=True)
@@ -249,6 +259,51 @@ try:
         created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
 
         run = relationship("ExecutionRunRecord", back_populates="tier_results")
+
+    class RunInputParameterRecord(Base):
+        __tablename__ = "run_input_parameters"
+
+        id = Column(Integer, primary_key=True, autoincrement=True)
+        run_id = Column(String(64), ForeignKey("execution_runs.run_id"), nullable=False, index=True)
+        scenario_id = Column(String(64), nullable=False)
+        param_scope = Column(String(32), nullable=False, index=True)
+        param_key = Column(String(64), nullable=False)
+        display_name = Column(String(128), nullable=False)
+        param_value = Column(Text, nullable=False)
+        param_type = Column(String(32), nullable=False)
+        unit = Column(String(32), default="")
+        description = Column(Text, nullable=False)
+        latex_symbol = Column(String(64), default="")
+        min_bound = Column(Float, nullable=True)
+        max_bound = Column(Float, nullable=True)
+        compliance_standard = Column(String(128), default="")
+        is_overridden = Column(Integer, default=0)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+        run = relationship("ExecutionRunRecord", back_populates="parameters")
+
+    class AlgorithmBenchmarkLogRecord(Base):
+        __tablename__ = "algorithm_benchmarks_log"
+
+        benchmark_id = Column(String(64), primary_key=True)
+        run_id = Column(String(64), ForeignKey("execution_runs.run_id"), nullable=False, index=True)
+        scenario_id = Column(String(64), nullable=False)
+        tier_number = Column(Integer, nullable=False, index=True)
+        algorithm_key = Column(String(64), nullable=False)
+        algorithm_name = Column(String(128), nullable=False)
+        wall_clock_ms = Column(Float, nullable=False)
+        setup_time_ms = Column(Float, default=0.0)
+        solve_time_ms = Column(Float, default=0.0)
+        cpu_time_ms = Column(Float, default=0.0)
+        qpu_time_ms = Column(Float, default=0.0)
+        iterations_count = Column(Integer, default=1)
+        objective_cost = Column(Float, nullable=False)
+        speedup_vs_baseline = Column(Float, default=1.0)
+        is_winner_in_tier = Column(Integer, default=0)
+        metadata_json = Column(JSON, nullable=True)
+        created_datetime = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+        run = relationship("ExecutionRunRecord", back_populates="algorithm_benchmarks")
 
     class QuantumTelemetryRecord(Base):
         __tablename__ = "quantum_telemetry"
@@ -342,6 +397,7 @@ except ImportError:
         total_solve_latency_sec: float
         falsification_ratio_phi: float
         mode: str = "32Q"
+        provenance_hash: str = ""
         is_falsified: bool = False
         sla_violations_count: int = 0
         verification_code: str = "lmn"
@@ -469,8 +525,54 @@ except ImportError:
         latency_ms: float
         status: str
         output_summary: Dict[str, Any]
+        setup_time_ms: float = 0.0
+        solve_time_ms: float = 0.0
+        validation_time_ms: float = 0.0
+        cpu_time_ms: float = 0.0
+        qpu_execution_ms: float = 0.0
+        memory_peak_mb: float = 0.0
+        optimality_gap_pct: float = 0.0
         iterations_count: int = 1
         benders_cuts_generated: Optional[List[Any]] = None
+        created_datetime: Optional[str] = None
+
+    @dataclass
+    class RunInputParameterRecord:
+        run_id: str
+        scenario_id: str
+        param_scope: str
+        param_key: str
+        display_name: str
+        param_value: str
+        param_type: str
+        unit: str = ""
+        description: str = ""
+        latex_symbol: str = ""
+        min_bound: Optional[float] = None
+        max_bound: Optional[float] = None
+        compliance_standard: str = ""
+        is_overridden: int = 0
+        id: Optional[int] = None
+        created_datetime: Optional[str] = None
+
+    @dataclass
+    class AlgorithmBenchmarkLogRecord:
+        benchmark_id: str
+        run_id: str
+        scenario_id: str
+        tier_number: int
+        algorithm_key: str
+        algorithm_name: str
+        wall_clock_ms: float
+        objective_cost: float
+        setup_time_ms: float = 0.0
+        solve_time_ms: float = 0.0
+        cpu_time_ms: float = 0.0
+        qpu_time_ms: float = 0.0
+        iterations_count: int = 1
+        speedup_vs_baseline: float = 1.0
+        is_winner_in_tier: int = 0
+        metadata_json: Optional[Dict[str, Any]] = None
         created_datetime: Optional[str] = None
 
     @dataclass
