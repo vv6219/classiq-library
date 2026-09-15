@@ -282,10 +282,11 @@ class DispatchAPIRequestHandler(BaseHTTPRequestHandler):
 
         elif path == "/api/v1/dispatch/runs":
             limit = int(query.get("limit", ["30"])[0])
+            prefix = query.get("prefix", [None])[0]
             session = DatabaseManager.get_session()
             try:
                 repo = WarehouseRepository(session)
-                runs = repo.list_runs(limit=limit)
+                runs = repo.list_runs(limit=limit, prefix=prefix)
                 self._send_json(200, {"runs_count": len(runs), "runs": runs})
             finally:
                 DatabaseManager.close_session(session)

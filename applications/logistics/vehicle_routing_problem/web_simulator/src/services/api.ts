@@ -853,11 +853,14 @@ export const CANONICAL_BENCHMARK_RUNS: RunSummaryDTO[] = [
   },
 ];
 
-export async function fetchRuns(limit = 30): Promise<RunSummaryDTO[]> {
+export async function fetchRuns(limit = 30, prefix?: string): Promise<RunSummaryDTO[]> {
   let baseRuns: RunSummaryDTO[] = CANONICAL_BENCHMARK_RUNS;
   try {
+    const url = prefix
+      ? `${API_BASE}/dispatch/runs?limit=${limit}&prefix=${encodeURIComponent(prefix)}`
+      : `${API_BASE}/dispatch/runs?limit=${limit}`;
     const data = await fetchSafeJson<{ runs: RunSummaryDTO[] }>(
-      `${API_BASE}/dispatch/runs?limit=${limit}`,
+      url,
       `${API_BASE}/dispatch/runs.json`,
       { runs: CANONICAL_BENCHMARK_RUNS }
     );
@@ -868,7 +871,7 @@ export async function fetchRuns(limit = 30): Promise<RunSummaryDTO[]> {
     console.warn('Using canonical fallback runs:', err);
   }
 
-  // Merge in-memory dispatched runs with base runs (in-memory dispatched runs take precedence at head)
+  // Merge in-memory dispatched runs with base runs
   const mergedMap = new Map<string, RunSummaryDTO>();
   for (const r of inMemoryDispatchedRuns) {
     mergedMap.set(r.run_id, r);
@@ -878,7 +881,15 @@ export async function fetchRuns(limit = 30): Promise<RunSummaryDTO[]> {
       mergedMap.set(r.run_id, r);
     }
   }
-  return Array.from(mergedMap.values());
+
+  // Strict ordering by created_datetime DESC (falling back to timestamp)
+  const mergedList = Array.from(mergedMap.values());
+  mergedList.sort((a, b) => {
+    const timeA = new Date(a.created_datetime || a.timestamp || 0).getTime();
+    const timeB = new Date(b.created_datetime || b.timestamp || 0).getTime();
+    return timeB - timeA;
+  });
+  return mergedList;
 }
 
 export async function compareRuns(runA: string, runB: string): Promise<RunComparisonDTO> {

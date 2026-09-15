@@ -816,21 +816,37 @@ class WarehouseRepository:
         conn.commit()
         return new_scenario_id
 
-    def list_runs(self, limit: int = 30) -> List[Dict[str, Any]]:
-        """List historical execution runs with KPI summary and run mode."""
-        conn = self.handle if not self.is_sqlalchemy else None
+    def list_runs(self, limit: int = 30, prefix: Optional[str] = None) -> List[Dict[str, Any]]:
+        """List historical execution runs ordered by created_datetime DESC with optional prefix filter."""
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return []
 
-        cursor.execute("""
-            SELECT run_id, scenario_id, wave_id, operational_mode, mode, total_makespan_sec,
-                   total_distance_km, chute_variance, total_solve_latency_sec,
-                   falsification_ratio_phi, is_falsified, timestamp
-            FROM execution_runs
-            ORDER BY timestamp DESC
-            LIMIT ?
-        """, (limit,))
+        if prefix and prefix.strip():
+            p = prefix.strip()
+            like_pattern = f"{p}%"
+            clean_p = p.upper().replace("RUN-", "")
+            alt_like = f"RUN-{clean_p}%"
+            cursor.execute("""
+                SELECT run_id, scenario_id, wave_id, operational_mode, mode, total_makespan_sec,
+                       total_distance_km, chute_variance, total_solve_latency_sec,
+                       falsification_ratio_phi, is_falsified, created_datetime, timestamp
+                FROM execution_runs
+                WHERE run_id LIKE ? OR run_id LIKE ? OR scenario_id LIKE ?
+                ORDER BY COALESCE(created_datetime, timestamp) DESC
+                LIMIT ?
+            """, (like_pattern, alt_like, like_pattern, limit))
+        else:
+            cursor.execute("""
+                SELECT run_id, scenario_id, wave_id, operational_mode, mode, total_makespan_sec,
+                       total_distance_km, chute_variance, total_solve_latency_sec,
+                       falsification_ratio_phi, is_falsified, created_datetime, timestamp
+                FROM execution_runs
+                ORDER BY COALESCE(created_datetime, timestamp) DESC
+                LIMIT ?
+            """, (limit,))
+
         rows = cursor.fetchall()
         return [
             {
@@ -845,6 +861,7 @@ class WarehouseRepository:
                 "solve_latency_sec": r["total_solve_latency_sec"],
                 "falsification_ratio_phi": r["falsification_ratio_phi"],
                 "is_falsified": bool(r["is_falsified"]),
+                "created_datetime": r["created_datetime"] if ("created_datetime" in r.keys() and r["created_datetime"]) else r["timestamp"],
                 "timestamp": r["timestamp"],
             }
             for r in rows
@@ -939,7 +956,7 @@ class WarehouseRepository:
 
     def delete_run(self, run_id: str) -> bool:
         """Delete an execution run and cascade delete its associated child records."""
-        conn = self.handle if not self.is_sqlalchemy else None
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return False
@@ -959,7 +976,7 @@ class WarehouseRepository:
 
     def compare_runs(self, run_a: str, run_b: str) -> Dict[str, Any]:
         """Compute delta comparison between two execution runs."""
-        conn = self.handle if not self.is_sqlalchemy else None
+        conn = self._get_conn()
         cursor = conn.cursor() if conn else None
         if not cursor:
             return {}

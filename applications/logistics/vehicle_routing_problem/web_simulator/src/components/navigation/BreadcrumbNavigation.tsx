@@ -212,8 +212,22 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
     })
     .filter((r) => {
       if (!runSearchQuery.trim()) return true;
-      const q = runSearchQuery.toLowerCase();
-      return r.run_id.toLowerCase().includes(q) || (r.scenario_id && r.scenario_id.toLowerCase().includes(q));
+      const q = runSearchQuery.trim().toLowerCase();
+      const rId = (r.run_id || '').toLowerCase();
+      const sId = (r.scenario_id || '').toLowerCase();
+      const wId = (r.wave_id || '').toLowerCase();
+      const m = (r.mode || '').toLowerCase();
+      const op = (r.operational_mode || '').toLowerCase();
+      const dt = (r.created_datetime || r.timestamp || '').toLowerCase();
+      return (
+        rId.includes(q) ||
+        rId.replace('run-', '').includes(q) ||
+        sId.includes(q) ||
+        wId.includes(q) ||
+        m.includes(q) ||
+        op.includes(q) ||
+        dt.includes(q)
+      );
     });
 
   return (
@@ -659,8 +673,9 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                   )}
                 </div>
               ) : (
-                filteredRuns.map((r) => {
+                filteredRuns.map((r, index) => {
                   const isCurrent = r.run_id === currentRunId;
+                  const isLatest = index === 0;
                   return (
                     <div
                       key={r.run_id}
@@ -681,11 +696,18 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                       }}
                     >
                       <div>
-                        <div style={{ fontWeight: 600, color: isCurrent ? '#34d399' : '#f1f5f9' }}>
-                          {r.run_id}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontWeight: 600, color: isCurrent ? '#34d399' : '#f1f5f9' }}>
+                            {r.run_id}
+                          </span>
+                          {isLatest && (
+                            <span style={{ fontSize: '8px', padding: '1px 4px', borderRadius: '3px', background: 'rgba(52, 211, 153, 0.25)', color: '#34d399', fontWeight: 800 }}>
+                              LATEST
+                            </span>
+                          )}
                         </div>
                         <div style={{ fontSize: '9px', color: '#94a3b8' }}>
-                          {r.operational_mode} • {r.makespan_sec.toFixed(1)}s • {r.distance_km.toFixed(2)}km
+                          {r.operational_mode || 'QUANTUM'} • {r.makespan_sec ? `${r.makespan_sec.toFixed(1)}s` : ''} • {r.distance_km ? `${r.distance_km.toFixed(2)}km` : ''}
                         </div>
                       </div>
                       {isCurrent && <CheckCircle2 size={12} color="#34d399" />}

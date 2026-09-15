@@ -185,6 +185,11 @@ class TestBenchmarkLedger(unittest.TestCase):
             self.assertIn("solve_time_ms", t)
             self.assertIn("validation_time_ms", t)
 
+        # Verify list_runs retrieves the run
+        all_runs = self.repo.list_runs(10)
+        self.assertGreater(len(all_runs), 0)
+        self.assertTrue(any(r["run_id"] == run_id for r in all_runs))
+
 
 if __name__ == "__main__":
     unittest.main()

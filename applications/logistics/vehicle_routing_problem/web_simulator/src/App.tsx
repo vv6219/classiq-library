@@ -31,6 +31,7 @@ import {
   fetchArchetypes,
   fetchRuns,
   getCustomRuns,
+  registerCustomRun,
   CONFIG_LIMITS,
   CANONICAL_BENCHMARK_RUNS,
   ScheduleDetails,
@@ -702,7 +703,9 @@ export const App: React.FC = () => {
           is_falsified: resp.is_falsified,
           created_datetime: new Date().toISOString().replace('T', ' ').substring(0, 19),
         };
+        registerCustomRun(newRunSummary);
         setRuns((prev) => [newRunSummary, ...prev.filter((r) => r.run_id !== resp.run_id)]);
+        loadHistoricalRuns(resp.run_id);
 
         // Finalize 7-step detailed progress state with 100% and real execution metrics
         const baseSteps = dispatchProgress?.steps || INITIAL_PIPELINE_STEPS;

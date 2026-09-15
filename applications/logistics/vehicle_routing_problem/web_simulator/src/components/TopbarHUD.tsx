@@ -20,6 +20,7 @@ import {
 } from '../utils/analytics';
 
 import { StudioTabId } from '../types/navigationState';
+import { SearchableRunCombobox } from './SearchableRunCombobox';
 
 export interface TopbarHUDProps {
   lastWave: WaveExecutionResponse | null;
@@ -272,53 +273,17 @@ export const TopbarHUD: React.FC<TopbarHUDProps> = ({
 
       {/* RIGHT: Run Selector, Engine Switcher, Re-Run & Dispatch Wave Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {/* Run Selector Combobox Dropdown */}
+        {/* Searchable Run Combobox Dropdown */}
         {effectiveRuns.length > 0 && onSelectRun && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '2px 8px',
-              borderRadius: '6px',
-              background: 'rgba(7, 15, 30, 0.85)',
-              border: '1px solid rgba(0, 240, 255, 0.3)',
-              height: '28px',
-              boxSizing: 'border-box',
+          <SearchableRunCombobox
+            runs={effectiveRuns}
+            currentRunId={currentRunId}
+            onSelectRun={(runId) => {
+              trackButtonClick('Select_Run_Combo', 'TopbarHUD', { run_id: runId });
+              onSelectRun(runId);
             }}
-            title={`Active Run ID: ${currentRunId || 'None'} - Switch execution run`}
-          >
-            <span style={{ fontSize: '9px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.05em' }}>
-              RUN:
-            </span>
-            <select
-              value={currentRunId || ''}
-              onChange={(e) => {
-                trackButtonClick('Select_Run_Combo', 'TopbarHUD', { run_id: e.target.value });
-                onSelectRun(e.target.value);
-              }}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#38bdf8',
-                fontSize: '11px',
-                fontFamily: 'var(--font-mono, monospace)',
-                fontWeight: 700,
-                cursor: 'pointer',
-                outline: 'none',
-                maxWidth: '240px',
-              }}
-            >
-              {effectiveRuns.map((r) => {
-                const stops = getRunTotalStops(r);
-                return (
-                  <option key={r.run_id} value={r.run_id} style={{ background: '#0d1527', color: '#f0f4f8' }}>
-                    {r.run_id} • [{formatRunMode(r)}] {r.makespan_sec ? `${r.makespan_sec.toFixed(0)}s` : ''} • {stops} stops
-                  </option>
-                );
-              })}
-            </select>
-          </div>
+            operationalMode={operationalMode as 'QUANTUM' | 'CLASSICAL'}
+          />
         )}
 
         {/* Operational Mode Toggle Tab */}
