@@ -57,7 +57,7 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
   onSelectRun,
   onNavigateTo2D,
   operationalMode = 'QUANTUM',
-  quantumPanelMode = 'expanded',
+  quantumPanelMode = 'minimized',
   onQuantumPanelModeChange,
   reportsRepoMode = 'minimized',
   onReportsRepoModeChange,
@@ -79,7 +79,7 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
   const [isLegendOpen, setIsLegendOpen] = useState<boolean>(false);
 
   // HUD Panel Stack Display Modes
-  const [floorEnvelopeMode, setFloorEnvelopeMode] = useState<HUDPanelDisplayMode>('expanded');
+  const [floorEnvelopeMode, setFloorEnvelopeMode] = useState<HUDPanelDisplayMode>('minimized');
   const [amrTelemetryMode, setAmrTelemetryMode] = useState<HUDPanelDisplayMode>('expanded');
 
   const handleMinimizeAll = () => {
@@ -840,18 +840,22 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
         id="floor-surface-envelope-panel"
         title="FLOOR SURFACE ENVELOPE"
         icon={<ShieldCheck size={16} color={floorMetrics.isFullyContained ? '#00f0ff' : '#ef4444'} />}
-        badge={{
-          text: floorMetrics.isFullyContained ? '100% CONTAINED' : 'LEAKAGE',
-          color: floorMetrics.isFullyContained ? '#34d399' : '#f87171',
-          bg: floorMetrics.isFullyContained ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.2)',
-          border: floorMetrics.isFullyContained ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.5)',
-        }}
+        badge={
+          floorEnvelopeMode === 'minimized'
+            ? {
+                text: floorMetrics.isFullyContained ? '100% CONTAINED' : 'LEAKAGE',
+                color: floorMetrics.isFullyContained ? '#34d399' : '#f87171',
+                bg: floorMetrics.isFullyContained ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.2)',
+                border: floorMetrics.isFullyContained ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.5)',
+              }
+            : undefined
+        }
         summaryText={`${floorMetrics.facilityWidth.toFixed(0)}m × ${floorMetrics.facilityHeight.toFixed(0)}m • 0 Leakage`}
         mode={floorEnvelopeMode}
         onModeChange={setFloorEnvelopeMode}
         accentColor={floorMetrics.isFullyContained ? '#00f0ff' : '#ef4444'}
-        positionStyle={{ top: '16px', left: '16px' }}
-        width="330px"
+        positionStyle={{ top: '68px', left: '16px' }}
+        width="370px"
         zIndex={15}
         actions={
           <div style={{ display: 'flex', gap: '3px' }}>
@@ -1233,7 +1237,7 @@ export const ThreeWarehouseCanvas: React.FC<ThreeWarehouseCanvasProps> = ({
           isClosable={true}
           accentColor="#38bdf8"
           positionStyle={{
-            top: '80px',
+            top: reportsRepoMode === 'hidden' ? '68px' : '120px',
             right: isLegendOpen ? '440px' : '16px',
           }}
           width="280px"

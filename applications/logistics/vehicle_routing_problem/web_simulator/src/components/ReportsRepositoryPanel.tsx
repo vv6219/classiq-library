@@ -49,6 +49,7 @@ export interface ReportsRepositoryPanelProps {
   onOpenPDFModal: (profile: PDFProfileId) => void;
   reportsCount: number;
   onReportsCountChange?: (count: number) => void;
+  positionStyle?: React.CSSProperties;
 }
 
 export const ReportsRepositoryPanel: React.FC<ReportsRepositoryPanelProps> = ({
@@ -59,6 +60,7 @@ export const ReportsRepositoryPanel: React.FC<ReportsRepositoryPanelProps> = ({
   onOpenPDFModal,
   reportsCount,
   onReportsCountChange,
+  positionStyle,
 }) => {
   const [activeTab, setActiveTab] = useState<'catalog' | 'generate' | 'analytics'>('catalog');
   const [reports, setReports] = useState<SavedReportDTO[]>([]);
@@ -265,6 +267,7 @@ export const ReportsRepositoryPanel: React.FC<ReportsRepositoryPanelProps> = ({
       positionStyle={{
         top: '68px',
         right: '16px',
+        ...positionStyle,
       }}
       width="480px"
       maxWidth="calc(100vw - 32px)"

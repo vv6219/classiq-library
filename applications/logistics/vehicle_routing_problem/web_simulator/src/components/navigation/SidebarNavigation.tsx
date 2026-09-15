@@ -40,6 +40,11 @@ import {
   Warehouse,
   SlidersHorizontal,
   Gauge,
+  Scale,
+  TrendingUp,
+  GitFork,
+  Network,
+  GitCommit,
 } from 'lucide-react';
 import { trackButtonClick, trackTabChange, trackSidebarNavigation } from '../../utils/analytics';
 import { PDFProfileId } from '../../data/reportsRegistry';
@@ -86,6 +91,8 @@ export interface SidebarNavigationProps {
   onSelectComparisonMode?: (mode: 'DELTA_AUDIT' | 'ALL' | 'GRID_FOCUS' | 'COMPARISON_FOCUS') => void;
   selectedInvestigationSubTab?: 'timeline' | 'gates' | 'chutes' | 'quantum' | 'carbon';
   onSelectInvestigationSubTab?: (subTab: 'timeline' | 'gates' | 'chutes' | 'quantum' | 'carbon') => void;
+  selected2DSubView?: 'trajectories' | 'chutes';
+  onSelect2DSubView?: (subView: 'trajectories' | 'chutes') => void;
 }
 
 export type MenuItemType = 'tab' | 'action' | 'command' | 'external' | 'group';
@@ -158,6 +165,8 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   onSelectComparisonMode,
   selectedInvestigationSubTab,
   onSelectInvestigationSubTab,
+  selected2DSubView = 'trajectories',
+  onSelect2DSubView,
 }) => {
   // Helper to normalize entity IDs for robust match (AMR_001, AMR-01, amr_1)
   const normalizeEntityId = (id?: string | null) => {
@@ -282,6 +291,13 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
     if (targetPillar && !expandedPillars.has(targetPillar)) {
       setExpandedPillars((prev) => new Set([...prev, targetPillar]));
     }
+    if (activeTab === '3d-sim') {
+      setExpandedSubGroups((prev) => new Set([...prev, 'menu-3d-sim']));
+    } else if (activeTab === '2d-route-map') {
+      setExpandedSubGroups((prev) => new Set([...prev, 'menu-2d-route-map']));
+    } else if (activeTab === 'graphs') {
+      setExpandedSubGroups((prev) => new Set([...prev, 'menu-graphs']));
+    }
   }, [activeTab]);
 
   // Auto-reveal selected entity only when user actively selects an AMR after load
@@ -295,6 +311,14 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
       setExpandedSubGroups((prev) => new Set([...prev, 'amr-fleet']));
     }
   }, [selectedEntity]);
+
+  // Auto-reveal camera presets when a non-overview preset is selected
+  useEffect(() => {
+    if (cameraPreset && cameraPreset !== 'overview') {
+      setExpandedPillars((prev) => new Set([...prev, 'pillar-1']));
+      setExpandedSubGroups((prev) => new Set([...prev, 'camera-presets']));
+    }
+  }, [cameraPreset]);
 
   // Pillar & Sub-Menu Tree Definition
   const pillars: PillarCategory[] = useMemo(
@@ -454,13 +478,21 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                 id: 'sub-trajectories',
                 label: 'Route Trajectories & Waypoints',
                 type: 'command',
-                onExecute: () => onSelectTab('2d-route-map'),
+                onExecute: () => {
+                  onSelectTab('2d-route-map');
+                  onSelect2DSubView?.('trajectories');
+                  trackButtonClick('sidebar_sub_trajectories');
+                },
               },
               {
                 id: 'sub-chute-contention',
                 label: 'Chute Contention & Queues',
                 type: 'command',
-                onExecute: () => onSelectTab('2d-route-map'),
+                onExecute: () => {
+                  onSelectTab('2d-route-map');
+                  onSelect2DSubView?.('chutes');
+                  trackButtonClick('sidebar_sub_chute_contention');
+                },
               },
             ],
           },
@@ -872,33 +904,130 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                 id: 'sub-pareto',
                 label: 'Fleet Makespan & Distance Pareto Front',
                 shortLabel: 'Pareto Front',
+                icon: <Scale size={12} />,
                 type: 'tab',
                 targetTab: 'graphs',
                 onExecute: () => {
                   onSelectTab('graphs');
                   if (onSelectGraph) onSelectGraph('pareto');
+                  trackButtonClick('sidebar_graph_pareto');
                 },
               },
               {
-                id: 'sub-benchmarks',
-                label: '4-Way Solver Latency Benchmark',
-                shortLabel: 'Solver Benchmarks',
+                id: 'sub-spatial',
+                label: 'Spatial Routing Network G=(V, A)',
+                shortLabel: 'Spatial Network',
+                icon: <Network size={12} />,
+                type: 'tab',
+                targetTab: 'graphs',
+                onExecute: () => {
+                  onSelectTab('graphs');
+                  if (onSelectGraph) onSelectGraph('spatial');
+                  trackButtonClick('sidebar_graph_spatial');
+                },
+              },
+              {
+                id: 'sub-lifo',
+                label: '3D LIFO Extraction Precedence DAG',
+                shortLabel: '3D LIFO DAG',
+                icon: <GitFork size={12} />,
+                type: 'tab',
+                targetTab: 'graphs',
+                onExecute: () => {
+                  onSelectTab('graphs');
+                  if (onSelectGraph) onSelectGraph('lifo');
+                  trackButtonClick('sidebar_graph_lifo');
+                },
+              },
+              {
+                id: 'sub-chutes',
+                label: 'Chute Accumulation Dynamics Qc(t)',
+                shortLabel: 'Chute Accumulation',
+                icon: <TrendingUp size={12} />,
+                type: 'tab',
+                targetTab: 'graphs',
+                onExecute: () => {
+                  onSelectTab('graphs');
+                  if (onSelectGraph) onSelectGraph('chutes');
+                  trackButtonClick('sidebar_graph_chutes');
+                },
+              },
+              {
+                id: 'sub-velocity',
+                label: 'Fleet Kinematics vk(t) & Speed Throttle',
+                shortLabel: 'Kinematics vk(t)',
+                icon: <Gauge size={12} />,
+                type: 'tab',
+                targetTab: 'graphs',
+                onExecute: () => {
+                  onSelectTab('graphs');
+                  if (onSelectGraph) onSelectGraph('velocity');
+                  trackButtonClick('sidebar_graph_velocity');
+                },
+              },
+              {
+                id: 'sub-qaoa',
+                label: 'QAOA Energy Surface & Bitstrings',
+                shortLabel: 'QAOA Surface',
+                icon: <Cpu size={12} />,
+                type: 'tab',
+                targetTab: 'graphs',
+                onExecute: () => {
+                  onSelectTab('graphs');
+                  if (onSelectGraph) onSelectGraph('qaoa');
+                  trackButtonClick('sidebar_graph_qaoa');
+                },
+              },
+              {
+                id: 'sub-benders',
+                label: 'Benders Decomposition Bounds',
+                shortLabel: 'Benders Bounds',
+                icon: <GitCommit size={12} />,
                 type: 'tab',
                 targetTab: 'graphs',
                 onExecute: () => {
                   onSelectTab('graphs');
                   if (onSelectGraph) onSelectGraph('benders');
+                  trackButtonClick('sidebar_graph_benders');
+                },
+              },
+              {
+                id: 'sub-packing-3d',
+                label: '3D AMR Bay Packing & CoG Stability',
+                shortLabel: '3D Bay Packing',
+                icon: <Layers size={12} />,
+                type: 'tab',
+                targetTab: 'graphs',
+                onExecute: () => {
+                  onSelectTab('graphs');
+                  if (onSelectGraph) onSelectGraph('packing_3d');
+                  trackButtonClick('sidebar_graph_packing_3d');
+                },
+              },
+              {
+                id: 'sub-battery-soc',
+                label: 'Fleet Battery SOC Trajectories',
+                shortLabel: 'Battery SOC',
+                icon: <Gauge size={12} />,
+                type: 'tab',
+                targetTab: 'graphs',
+                onExecute: () => {
+                  onSelectTab('graphs');
+                  if (onSelectGraph) onSelectGraph('battery_soc');
+                  trackButtonClick('sidebar_graph_battery_soc');
                 },
               },
               {
                 id: 'sub-heatmaps',
-                label: 'Chute Balance Variance Heatmaps',
-                shortLabel: 'Chute Heatmaps',
+                label: 'Aisle Spatio-Temporal Congestion Matrix',
+                shortLabel: 'Aisle Heatmap',
+                icon: <BarChart3 size={12} />,
                 type: 'tab',
                 targetTab: 'graphs',
                 onExecute: () => {
                   onSelectTab('graphs');
                   if (onSelectGraph) onSelectGraph('spatiotemporal_heatmap');
+                  trackButtonClick('sidebar_graph_spatiotemporal_heatmap');
                 },
               },
             ],
@@ -1967,6 +2096,11 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                                       (child.id === 'cam-follow' && cameraPreset === 'follow') ||
                                       (child.id === 'cam-chute' && cameraPreset === 'chute-focus')
                                     )) ||
+                                    (activeTab === '3d-sim' && !selectedEntity && (!cameraPreset || cameraPreset === 'overview') && child.id === 'sub-facility-envelope') ||
+                                    (activeTab === '2d-route-map' && (
+                                      (child.id === 'sub-trajectories' && (selected2DSubView === 'trajectories' || !selected2DSubView)) ||
+                                      (child.id === 'sub-chute-contention' && selected2DSubView === 'chutes')
+                                    )) ||
                                     (selectedTier && (
                                       (child.id === 'sub-tier-1' && selectedTier === 'tier1') ||
                                       (child.id === 'sub-tier-2' && selectedTier === 'tier2') ||
@@ -1975,8 +2109,16 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                                     )) ||
                                     (activeTab === 'graphs' && (
                                       (child.id === 'sub-pareto' && (selectedGraphId === 'pareto' || !selectedGraphId)) ||
-                                      (child.id === 'sub-benchmarks' && (selectedGraphId === 'benders' || selectedGraphId === 'velocity')) ||
-                                      (child.id === 'sub-heatmaps' && (selectedGraphId === 'spatiotemporal_heatmap' || selectedGraphId === 'chutes'))
+                                      (child.id === 'sub-spatial' && selectedGraphId === 'spatial') ||
+                                      (child.id === 'sub-lifo' && selectedGraphId === 'lifo') ||
+                                      (child.id === 'sub-chutes' && selectedGraphId === 'chutes') ||
+                                      (child.id === 'sub-velocity' && selectedGraphId === 'velocity') ||
+                                      (child.id === 'sub-qaoa' && selectedGraphId === 'qaoa') ||
+                                      (child.id === 'sub-benders' && selectedGraphId === 'benders') ||
+                                      (child.id === 'sub-benchmarks' && selectedGraphId === 'benders') ||
+                                      (child.id === 'sub-packing-3d' && selectedGraphId === 'packing_3d') ||
+                                      (child.id === 'sub-battery-soc' && selectedGraphId === 'battery_soc') ||
+                                      (child.id === 'sub-heatmaps' && selectedGraphId === 'spatiotemporal_heatmap')
                                     )) ||
                                     (activeTab === 'comparison' && (
                                       (child.id === 'sub-delta-audit' && (selectedComparisonMode === 'DELTA_AUDIT' || !selectedComparisonMode)) ||

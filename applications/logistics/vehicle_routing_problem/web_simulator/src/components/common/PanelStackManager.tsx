@@ -38,9 +38,10 @@ export interface PanelStackActions {
 interface PanelStackDockProps {
   state: PanelStackState;
   actions: PanelStackActions;
+  positionStyle?: React.CSSProperties;
 }
 
-export const PanelStackDock: React.FC<PanelStackDockProps> = ({ state, actions }) => {
+export const PanelStackDock: React.FC<PanelStackDockProps> = ({ state, actions, positionStyle }) => {
   const isAllMinimized =
     state.floorEnvelope === 'minimized' &&
     (state.amrTelemetry === 'minimized' || !state.selectedVehicleId) &&
@@ -49,15 +50,13 @@ export const PanelStackDock: React.FC<PanelStackDockProps> = ({ state, actions }
 
   const isQuantum = state.operationalMode === 'QUANTUM';
 
-
   return (
     <div
       className="glass-panel"
       style={{
         position: 'absolute',
         top: '16px',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        left: '16px',
         zIndex: 25,
         padding: '4px 12px',
         borderRadius: '20px',
@@ -69,6 +68,9 @@ export const PanelStackDock: React.FC<PanelStackDockProps> = ({ state, actions }
         boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 240, 255, 0.1)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
+        maxWidth: 'calc(100vw - 420px)',
+        overflowX: 'auto',
+        ...positionStyle,
       }}
     >
       {/* Title & Quick Actions */}

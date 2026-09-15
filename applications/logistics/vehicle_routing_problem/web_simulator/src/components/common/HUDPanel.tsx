@@ -55,7 +55,7 @@ export const HUDPanel: React.FC<HUDPanelProps> = ({
   className = '',
   children,
 }) => {
-  const [internalMode, setInternalMode] = useState<HUDPanelDisplayMode>('expanded');
+  const [internalMode, setInternalMode] = useState<HUDPanelDisplayMode>('minimized');
   const activeMode = controlledMode !== undefined ? controlledMode : internalMode;
 
   const setMode = (newMode: HUDPanelDisplayMode) => {
@@ -125,7 +125,7 @@ export const HUDPanel: React.FC<HUDPanelProps> = ({
         }}
       >
         {/* Left: Icon + Title + Badge + Summary */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
           <div
             style={{
               width: '24px',
@@ -143,7 +143,7 @@ export const HUDPanel: React.FC<HUDPanelProps> = ({
             {icon}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flexWrap: 'nowrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flexWrap: 'nowrap', overflow: 'hidden' }}>
             <span
               style={{
                 fontSize: '11px',
@@ -152,6 +152,8 @@ export const HUDPanel: React.FC<HUDPanelProps> = ({
                 color: '#f0f4f8',
                 whiteSpace: 'nowrap',
                 textTransform: 'uppercase',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               {title}
@@ -197,7 +199,7 @@ export const HUDPanel: React.FC<HUDPanelProps> = ({
 
         {/* Right: Custom Action Buttons & Window Controls */}
         <div
-          style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0, marginLeft: 'auto' }}
           onClick={(e) => e.stopPropagation()}
         >
           {actions && <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{actions}</div>}

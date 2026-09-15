@@ -30,21 +30,40 @@ import {
   X,
 } from 'lucide-react';
 import katex from 'katex';
-import { getGraphImageUrl } from '../services/api';
+import { getGraphImageUrl, RunSummaryDTO, formatRunMode } from '../services/api';
 import { GRAPH_DOSSIERS } from '../data/graphDossiers';
+import { HUDPanelDisplayMode } from './common/HUDPanel';
 
 interface GraphStudioProps {
   runId?: string;
+  runs?: RunSummaryDTO[];
+  onSelectRun?: (runId: string) => void;
   activeGraphId?: string;
   onSelectGraph?: (graphId: string) => void;
+  isMeaningPanelOpen?: boolean;
+  onToggleMeaningPanel?: () => void;
+  onOpenReportsStudio?: () => void;
+  reportsCount?: number;
+  reportsRepoMode?: HUDPanelDisplayMode;
+  onReportsRepoModeChange?: (mode: HUDPanelDisplayMode) => void;
 }
 
 export const GraphStudio: React.FC<GraphStudioProps> = ({
   runId: propRunId,
+  runs,
+  onSelectRun,
   activeGraphId,
   onSelectGraph,
+  isMeaningPanelOpen: propIsMeaningPanelOpen,
+  onToggleMeaningPanel,
+  onOpenReportsStudio,
+  reportsCount = 0,
+  reportsRepoMode = 'minimized',
+  onReportsRepoModeChange,
 }) => {
-  const effectiveRunId = propRunId && propRunId.trim() ? propRunId.trim() : 'RUN-ACTIVE-001';
+  const effectiveRunId = propRunId && propRunId.trim() ? propRunId.trim() : (runs && runs[0]?.run_id) || 'RUN-ACTIVE-001';
+  const currentRunObj = runs?.find((r) => r.run_id === effectiveRunId);
+  const currentMode = currentRunObj?.operational_mode || 'QUANTUM';
   const [activeGraph, setActiveGraph] = useState<string>(activeGraphId || 'pareto');
   const [reloadKey, setReloadKey] = useState<number>(Date.now());
   const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>('loading');
@@ -53,7 +72,15 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({
   const [copiedNotification, setCopiedNotification] = useState<boolean>(false);
   const [dossierTab, setDossierTab] = useState<'all' | 'meaning' | 'elements' | 'acronyms' | 'results'>('all');
   const [activeStudioTab, setActiveStudioTab] = useState<'chart' | 'dossier'>('chart');
-  const [isMeaningPanelOpen, setIsMeaningPanelOpen] = useState<boolean>(true);
+  const [localMeaningOpen, setLocalMeaningOpen] = useState<boolean>(true);
+  const isMeaningOpen = propIsMeaningPanelOpen !== undefined ? propIsMeaningPanelOpen : localMeaningOpen;
+  const toggleMeaningPanel = () => {
+    if (onToggleMeaningPanel) {
+      onToggleMeaningPanel();
+    } else {
+      setLocalMeaningOpen((prev) => !prev);
+    }
+  };
   const [isSpeakingMeaning, setIsSpeakingMeaning] = useState<boolean>(false);
   const [meaningSubTab, setMeaningSubTab] = useState<'overview' | 'math' | 'elements' | 'kpis'>('overview');
 
@@ -794,32 +821,95 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({
 
   return (
     <div className="graph-studio-fit">
-      {/* Compact Studio Header with View Mode & Controls */}
+      {/* Studio Header: Separate Places for Run ID Selector and Button Menu */}
       <div
         className="glass-panel"
         style={{
-          padding: '6px 14px',
+          padding: '8px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '8px',
+          gap: '12px',
           flexShrink: 0,
+          borderBottom: '1px solid rgba(0, 240, 255, 0.2)',
+          background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 16, 31, 0.9) 100%)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#00f0ff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            {effectiveRunId}
-          </span>
-          <span style={{ color: '#475569' }}>|</span>
-          <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#f3f4f6', margin: 0 }}>
-            Analytics &amp; Graphs (10 Charts)
-          </h2>
+        {/* Place 1: Dedicated Run ID Combobox and Mode Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              background: 'rgba(15, 23, 42, 0.85)',
+              border: '1px solid rgba(0, 240, 255, 0.3)',
+              boxShadow: '0 0 12px rgba(0, 240, 255, 0.15)',
+            }}
+          >
+            <BarChart3 size={14} color="#00f0ff" />
+            <span style={{ fontSize: '10px', fontWeight: 800, color: '#00f0ff', letterSpacing: '0.05em' }}>
+              ANALYTICS RUN ID
+            </span>
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 800,
+                padding: '2px 5px',
+                borderRadius: '3px',
+                backgroundColor: currentMode === 'QUANTUM' ? 'rgba(0, 240, 255, 0.2)' : 'rgba(251, 191, 36, 0.2)',
+                color: currentMode === 'QUANTUM' ? '#00f0ff' : '#fbbf24',
+                border: `1px solid ${currentMode === 'QUANTUM' ? '#00f0ff' : '#fbbf24'}`,
+                letterSpacing: '0.04em',
+              }}
+            >
+              {currentMode}
+            </span>
+            <select
+              value={effectiveRunId}
+              onChange={(e) => onSelectRun && onSelectRun(e.target.value)}
+              style={{
+                backgroundColor: '#070c18',
+                color: '#f8fafc',
+                border: '1px solid rgba(0, 240, 255, 0.35)',
+                borderRadius: '4px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                outline: 'none',
+                maxWidth: '240px',
+              }}
+              title="Select Historical Run for Performance Analytics"
+            >
+              {runs && runs.length > 0 ? (
+                runs.map((r) => (
+                  <option key={r.run_id} value={r.run_id} style={{ background: '#0b1329', color: '#f8fafc' }}>
+                    {r.run_id} • [{formatRunMode(r)}] {r.makespan_sec ? `${r.makespan_sec.toFixed(0)}s` : 'active'} {r.distance_km ? `• ${r.distance_km.toFixed(2)}km` : ''}
+                  </option>
+                ))
+              ) : (
+                <option value={effectiveRunId}>{effectiveRunId}</option>
+              )}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: '#475569' }}>|</span>
+            <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#f3f4f6', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>{activeOption.title}</span>
+              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 500 }}>(10 Charts Available)</span>
+            </h2>
+          </div>
         </div>
 
-        {/* View Mode Switcher: Chart Canvas vs Mathematical Dossier */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.8)', padding: '2px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        {/* Place 2: Dedicated Buttons Menu */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          {/* View Mode Switcher: Chart Canvas vs Mathematical Dossier */}
+          <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.8)', padding: '2px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
             <button
               onClick={() => setActiveStudioTab('chart')}
               style={{
@@ -866,7 +956,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({
 
           {/* Publication Figure / Interactive Vector toggle */}
           {activeStudioTab === 'chart' && (
-            <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.8)', padding: '2px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.8)', padding: '2px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
               <button
                 onClick={() => setViewMode('figure')}
                 style={{
@@ -911,7 +1001,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({
           {/* Detailed Meaning Panel Toggle */}
           {activeStudioTab === 'chart' && (
             <button
-              onClick={() => setIsMeaningPanelOpen(!isMeaningPanelOpen)}
+              onClick={toggleMeaningPanel}
               className="btn-secondary"
               style={{
                 fontSize: '10px',
@@ -919,17 +1009,44 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                background: isMeaningPanelOpen ? 'rgba(0, 240, 255, 0.18)' : 'rgba(15, 23, 42, 0.8)',
-                borderColor: isMeaningPanelOpen ? '#00f0ff' : 'rgba(255, 255, 255, 0.1)',
-                color: isMeaningPanelOpen ? '#00f0ff' : '#94a3b8',
-                boxShadow: isMeaningPanelOpen ? '0 0 10px rgba(0, 240, 255, 0.25)' : 'none',
+                background: isMeaningOpen ? 'rgba(0, 240, 255, 0.18)' : 'rgba(15, 23, 42, 0.8)',
+                borderColor: isMeaningOpen ? '#00f0ff' : 'rgba(255, 255, 255, 0.15)',
+                color: isMeaningOpen ? '#00f0ff' : '#94a3b8',
+                boxShadow: isMeaningOpen ? '0 0 10px rgba(0, 240, 255, 0.25)' : 'none',
               }}
               title="Toggle Detailed Graph Meaning & Engineering Dossier Panel"
             >
-              <BookOpen size={11} color={isMeaningPanelOpen ? '#00f0ff' : '#94a3b8'} />
-              <span>{isMeaningPanelOpen ? 'Meaning Panel On' : 'Meaning Panel'}</span>
+              <BookOpen size={11} color={isMeaningOpen ? '#00f0ff' : '#94a3b8'} />
+              <span>{isMeaningOpen ? 'Meaning Panel On' : 'Meaning Panel'}</span>
             </button>
           )}
+
+          {/* Reports Studio Toggle Button */}
+          <button
+            onClick={() => {
+              if (onReportsRepoModeChange) {
+                onReportsRepoModeChange(reportsRepoMode === 'expanded' ? 'minimized' : 'expanded');
+              } else if (onOpenReportsStudio) {
+                onOpenReportsStudio();
+              }
+            }}
+            className="btn-secondary"
+            style={{
+              fontSize: '10px',
+              padding: '3px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: reportsRepoMode === 'expanded' ? 'rgba(0, 240, 255, 0.2)' : 'rgba(15, 23, 42, 0.8)',
+              borderColor: reportsRepoMode === 'expanded' ? '#00f0ff' : 'rgba(255, 255, 255, 0.15)',
+              color: reportsRepoMode === 'expanded' ? '#00f0ff' : '#94a3b8',
+              boxShadow: reportsRepoMode === 'expanded' ? '0 0 10px rgba(0, 240, 255, 0.25)' : 'none',
+            }}
+            title="Toggle Reports Manager Studio"
+          >
+            <FileText size={11} color={reportsRepoMode === 'expanded' ? '#00f0ff' : '#10b981'} />
+            <span>Reports ({reportsCount})</span>
+          </button>
 
           {/* Download Button */}
           <button
@@ -955,7 +1072,15 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({
       </div>
 
       {/* Single-Row 10-Graph Selector Strip */}
-      <div className="graph-pills-strip">
+      <div
+        className="graph-pills-strip"
+        style={{
+          padding: '4px 16px 6px 16px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          background: 'rgba(10, 16, 31, 0.6)',
+          paddingRight: reportsRepoMode !== 'hidden' ? '380px' : '16px',
+        }}
+      >
         {graphOptions.map((opt) => {
           const Icon = opt.icon;
           const isActive = activeGraph === opt.id;
@@ -1130,11 +1255,11 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <button
-                    onClick={() => setIsMeaningPanelOpen(!isMeaningPanelOpen)}
+                    onClick={toggleMeaningPanel}
                     style={{
-                      background: isMeaningPanelOpen ? 'rgba(0, 240, 255, 0.18)' : 'rgba(255, 255, 255, 0.06)',
-                      border: isMeaningPanelOpen ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.15)',
-                      color: isMeaningPanelOpen ? '#00f0ff' : '#94a3b8',
+                      background: isMeaningOpen ? 'rgba(0, 240, 255, 0.18)' : 'rgba(255, 255, 255, 0.06)',
+                      border: isMeaningOpen ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.15)',
+                      color: isMeaningOpen ? '#00f0ff' : '#94a3b8',
                       fontSize: '10.5px',
                       fontWeight: 600,
                       padding: '2px 8px',
@@ -1148,7 +1273,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({
                     title="Toggle Detailed Graph Meaning Panel"
                   >
                     <BookOpen size={11} />
-                    <span>{isMeaningPanelOpen ? 'Hide Meaning' : 'Detailed Meaning'}</span>
+                    <span>{isMeaningOpen ? 'Hide Meaning' : 'Detailed Meaning'}</span>
                   </button>
                   <button
                     onClick={() => setActiveStudioTab('dossier')}
@@ -1172,7 +1297,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({
             </div>
 
             {/* Right: Detailed Graph Meaning Panel */}
-            {isMeaningPanelOpen && (
+            {isMeaningOpen && (
               <div
                 className="glass-card"
                 style={{
@@ -1260,7 +1385,7 @@ export const GraphStudio: React.FC<GraphStudioProps> = ({
                       <Copy size={12} />
                     </button>
                     <button
-                      onClick={() => setIsMeaningPanelOpen(false)}
+                      onClick={toggleMeaningPanel}
                       style={{
                         background: 'transparent',
                         border: '1px solid rgba(255, 255, 255, 0.1)',

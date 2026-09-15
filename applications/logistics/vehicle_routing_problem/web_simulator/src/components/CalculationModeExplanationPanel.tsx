@@ -50,7 +50,7 @@ export const CalculationModeExplanationPanel: React.FC<CalculationModeExplanatio
   sidebarWidth = 260,
   isSidebarExpanded = false,
 }) => {
-  const [internalExpanded, setInternalExpanded] = useState(true);
+  const [internalExpanded, setInternalExpanded] = useState(false);
   const isExpanded = panelMode !== undefined ? panelMode === 'expanded' : internalExpanded;
 
   const setIsExpanded = (val: boolean) => {

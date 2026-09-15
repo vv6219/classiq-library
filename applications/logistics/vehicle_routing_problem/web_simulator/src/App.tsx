@@ -105,14 +105,16 @@ export const App: React.FC = () => {
   const [isExplainerOpen, setIsExplainerOpen] = useState(false);
   const [isQuantumPanelOpen, setIsQuantumPanelOpen] = useState(false);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
-  const [quantumPanelMode, setQuantumPanelMode] = useState<HUDPanelDisplayMode>('expanded');
+  const [quantumPanelMode, setQuantumPanelMode] = useState<HUDPanelDisplayMode>('minimized');
   const [reportsRepoMode, setReportsRepoMode] = useState<HUDPanelDisplayMode>('minimized');
   const [reportsCount, setReportsCount] = useState<number>(0);
   const [investigationSubTab, setInvestigationSubTab] = useState<'timeline' | 'gates' | 'chutes' | 'quantum' | 'carbon'>('timeline');
+  const [selected2DSubView, setSelected2DSubView] = useState<'trajectories' | 'chutes'>('trajectories');
   const [glossaryInitialTermId, setGlossaryInitialTermId] = useState<string>('benders-decomposition');
 
   const [selectedTier, setSelectedTier] = useState<string>('tier1');
   const [selectedGraphId, setSelectedGraphId] = useState<string>('pareto');
+  const [isGraphMeaningOpen, setIsGraphMeaningOpen] = useState<boolean>(false);
   const [generatorInitialParam, setGeneratorInitialParam] = useState<string>('num_orders');
   const [isZeroOrdersModalOpen, setIsZeroOrdersModalOpen] = useState(false);
   const [zeroOrdersToastMessage, setZeroOrdersToastMessage] = useState<string | null>(null);
@@ -344,7 +346,7 @@ export const App: React.FC = () => {
       setIsProgressModalOpen(s.isStepsModalOpen);
     }
     if (s.reportsRepoMode) {
-      setReportsRepoMode(s.reportsRepoMode);
+      setReportsRepoMode(entryMethod === 'direct_url' ? 'minimized' : s.reportsRepoMode);
     }
     if (s.pdfProfileToOpen) {
       handleOpenPDF(s.pdfProfileToOpen);
@@ -1012,16 +1014,48 @@ export const App: React.FC = () => {
           onSelectGraph={setSelectedGraphId}
           selectedComparisonMode={comparisonMode}
           onSelectComparisonMode={setComparisonMode}
+          selected2DSubView={selected2DSubView}
+          onSelect2DSubView={setSelected2DSubView}
           onNavigate={(item) => {
             if (item.targetTab) {
               trackTabChange(activeTab, item.targetTab);
               setActiveTab(item.targetTab);
             }
-            if (item.id === 'sub-pareto') {
+            if (item.id === 'sub-trajectories') {
+              setActiveTab('2d-route-map');
+              setSelected2DSubView('trajectories');
+            } else if (item.id === 'sub-chute-contention') {
+              setActiveTab('2d-route-map');
+              setSelected2DSubView('chutes');
+            } else if (item.id === 'sub-pareto') {
+              setActiveTab('graphs');
               setSelectedGraphId('pareto');
-            } else if (item.id === 'sub-benchmarks') {
+            } else if (item.id === 'sub-spatial') {
+              setActiveTab('graphs');
+              setSelectedGraphId('spatial');
+            } else if (item.id === 'sub-lifo') {
+              setActiveTab('graphs');
+              setSelectedGraphId('lifo');
+            } else if (item.id === 'sub-chutes') {
+              setActiveTab('graphs');
+              setSelectedGraphId('chutes');
+            } else if (item.id === 'sub-velocity') {
+              setActiveTab('graphs');
+              setSelectedGraphId('velocity');
+            } else if (item.id === 'sub-qaoa') {
+              setActiveTab('graphs');
+              setSelectedGraphId('qaoa');
+            } else if (item.id === 'sub-benders' || item.id === 'sub-benchmarks') {
+              setActiveTab('graphs');
               setSelectedGraphId('benders');
+            } else if (item.id === 'sub-packing-3d') {
+              setActiveTab('graphs');
+              setSelectedGraphId('packing_3d');
+            } else if (item.id === 'sub-battery-soc') {
+              setActiveTab('graphs');
+              setSelectedGraphId('battery_soc');
             } else if (item.id === 'sub-heatmaps') {
+              setActiveTab('graphs');
               setSelectedGraphId('spatiotemporal_heatmap');
             } else if (item.id === 'sub-delta-audit') {
               setComparisonMode('DELTA_AUDIT');
@@ -1077,6 +1111,8 @@ export const App: React.FC = () => {
                 runs={runs}
                 onSelectRun={handleSelectHistoricalRun}
                 onNavigateTo3D={() => setActiveTab('3d-sim')}
+                selectedSubView={selected2DSubView}
+                onSelectSubView={setSelected2DSubView}
               />
             </ErrorBoundary>
           )}
@@ -1122,8 +1158,16 @@ export const App: React.FC = () => {
           {activeTab === 'graphs' && (
             <GraphStudio
               runId={currentRunId}
+              runs={runs}
+              onSelectRun={handleSelectHistoricalRun}
               activeGraphId={selectedGraphId}
               onSelectGraph={setSelectedGraphId}
+              isMeaningPanelOpen={isGraphMeaningOpen}
+              onToggleMeaningPanel={() => setIsGraphMeaningOpen(!isGraphMeaningOpen)}
+              onOpenReportsStudio={() => setReportsRepoMode('expanded')}
+              reportsCount={reportsCount}
+              reportsRepoMode={reportsRepoMode}
+              onReportsRepoModeChange={setReportsRepoMode}
             />
           )}
           {activeTab === 'comparison' && (
@@ -1242,6 +1286,28 @@ export const App: React.FC = () => {
             onOpenPDFModal={handleOpenPDF}
             reportsCount={reportsCount}
             onReportsCountChange={setReportsCount}
+            positionStyle={
+              activeTab === 'graphs'
+                ? {
+                    top: '126px',
+                    right: isGraphMeaningOpen ? '420px' : '16px',
+                    maxHeight: 'calc(100vh - 160px)',
+                    zIndex: 35,
+                  }
+                : activeTab === 'dataset' || activeTab === 'tiers' || activeTab === 'quantum' || activeTab === 'comparison' || activeTab === 'investigation'
+                ? {
+                    top: '126px',
+                    right: '16px',
+                    maxHeight: 'calc(100vh - 160px)',
+                    zIndex: 35,
+                  }
+                : {
+                    top: '68px',
+                    right: '16px',
+                    maxHeight: 'calc(100vh - 120px)',
+                    zIndex: 30,
+                  }
+            }
           />
         </ErrorBoundary>
       </div>

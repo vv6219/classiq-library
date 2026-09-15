@@ -30,6 +30,8 @@ interface RouteMap2DStudioProps {
   runs?: RunSummaryDTO[];
   onSelectRun?: (runId: string) => void;
   onNavigateTo3D?: () => void;
+  selectedSubView?: 'trajectories' | 'chutes';
+  onSelectSubView?: (subView: 'trajectories' | 'chutes') => void;
 }
 
 // High-contrast vehicle colors for dark-mode cyber warehouse
@@ -50,6 +52,8 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
   runs,
   onSelectRun,
   onNavigateTo3D,
+  selectedSubView,
+  onSelectSubView,
 }) => {
   // Routes data fallback with robust validation
   const routes: VehicleRoute[] = useMemo(() => {
@@ -70,7 +74,16 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
   const [showSequenceNumbers, setShowSequenceNumbers] = useState<boolean>(true);
   const [showDirectionArrows, setShowDirectionArrows] = useState<boolean>(true);
   const [showHRIZone, setShowHRIZone] = useState<boolean>(true);
-  const [filterStopType, setFilterStopType] = useState<string>('ALL');
+  const [filterStopType, setFilterStopType] = useState<string>(selectedSubView === 'chutes' ? 'CHUTE' : 'ALL');
+
+  // Sync filter when selectedSubView changes from sidebar
+  React.useEffect(() => {
+    if (selectedSubView === 'chutes') {
+      setFilterStopType('CHUTE');
+    } else if (selectedSubView === 'trajectories') {
+      setFilterStopType('ALL');
+    }
+  }, [selectedSubView]);
 
   // Zoom and Pan
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
@@ -458,8 +471,8 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
           <div
             style={{
               position: 'absolute',
-              top: '12px',
-              left: '14px',
+              top: '16px',
+              left: '16px',
               zIndex: 15,
               display: 'flex',
               alignItems: 'center',
@@ -568,17 +581,17 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
             </button>
           </div>
 
-          {/* Top Right Floating Badge: Current Run ID Identificator on 2D Map */}
+          {/* Top Right Floating Card: Current Run ID & Combobox on 2D Map */}
           <div
             style={{
               position: 'absolute',
-              top: '12px',
-              right: '14px',
+              top: '16px',
+              right: '16px',
               zIndex: 15,
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              backgroundColor: 'rgba(12, 16, 28, 0.9)',
+              gap: '10px',
+              backgroundColor: 'rgba(12, 16, 28, 0.92)',
               padding: '6px 12px',
               borderRadius: '8px',
               border: '1px solid rgba(0, 240, 255, 0.35)',
@@ -586,13 +599,46 @@ export const RouteMap2DStudio: React.FC<RouteMap2DStudioProps> = ({
               backdropFilter: 'blur(10px)',
             }}
           >
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#00f0ff', boxShadow: '0 0 6px #00f0ff' }} />
-            <span style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
-              2D MAP RUN ID:
-            </span>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#00f0ff', fontFamily: 'var(--font-mono, monospace)' }}>
-              {runId || schedule?.run_id || 'RUN-ACTIVE-001'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#00f0ff', boxShadow: '0 0 6px #00f0ff' }} />
+              <span style={{ fontSize: '9px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+                2D MAP RUN ID:
+              </span>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#00f0ff', fontFamily: 'var(--font-mono, monospace)' }}>
+                {runId || schedule?.run_id || 'RUN-ACTIVE-001'}
+              </span>
+            </div>
+
+            {runs && runs.length > 0 && onSelectRun && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderLeft: '1px solid rgba(255, 255, 255, 0.12)', paddingLeft: '8px' }}>
+                <span style={{ fontSize: '9px', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+                  RUN:
+                </span>
+                <select
+                  value={runId || schedule?.run_id || ''}
+                  onChange={(e) => onSelectRun(e.target.value)}
+                  title="Switch active Run ID for 2D Map"
+                  style={{
+                    background: '#0d1527',
+                    border: '1px solid rgba(0, 240, 255, 0.4)',
+                    borderRadius: '5px',
+                    color: '#f0f4f8',
+                    fontSize: '11px',
+                    fontFamily: 'var(--font-mono, monospace)',
+                    fontWeight: 600,
+                    padding: '3px 6px',
+                    cursor: 'pointer',
+                    outline: 'none',
+                  }}
+                >
+                  {runs.map((r) => (
+                    <option key={r.run_id} value={r.run_id} style={{ background: '#0d1527', color: '#f0f4f8' }}>
+                      {r.run_id} • [{formatRunMode(r)}] {r.makespan_sec ? `${r.makespan_sec.toFixed(0)}s` : 'active'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* SVG Canvas Container */}

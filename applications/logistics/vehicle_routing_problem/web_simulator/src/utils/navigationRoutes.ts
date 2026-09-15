@@ -1466,7 +1466,7 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
       canonicalPath: '/reports',
     },
     state: {
-      reportsRepoMode: 'expanded',
+      reportsRepoMode: 'minimized',
     },
   },
   {
@@ -1485,7 +1485,7 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
       canonicalPath: '/reports/executive',
     },
     state: {
-      reportsRepoMode: 'expanded',
+      reportsRepoMode: 'minimized',
       pdfProfileToOpen: 'EXECUTIVE',
     },
   },
@@ -1505,7 +1505,7 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
       canonicalPath: '/reports/comprehensive',
     },
     state: {
-      reportsRepoMode: 'expanded',
+      reportsRepoMode: 'minimized',
       pdfProfileToOpen: 'COMPREHENSIVE',
     },
   },
@@ -1525,7 +1525,7 @@ export const NAVIGATION_ROUTES: NavigationRouteDefinition[] = [
       canonicalPath: '/reports/certificate',
     },
     state: {
-      reportsRepoMode: 'expanded',
+      reportsRepoMode: 'minimized',
       pdfProfileToOpen: 'CERTIFICATE',
     },
   },
